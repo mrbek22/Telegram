@@ -1,0 +1,68 @@
+name: Build APK
+
+# Qo'lda ishga tushirish (Actions sahifasidan "Run workflow") yoki master'ga push bo'lganda
+on:
+  workflow_dispatch:
+  push:
+    branches: [ master ]
+    paths-ignore:
+      - '**.md'
+      - 'PLAN.md'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Bo'sh disk joyini oshirish
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android/sdk/ndk /opt/ghc /usr/local/.ghcup || true
+          df -h /
+
+      - name: JDK 17 o'rnatish
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Android SDK o'rnatish
+        uses: android-actions/setup-android@v3
+
+      - name: NDK va CMake o'rnatish
+        run: |
+          yes | sdkmanager --licenses > /dev/null || true
+          sdkmanager "platforms;android-35" "build-tools;35.0.0" "ndk;27.2.12479018" "cmake;3.10.2"
+
+      - name: Gradle cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle', 'gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-
+
+      - name: gradlew ruxsat
+        run: chmod +x ./gradlew
+
+      - name: Standalone APK build
+        run: ./gradlew :TMessagesProj_AppStandalone:assembleAfatStandalone --stacktrace --no-daemon
+
+      - name: APK'ni topish
+        id: apk
+        run: |
+          APK=$(find TMessagesProj_AppStandalone/build/outputs/apk -name "*.apk" | head -n1)
+          echo "path=$APK" >> "$GITHUB_OUTPUT"
+          echo "APK topildi: $APK"
+          ls -lh "$APK"
+
+      - name: APK'ni yuklash (artifact)
+        uses: actions/upload-artifact@v4
+        with:
+          name: telegram-fork-apk
+          path: ${{ steps.apk.outputs.path }}
+          if-no-files-found: error
