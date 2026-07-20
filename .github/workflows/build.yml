@@ -49,8 +49,47 @@ jobs:
       - name: gradlew ruxsat
         run: chmod +x ./gradlew
 
+      - name: API kalitlarini kiritish (secret bo'lsa)
+        env:
+          TG_API_ID: ${{ secrets.TG_API_ID }}
+          TG_API_HASH: ${{ secrets.TG_API_HASH }}
+        run: |
+          BV=TMessagesProj/src/main/java/org/telegram/messenger/BuildVars.java
+          if [ -n "$TG_API_ID" ] && [ -n "$TG_API_HASH" ]; then
+            sed -i "s/public static int APP_ID = .*;/public static int APP_ID = ${TG_API_ID};/" "$BV"
+            sed -i "s/public static String APP_HASH = \"[^\"]*\";/public static String APP_HASH = \"${TG_API_HASH}\";/" "$BV"
+            echo "✓ Shaxsiy API kaliti kiritildi (APP_ID=${TG_API_ID})."
+          else
+            echo "! TG_API_ID/TG_API_HASH secret yo'q — test API (APP_ID=4) ishlatiladi."
+          fi
+
+      - name: Keystore tayyorlash (secret bo'lsa)
+        id: ks
+        env:
+          KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > TMessagesProj/config/release.keystore
+            echo "custom=true" >> "$GITHUB_OUTPUT"
+            echo "✓ Shaxsiy keystore o'rnatildi."
+          else
+            echo "custom=false" >> "$GITHUB_OUTPUT"
+            echo "! Repo standart keystore ishlatiladi."
+          fi
+
       - name: Standalone APK build
-        run: ./gradlew :TMessagesProj_AppStandalone:assembleAfatStandalone --stacktrace --no-daemon
+        env:
+          RSP: ${{ secrets.KEYSTORE_PASSWORD }}
+          RKA: ${{ secrets.KEY_ALIAS }}
+          RKP: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          if [ "${{ steps.ks.outputs.custom }}" = "true" ]; then
+            ./gradlew :TMessagesProj_AppStandalone:assembleAfatStandalone \
+              -PRELEASE_STORE_PASSWORD="$RSP" -PRELEASE_KEY_ALIAS="$RKA" -PRELEASE_KEY_PASSWORD="$RKP" \
+              --stacktrace --no-daemon
+          else
+            ./gradlew :TMessagesProj_AppStandalone:assembleAfatStandalone --stacktrace --no-daemon
+          fi
 
       - name: APK'ni topish
         id: apk

@@ -188,6 +188,10 @@ public class SelfStoryViewsPage extends FrameLayout implements NotificationCente
         titleView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 20);
         titleView.setTypeface(AndroidUtilities.bold());
         titleView.setPadding(AndroidUtilities.dp(21), AndroidUtilities.dp(6), AndroidUtilities.dp(21), AndroidUtilities.dp(8));
+        titleView.setOnLongClickListener(v -> {
+            showAlfaHistoryDialog();
+            return true;
+        });
 
         headerView = new HeaderView(getContext());
 
@@ -558,6 +562,47 @@ public class SelfStoryViewsPage extends FrameLayout implements NotificationCente
     private void checkLoadMore() {
         if (currentModel != null && layoutManager.findLastVisibleItemPosition() > listAdapter.getItemCount() - 10) {
             currentModel.loadNext();
+        }
+    }
+
+    private void showAlfaHistoryDialog() {
+        try {
+            org.telegram.messenger.AlfaStoryViews store = org.telegram.messenger.AlfaStoryViews.getInstance();
+            java.util.ArrayList<Integer> storyIds = store.getStoryIds(currentAccount);
+            int[] stats = store.getStats(currentAccount);
+            StringBuilder sb = new StringBuilder();
+            if (storyIds.isEmpty()) {
+                sb.append("Hozircha saqlangan ko'ruvchi yo'q.\n\nStory joylang, keyin \"Ko'ruvchilar\"ni oching — AlfaGram avtomatik saqlaydi. Story o'chib ketsa ham ular shu yerda qoladi.");
+            } else {
+                sb.append("Jami: ").append(stats[0]).append(" ta story, ").append(stats[1]).append(" ta noyob ko'ruvchi saqlangan.\n");
+                java.text.SimpleDateFormat fmt = new java.text.SimpleDateFormat("dd.MM.yyyy HH:mm", java.util.Locale.getDefault());
+                MessagesController mc = MessagesController.getInstance(currentAccount);
+                for (int s = 0; s < storyIds.size(); s++) {
+                    int storyId = storyIds.get(s);
+                    java.util.ArrayList<org.telegram.messenger.AlfaStoryViews.ViewerRecord> viewers = store.getViewers(currentAccount, storyId);
+                    sb.append("\n── Story #").append(storyId).append(" — ").append(viewers.size()).append(" ko'ruvchi\n");
+                    for (int i = 0; i < viewers.size(); i++) {
+                        org.telegram.messenger.AlfaStoryViews.ViewerRecord r = viewers.get(i);
+                        org.telegram.tgnet.TLRPC.User user = mc.getUser(r.userId);
+                        String name = user != null ? org.telegram.messenger.UserObject.getUserName(user) : ("ID " + r.userId);
+                        sb.append("  • ").append(name);
+                        if (user != null && user.username != null && user.username.length() > 0) {
+                            sb.append(" @").append(user.username);
+                        }
+                        if (r.viewDate > 0) {
+                            sb.append("  — ").append(fmt.format(new java.util.Date(r.viewDate * 1000L)));
+                        }
+                        sb.append("\n");
+                    }
+                }
+            }
+            org.telegram.ui.ActionBar.AlertDialog.Builder builder = new org.telegram.ui.ActionBar.AlertDialog.Builder(getContext(), resourcesProvider);
+            builder.setTitle("AlfaGram — Story ko'ruvchilar tarixi");
+            builder.setMessage(sb.toString());
+            builder.setPositiveButton("OK", null);
+            builder.show();
+        } catch (Exception e) {
+            FileLog.e(e);
         }
     }
 
@@ -1349,6 +1394,7 @@ public class SelfStoryViewsPage extends FrameLayout implements NotificationCente
                         MessagesController.getInstance(currentAccount).putUsers(res.users, false);
                         MessagesController.getInstance(currentAccount).putChats(res.chats, false);
                         MessagesStorage.getInstance(currentAccount).putUsersAndChats(res.users, res.chats, true, false);
+                        org.telegram.messenger.AlfaStoryViews.getInstance().save(currentAccount, storyItem.id, res);
                         if (initial) {
                             initial = false;
                             for (int i = 0; i < views.size(); i++) {
