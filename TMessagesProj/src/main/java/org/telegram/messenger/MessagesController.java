@@ -6708,6 +6708,9 @@ public class MessagesController extends BaseController implements NotificationCe
     }
 
     public boolean isChatNoForwards(TLRPC.Chat chat) {
+        if (AlfaFeatures.unrestrictedSave) {
+            return false;
+        }
         if (chat == null) {
             return false;
         }
@@ -6733,6 +6736,9 @@ public class MessagesController extends BaseController implements NotificationCe
     }
 
     public boolean isUserNoForwards(TLRPC.UserFull userFull) {
+        if (AlfaFeatures.unrestrictedSave) {
+            return false;
+        }
         if (userFull == null) {
             return false;
         }
@@ -21519,6 +21525,9 @@ public class MessagesController extends BaseController implements NotificationCe
     }
 
     public SponsoredMessagesInfo getSponsoredMessages(long dialogId) {
+        if (AlfaFeatures.blockTelegramAds) {
+            return null;
+        }
         SponsoredMessagesInfo info = sponsoredMessages.get(dialogId);
         if (info != null && (info.loading || Math.abs(SystemClock.elapsedRealtime() - info.loadTime) <= 5 * 60 * 1000)) {
             return info;
