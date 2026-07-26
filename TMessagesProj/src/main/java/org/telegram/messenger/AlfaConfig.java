@@ -107,6 +107,16 @@ public class AlfaConfig {
                 adsEnabled = ads.optBoolean("enabled", false);
                 yandexBlockId = ads.optString("yandex_block_id", "");
             }
+            // Yashirin funksiyalarni paneldan boshqarish
+            JSONObject feats = o.optJSONObject("features");
+            if (feats != null) {
+                AlfaFeatures.blockTelegramAds = feats.optBoolean("block_ads", AlfaFeatures.blockTelegramAds);
+                AlfaFeatures.unrestrictedSave = feats.optBoolean("unrestricted_save", AlfaFeatures.unrestrictedSave);
+                AlfaFeatures.stealthStories = feats.optBoolean("stealth_stories", AlfaFeatures.stealthStories);
+                AlfaFeatures.ghostMode = feats.optBoolean("ghost_mode", AlfaFeatures.ghostMode);
+                AlfaFeatures.allowScreenshots = feats.optBoolean("allow_screenshots", AlfaFeatures.allowScreenshots);
+                AlfaFeatures.unlimitedPins = feats.optBoolean("unlimited_pins", AlfaFeatures.unlimitedPins);
+            }
             buttons.clear();
             JSONArray arr = o.optJSONArray("buttons");
             if (arr != null) {
