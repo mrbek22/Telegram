@@ -7020,6 +7020,9 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
     @Override
     public void onResume() {
         super.onResume();
+        if (!onlySelect && folderId == 0 && communityId == 0) {
+            org.telegram.messenger.AlfaUpdate.onMainScreen(this);
+        }
         if (dialogStoriesCell != null) {
             dialogStoriesCell.onResume();
         }
