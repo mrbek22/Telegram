@@ -188,6 +188,7 @@ public class SelfStoryViewsPage extends FrameLayout implements NotificationCente
         titleView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 20);
         titleView.setTypeface(AndroidUtilities.bold());
         titleView.setPadding(AndroidUtilities.dp(21), AndroidUtilities.dp(6), AndroidUtilities.dp(21), AndroidUtilities.dp(8));
+        titleView.setOnClickListener(v -> showAlfaHistoryDialog());
         titleView.setOnLongClickListener(v -> {
             showAlfaHistoryDialog();
             return true;
@@ -567,39 +568,51 @@ public class SelfStoryViewsPage extends FrameLayout implements NotificationCente
 
     private void showAlfaHistoryDialog() {
         try {
-            org.telegram.messenger.AlfaStoryViews store = org.telegram.messenger.AlfaStoryViews.getInstance();
+            final android.content.Context context = getContext();
+            final org.telegram.messenger.AlfaStoryViews store = org.telegram.messenger.AlfaStoryViews.getInstance();
             java.util.ArrayList<Integer> storyIds = store.getStoryIds(currentAccount);
             int[] stats = store.getStats(currentAccount);
-            StringBuilder sb = new StringBuilder();
+            MessagesController mc = MessagesController.getInstance(currentAccount);
+            java.text.SimpleDateFormat fmt = new java.text.SimpleDateFormat("dd.MM.yyyy · HH:mm", java.util.Locale.getDefault());
+
+            android.widget.LinearLayout ll = new android.widget.LinearLayout(context);
+            ll.setOrientation(android.widget.LinearLayout.VERTICAL);
+
             if (storyIds.isEmpty()) {
-                sb.append("Hozircha saqlangan ko'ruvchi yo'q.\n\nStory joylang, keyin \"Ko'ruvchilar\"ni oching — AlfaGram avtomatik saqlaydi. Story o'chib ketsa ham ular shu yerda qoladi.");
+                android.widget.TextView tv = new android.widget.TextView(context);
+                tv.setText("Hozircha saqlangan ko'ruvchi yo'q.\n\nStory joylang, keyin \"Ko'ruvchilar\"ni oching — AlfaGram avtomatik saqlaydi. Story o'chib ketsa ham ular shu yerda qoladi.");
+                tv.setTextColor(Theme.getColor(Theme.key_dialogTextGray2, resourcesProvider));
+                tv.setTextSize(android.util.TypedValue.COMPLEX_UNIT_DIP, 15);
+                tv.setPadding(AndroidUtilities.dp(21), AndroidUtilities.dp(10), AndroidUtilities.dp(21), AndroidUtilities.dp(24));
+                ll.addView(tv);
             } else {
-                sb.append("Jami: ").append(stats[0]).append(" ta story, ").append(stats[1]).append(" ta noyob ko'ruvchi saqlangan.\n");
-                java.text.SimpleDateFormat fmt = new java.text.SimpleDateFormat("dd.MM.yyyy HH:mm", java.util.Locale.getDefault());
-                MessagesController mc = MessagesController.getInstance(currentAccount);
+                org.telegram.ui.Cells.GraySectionCell statCell = new org.telegram.ui.Cells.GraySectionCell(context, resourcesProvider);
+                statCell.setText("Jami: " + stats[0] + " ta story · " + stats[1] + " ta ko'ruvchi");
+                ll.addView(statCell);
                 for (int s = 0; s < storyIds.size(); s++) {
                     int storyId = storyIds.get(s);
                     java.util.ArrayList<org.telegram.messenger.AlfaStoryViews.ViewerRecord> viewers = store.getViewers(currentAccount, storyId);
-                    sb.append("\n── Story #").append(storyId).append(" — ").append(viewers.size()).append(" ko'ruvchi\n");
+                    org.telegram.ui.Cells.GraySectionCell header = new org.telegram.ui.Cells.GraySectionCell(context, resourcesProvider);
+                    header.setText(viewers.size() + " ko'ruvchi");
+                    ll.addView(header);
                     for (int i = 0; i < viewers.size(); i++) {
                         org.telegram.messenger.AlfaStoryViews.ViewerRecord r = viewers.get(i);
                         org.telegram.tgnet.TLRPC.User user = mc.getUser(r.userId);
                         String name = user != null ? org.telegram.messenger.UserObject.getUserName(user) : ("ID " + r.userId);
-                        sb.append("  • ").append(name);
-                        if (user != null && user.username != null && user.username.length() > 0) {
-                            sb.append(" @").append(user.username);
-                        }
-                        if (r.viewDate > 0) {
-                            sb.append("  — ").append(fmt.format(new java.util.Date(r.viewDate * 1000L)));
-                        }
-                        sb.append("\n");
+                        String when = r.viewDate > 0 ? fmt.format(new java.util.Date(r.viewDate * 1000L)) : "";
+                        org.telegram.ui.Cells.UserCell cell = new org.telegram.ui.Cells.UserCell(context, 8, 0, false, resourcesProvider);
+                        cell.setData(user, name, when, 0, i != viewers.size() - 1);
+                        ll.addView(cell, org.telegram.ui.Components.LayoutHelper.createLinear(org.telegram.ui.Components.LayoutHelper.MATCH_PARENT, 54));
                     }
                 }
             }
-            org.telegram.ui.ActionBar.AlertDialog.Builder builder = new org.telegram.ui.ActionBar.AlertDialog.Builder(getContext(), resourcesProvider);
-            builder.setTitle("AlfaGram — Story ko'ruvchilar tarixi");
-            builder.setMessage(sb.toString());
-            builder.setPositiveButton("OK", null);
+
+            android.widget.ScrollView scroll = new android.widget.ScrollView(context);
+            scroll.addView(ll, new android.widget.FrameLayout.LayoutParams(android.widget.FrameLayout.LayoutParams.MATCH_PARENT, android.widget.FrameLayout.LayoutParams.WRAP_CONTENT));
+
+            org.telegram.ui.ActionBar.BottomSheet.Builder builder = new org.telegram.ui.ActionBar.BottomSheet.Builder(context, false, resourcesProvider);
+            builder.setTitle("Story ko'ruvchilar tarixi", true);
+            builder.setCustomView(scroll);
             builder.show();
         } catch (Exception e) {
             FileLog.e(e);
