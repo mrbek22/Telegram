@@ -12,6 +12,15 @@ public class AlfaFeatures {
     /** Nusxa/forward taqiqlangan kanallardan ham saqlash/forward qilishga ruxsat. */
     public static boolean unrestrictedSave = true;
 
-    /** Ghost mode — o'qildi/yozayotgan/online yubormaslik (keyin ulanadi). */
+    /** Ghost mode — o'qildi/yozayotgan/online yubormaslik. */
     public static boolean ghostMode = false;
+
+    /** Anonim story — story'ni ko'rsangiz egasi bilmaydi (ko'ruvchilarda chiqmaysiz). */
+    public static boolean stealthStories = false;
+
+    /** Screenshot cheklovini olib tashlash. */
+    public static boolean allowScreenshots = true;
+
+    /** Cheksiz pin (pin limitini o'chirish). */
+    public static boolean unlimitedPins = true;
 }
