@@ -7,17 +7,17 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.yandex.mobile.ads.common.AdError;
-import com.yandex.mobile.ads.common.AdRequestConfiguration;
+import com.yandex.mobile.ads.common.AdRequest;
 import com.yandex.mobile.ads.common.AdRequestError;
 import com.yandex.mobile.ads.common.ImpressionData;
-import com.yandex.mobile.ads.common.MobileAds;
+import com.yandex.mobile.ads.common.YandexAds;
 import com.yandex.mobile.ads.interstitial.InterstitialAd;
 import com.yandex.mobile.ads.interstitial.InterstitialAdEventListener;
 import com.yandex.mobile.ads.interstitial.InterstitialAdLoadListener;
 import com.yandex.mobile.ads.interstitial.InterstitialAdLoader;
 
 /**
- * AlfaGram — Yandex interstitial (to'liq ekran) reklama.
+ * AlfaGram — Yandex interstitial (to'liq ekran) reklama. SDK 8.2.0.
  * Faqat panel'da reklama yoqilgan va Block ID bo'lsa ishlaydi.
  * Har `adsInterval` o'tishda va kamida 60 soniyada bir marta ko'rsatiladi.
  */
@@ -25,6 +25,7 @@ public class AlfaAds {
 
     private static boolean initialized;
     private static InterstitialAdLoader loader;
+    private static InterstitialAdLoadListener loadListener;
     private static InterstitialAd interstitialAd;
     private static boolean loading;
     private static int transitionCount;
@@ -43,9 +44,9 @@ public class AlfaAds {
         initialized = true;
         try {
             final Context app = context.getApplicationContext();
-            MobileAds.initialize(app, () -> {});
+            YandexAds.initialize(app, () -> {});
             loader = new InterstitialAdLoader(app);
-            loader.setAdLoadListener(new InterstitialAdLoadListener() {
+            loadListener = new InterstitialAdLoadListener() {
                 @Override
                 public void onAdLoaded(@NonNull InterstitialAd ad) {
                     interstitialAd = ad;
@@ -56,7 +57,7 @@ public class AlfaAds {
                 public void onAdFailedToLoad(@NonNull AdRequestError error) {
                     loading = false;
                 }
-            });
+            };
             preload();
         } catch (Throwable t) {
             FileLog.e(t);
@@ -64,12 +65,12 @@ public class AlfaAds {
     }
 
     private static void preload() {
-        if (loader == null || loading || interstitialAd != null || !enabled()) {
+        if (loader == null || loadListener == null || loading || interstitialAd != null || !enabled()) {
             return;
         }
         loading = true;
         try {
-            loader.loadAd(new AdRequestConfiguration.Builder(AlfaConfig.yandexBlockId).build());
+            loader.loadAd(new AdRequest.Builder(AlfaConfig.yandexBlockId).build(), loadListener);
         } catch (Throwable t) {
             loading = false;
             FileLog.e(t);
