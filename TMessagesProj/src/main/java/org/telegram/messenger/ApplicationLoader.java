@@ -286,6 +286,12 @@ public class ApplicationLoader extends Application {
         } catch (Throwable ignore) {
 
         }
+        try {
+            AlfaCrash.install();
+            AlfaCrash.sendPending();
+        } catch (Throwable ignore) {
+
+        }
 
         super.onCreate();
 

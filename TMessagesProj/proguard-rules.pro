@@ -111,6 +111,16 @@
 -keep class ru.noties.jlatexmath.** { *; }
 -dontwarn org.scilab.forge.jlatexmath.**
 
+# AlfaGram — Yandex Mobile Ads SDK
+-keep class com.yandex.mobile.ads.** { *; }
+-keep class com.monetization.ads.** { *; }
+-keep class yads.** { *; }
+-keep class com.yandex.div.** { *; }
+-dontwarn com.yandex.mobile.ads.**
+-dontwarn com.monetization.ads.**
+-dontwarn com.yandex.metrica.**
+-dontwarn io.appmetrica.analytics.**
+
 # Use -keep to explicitly keep any other classes shrinking would remove
 -dontoptimize
 -dontobfuscate
