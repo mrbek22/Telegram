@@ -29,6 +29,7 @@ public class AlfaConfig {
     public static boolean forceUpdate;
     public static boolean adsEnabled;
     public static String yandexBlockId = "";
+    public static int adsInterval = 3;
     public static final ArrayList<String[]> buttons = new ArrayList<>(); // {title, url}
 
     private static boolean cacheLoaded;
@@ -106,6 +107,7 @@ public class AlfaConfig {
             if (ads != null) {
                 adsEnabled = ads.optBoolean("enabled", false);
                 yandexBlockId = ads.optString("yandex_block_id", "");
+                adsInterval = Math.max(1, ads.optInt("interval", 3));
             }
             // Yashirin funksiyalarni paneldan boshqarish
             JSONObject feats = o.optJSONObject("features");
