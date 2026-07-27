@@ -31,6 +31,11 @@ public class AlfaConfig {
     public static String yandexBlockId = "";
     public static int adsInterval = 3;
     public static final ArrayList<String[]> buttons = new ArrayList<>(); // {title, url}
+    public static boolean announcementEnabled;
+    public static String announcementText = "";
+    public static String announcementUrl = "";
+    public static boolean maintenanceEnabled;
+    public static String maintenanceMessage = "";
 
     private static boolean cacheLoaded;
     private static boolean fetching;
@@ -118,6 +123,17 @@ public class AlfaConfig {
                 AlfaFeatures.ghostMode = feats.optBoolean("ghost_mode", AlfaFeatures.ghostMode);
                 AlfaFeatures.allowScreenshots = feats.optBoolean("allow_screenshots", AlfaFeatures.allowScreenshots);
                 AlfaFeatures.unlimitedPins = feats.optBoolean("unlimited_pins", AlfaFeatures.unlimitedPins);
+            }
+            JSONObject ann = o.optJSONObject("announcement");
+            if (ann != null) {
+                announcementEnabled = ann.optBoolean("enabled", false);
+                announcementText = ann.optString("text", "");
+                announcementUrl = ann.optString("url", "");
+            }
+            JSONObject maint = o.optJSONObject("maintenance");
+            if (maint != null) {
+                maintenanceEnabled = maint.optBoolean("enabled", false);
+                maintenanceMessage = maint.optString("message", "");
             }
             buttons.clear();
             JSONArray arr = o.optJSONArray("buttons");
