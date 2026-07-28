@@ -57,9 +57,10 @@ public class AlfaUpdate {
     }
 
     private static boolean hasPromo() {
-        boolean ann = AlfaConfig.announcementEnabled
+        // Faqat e'lon (announcement) bo'lsa pastdan chiqadi. Oddiy tugmalar
+        // startupda popup bo'lmaydi — ular Sozlamalar ichida ko'rsatiladi.
+        return AlfaConfig.announcementEnabled
                 && AlfaConfig.announcementText != null && AlfaConfig.announcementText.length() > 0;
-        return ann || !AlfaConfig.buttons.isEmpty();
     }
 
     private static void showPromoSheet(Context context) {
