@@ -112,6 +112,9 @@
 -dontwarn org.scilab.forge.jlatexmath.**
 
 # AlfaGram — Yandex Mobile Ads SDK
+# Yandex SDK androidx.recyclerview klasslarini (PagerSnapHelper h.k.) ishlatadi,
+# lekin Telegram uni ishlatmaydi -> R8 shrink olib tashlaydi -> crash. Saqlaymiz:
+-keep class androidx.recyclerview.widget.** { *; }
 -keep class com.yandex.mobile.ads.** { *; }
 -keep class com.monetization.ads.** { *; }
 -keep class yads.** { *; }
