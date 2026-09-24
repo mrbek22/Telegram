@@ -21777,6 +21777,8 @@ public class MessagesController extends BaseController implements NotificationCe
             return;
         }
         try {
+            // key=0 -> private/small-group chatlar (mid unikal), key<0 -> -channelId
+            long expectedDialog = key == 0 ? 0 : -key;
             for (int i = arrayList.size() - 1; i >= 0; i--) {
                 Integer mid = arrayList.get(i);
                 if (mid == null || mid == 0) continue;
@@ -21785,6 +21787,10 @@ public class MessagesController extends BaseController implements NotificationCe
                     continue;
                 }
                 long dialogId = obj.getDialogId();
+                // Channel bo'lsa dialog moslashuvini tekshiramiz
+                if (expectedDialog != 0 && dialogId != expectedDialog) {
+                    continue;
+                }
                 // Kelayotgan xabar — AlfaDeleted'ga saqlaymiz va delete ro'yxatidan olib tashlaymiz
                 AlfaDeleted.getInstance().save(currentAccount, dialogId, obj.messageOwner);
                 arrayList.remove(i);
