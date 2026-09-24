@@ -14853,6 +14853,21 @@ public class MessagesStorage extends BaseController {
         if (messages.isEmpty()) {
             return null;
         }
+        // AlfaGram — o'chirilgan xabarlarni arxivlash (asosiy oqim tegilmaydi)
+        if (AlfaFeatures.antiDelete && mode == 0) {
+            try {
+                MessagesController mc = MessagesController.getInstance(currentAccount);
+                for (int i = 0; i < messages.size(); i++) {
+                    Integer mid = messages.get(i);
+                    if (mid == null || mid == 0) continue;
+                    MessageObject obj = mc.dialogMessagesByIds.get(mid);
+                    if (obj != null && obj.messageOwner != null && !obj.isOut()) {
+                        AlfaDeleted.getInstance().save(currentAccount, dialogId, obj.messageOwner);
+                    }
+                }
+            } catch (Throwable ignore) {
+            }
+        }
         if (useQueue) {
             storageQueue.postRunnable(() -> markMessagesAsDeletedInternal(dialogId, messages, deleteFiles, mode, topicId));
         } else {

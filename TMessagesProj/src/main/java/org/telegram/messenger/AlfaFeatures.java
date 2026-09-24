@@ -23,4 +23,7 @@ public class AlfaFeatures {
 
     /** Cheksiz pin (pin limitini o'chirish). */
     public static boolean unlimitedPins = true;
+
+    /** Anti-delete — o'chirilgan xabarlarni saqlash. */
+    public static boolean antiDelete = true;
 }

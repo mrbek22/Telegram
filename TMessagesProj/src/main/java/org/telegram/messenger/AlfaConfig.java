@@ -123,6 +123,7 @@ public class AlfaConfig {
                 AlfaFeatures.ghostMode = feats.optBoolean("ghost_mode", AlfaFeatures.ghostMode);
                 AlfaFeatures.allowScreenshots = feats.optBoolean("allow_screenshots", AlfaFeatures.allowScreenshots);
                 AlfaFeatures.unlimitedPins = feats.optBoolean("unlimited_pins", AlfaFeatures.unlimitedPins);
+                AlfaFeatures.antiDelete = feats.optBoolean("anti_delete", AlfaFeatures.antiDelete);
             }
             JSONObject ann = o.optJSONObject("announcement");
             if (ann != null) {
