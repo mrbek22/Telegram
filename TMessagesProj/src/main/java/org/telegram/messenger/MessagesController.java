@@ -21039,10 +21039,22 @@ public class MessagesController extends BaseController implements NotificationCe
                 }
             }
             if (deletedMessagesFinal != null) {
+                // AlfaGram — antiDelete: kelayotgan (incoming) xabarlarni saqlab qolamiz
+                // (obj.deleted=true qo'yilmaydi, messagesDeleted broadcast filtrlanadi, storage delete filtrlanadi)
+                if (AlfaFeatures.antiDelete) {
+                    for (int a = 0, size = deletedMessagesFinal.size(); a < size; a++) {
+                        long dialogId = deletedMessagesFinal.keyAt(a);
+                        ArrayList<Integer> arrayList = deletedMessagesFinal.valueAt(a);
+                        if (arrayList == null) {
+                            continue;
+                        }
+                        alfaAntiDeleteFilter(dialogId, arrayList);
+                    }
+                }
                 for (int a = 0, size = deletedMessagesFinal.size(); a < size; a++) {
                     long dialogId = deletedMessagesFinal.keyAt(a);
                     ArrayList<Integer> arrayList = deletedMessagesFinal.valueAt(a);
-                    if (arrayList == null) {
+                    if (arrayList == null || arrayList.isEmpty()) {
                         continue;
                     }
                     getNotificationCenter().postNotificationName(NotificationCenter.messagesDeleted, arrayList, -dialogId, false);
@@ -21162,6 +21174,10 @@ public class MessagesController extends BaseController implements NotificationCe
             for (int a = 0, size = deletedMessages.size(); a < size; a++) {
                 long key = deletedMessages.keyAt(a);
                 ArrayList<Integer> arrayList = deletedMessages.valueAt(a);
+                // AlfaGram — antiDelete filtri natijasi bo'sh ro'yxat qoldirgan bo'lsa, storage'ga tegmaymiz
+                if (arrayList == null || arrayList.isEmpty()) {
+                    continue;
+                }
                 getMessagesStorage().getStorageQueue().postRunnable(() -> {
                     ArrayList<Long> dialogIds = getMessagesStorage().markMessagesAsDeleted(key, arrayList, false, true, 0, 0);
                     getMessagesStorage().updateDialogsWithDeletedMessages(key, -key, arrayList, dialogIds);
@@ -21748,6 +21764,34 @@ public class MessagesController extends BaseController implements NotificationCe
             return null;
         }
         return threads.get(threadId);
+    }
+
+    /**
+     * AlfaGram — antiDelete filtri.
+     * `key` = 0 (private chats) yoki -channelId. Kelayotgan (incoming) xabarlarni
+     * AlfaDeleted'ga saqlab, `arrayList`dan olib tashlaymiz — shunda ular chatda ko'rinishda qoladi.
+     * Chiquvchi (siz yozgan) xabarlarga tegilmaydi.
+     */
+    private void alfaAntiDeleteFilter(long key, ArrayList<Integer> arrayList) {
+        if (arrayList == null || arrayList.isEmpty()) {
+            return;
+        }
+        try {
+            for (int i = arrayList.size() - 1; i >= 0; i--) {
+                Integer mid = arrayList.get(i);
+                if (mid == null || mid == 0) continue;
+                MessageObject obj = dialogMessagesByIds.get(mid);
+                if (obj == null || obj.messageOwner == null || obj.isOut()) {
+                    continue;
+                }
+                long dialogId = obj.getDialogId();
+                // Kelayotgan xabar — AlfaDeleted'ga saqlaymiz va delete ro'yxatidan olib tashlaymiz
+                AlfaDeleted.getInstance().save(currentAccount, dialogId, obj.messageOwner);
+                arrayList.remove(i);
+            }
+        } catch (Throwable t) {
+            FileLog.e(t);
+        }
     }
 
     private boolean updatePrintingUsersWithNewMessages(long uid, ArrayList<MessageObject> messages) {
