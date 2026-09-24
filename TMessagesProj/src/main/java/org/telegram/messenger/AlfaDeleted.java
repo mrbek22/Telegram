@@ -115,6 +115,17 @@ public class AlfaDeleted extends SQLiteOpenHelper {
         return out;
     }
 
+    /** Chat uchun barcha o'chirilgan xabarlarni tozalaydi. */
+    public void clear(int account, long dialogId) {
+        try {
+            SQLiteDatabase db = getWritableDatabase();
+            db.execSQL("DELETE FROM deleted WHERE account=? AND dialog_id=?",
+                    new Object[]{account, dialogId});
+        } catch (Throwable t) {
+            FileLog.e(t);
+        }
+    }
+
     public int count(int account, long dialogId) {
         try {
             SQLiteDatabase db = getReadableDatabase();
