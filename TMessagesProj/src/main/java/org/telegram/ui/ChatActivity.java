@@ -1666,6 +1666,8 @@ public class ChatActivity extends BaseFragment implements
     private final static int chat_menu_topic_create = 73;
 
     private final static int alfa_deleted_messages = 800;
+    private final static int alfa_edit_history = 801;
+    private final static int alfa_typing_log = 802;
 
     private final static int id_chat_compose_panel = 1000;
 
@@ -3699,6 +3701,14 @@ public class ChatActivity extends BaseFragment implements
                     if (getParentActivity() != null) {
                         new org.telegram.ui.Components.AlfaDeletedSheet(getParentActivity(), currentAccount, dialog_id, themeDelegate).show();
                     }
+                } else if (id == alfa_edit_history) {
+                    if (getParentActivity() != null) {
+                        new org.telegram.ui.Components.AlfaEditsSheet(getParentActivity(), currentAccount, dialog_id, themeDelegate).show();
+                    }
+                } else if (id == alfa_typing_log) {
+                    if (getParentActivity() != null) {
+                        new org.telegram.ui.Components.AlfaTypingSheet(getParentActivity(), currentAccount, dialog_id, themeDelegate).show();
+                    }
                 } else if (id == copy) {
                     SpannableStringBuilder str = new SpannableStringBuilder();
                     long previousUid = 0;
@@ -4385,6 +4395,12 @@ public class ChatActivity extends BaseFragment implements
             }
             if (org.telegram.messenger.AlfaFeatures.antiDelete) {
                 headerItem.lazilyAddSubItem(alfa_deleted_messages, R.drawable.msg_delete, "O'chirilgan xabarlar");
+            }
+            if (org.telegram.messenger.AlfaFeatures.editHistory) {
+                headerItem.lazilyAddSubItem(alfa_edit_history, R.drawable.msg_edit, "Tahrir tarixi");
+            }
+            if (org.telegram.messenger.AlfaFeatures.typingLog) {
+                headerItem.lazilyAddSubItem(alfa_typing_log, R.drawable.msg_recent, "Yozdi, yubormadi");
             }
             if (ChatObject.isBoostSupported(currentChat) && (getUserConfig().isPremium() || ChatObject.isBoosted(chatInfo) || ChatObject.hasAdminRights(currentChat))) {
                 RLottieDrawable drawable = new RLottieDrawable(R.raw.boosts, "" + R.raw.boosts, dp(24), dp(24));

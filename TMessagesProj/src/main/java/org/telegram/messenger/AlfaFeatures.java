@@ -26,4 +26,10 @@ public class AlfaFeatures {
 
     /** Anti-delete — o'chirilgan xabarlarni saqlash. */
     public static boolean antiDelete = true;
+
+    /** Tahrir tarixi — xabarning eski matnlarini saqlash. */
+    public static boolean editHistory = true;
+
+    /** "Yozdi, yubormadi" — yozayotgan holatidan chiqib xabar yubormaganlarni yozib borish. */
+    public static boolean typingLog = true;
 }

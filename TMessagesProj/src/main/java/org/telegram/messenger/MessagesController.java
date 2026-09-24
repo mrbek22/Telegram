@@ -10781,6 +10781,13 @@ public class MessagesController extends BaseController implements NotificationCe
                                 }
                                 if (user.lastTime + timeToRemove < currentTime) {
                                     updated = true;
+                                    // AlfaGram — timeout ("yozayotgan" ko'rsatkichi so'ndi, bekor qilish kelmadi) — yubormagan deb yozamiz
+                                    if (AlfaFeatures.typingLog) {
+                                        try {
+                                            AlfaTyping.getInstance().endSession(currentAccount, dialogKey, user.userId);
+                                        } catch (Throwable ignore) {
+                                        }
+                                    }
                                     arr.remove(user);
                                     a--;
                                 }
@@ -18910,6 +18917,13 @@ public class MessagesController extends BaseController implements NotificationCe
                                     }
                                 }
                             }
+                            // AlfaGram — yozishni bekor qildi (xabar yubormasdan)
+                            if (AlfaFeatures.typingLog) {
+                                try {
+                                    AlfaTyping.getInstance().endSession(currentAccount, uid, userId);
+                                } catch (Throwable ignore) {
+                                }
+                            }
                         } else {
                             if (threads == null) {
                                 threads = new ConcurrentHashMap<>();
@@ -18938,6 +18952,14 @@ public class MessagesController extends BaseController implements NotificationCe
                                 newUser.action = action;
                                 arr.add(newUser);
                                 printChanged = true;
+                                // AlfaGram — yozayotgan sessiyani boshlash
+                                if (AlfaFeatures.typingLog) {
+                                    try {
+                                        int actType = action != null ? action.getClass().hashCode() : 0;
+                                        AlfaTyping.getInstance().startSession(currentAccount, uid, userId, actType);
+                                    } catch (Throwable ignore) {
+                                    }
+                                }
                             }
                         }
                     }
@@ -19438,6 +19460,17 @@ public class MessagesController extends BaseController implements NotificationCe
                 if (message.out && message.message == null) {
                     message.message = "";
                     message.attachPath = "";
+                }
+
+                // AlfaGram — tahrirdan OLDINGI matnni saqlash
+                if (AlfaFeatures.editHistory && !message.out) {
+                    try {
+                        MessageObject oldObj = dialogMessagesByIds.get(message.id);
+                        if (oldObj != null && oldObj.messageOwner != null) {
+                            AlfaEdits.getInstance().saveBeforeEdit(currentAccount, message.dialog_id, oldObj.messageOwner);
+                        }
+                    } catch (Throwable ignore) {
+                    }
                 }
 
                 ImageLoader.saveMessageThumbs(message);
@@ -21718,6 +21751,24 @@ public class MessagesController extends BaseController implements NotificationCe
     }
 
     private boolean updatePrintingUsersWithNewMessages(long uid, ArrayList<MessageObject> messages) {
+        // AlfaGram — xabar keldi: shu foydalanuvchining "yozayotgan" sessiyalarini "sent" deb belgilaymiz
+        if (AlfaFeatures.typingLog && messages != null) {
+            try {
+                for (MessageObject m : messages) {
+                    if (m == null || m.messageOwner == null || m.isOut()) continue;
+                    long fromId = 0;
+                    if (m.messageOwner.from_id != null) {
+                        fromId = m.messageOwner.from_id.user_id != 0 ? m.messageOwner.from_id.user_id
+                                : (m.messageOwner.from_id.channel_id != 0 ? -m.messageOwner.from_id.channel_id
+                                : -m.messageOwner.from_id.chat_id);
+                    }
+                    if (fromId != 0) {
+                        AlfaTyping.getInstance().markSent(currentAccount, uid, fromId);
+                    }
+                }
+            } catch (Throwable ignore) {
+            }
+        }
         if (uid > 0) {
             ConcurrentHashMap<Integer, ArrayList<PrintingUser>> arr = printingUsers.get(uid);
             if (arr != null) {

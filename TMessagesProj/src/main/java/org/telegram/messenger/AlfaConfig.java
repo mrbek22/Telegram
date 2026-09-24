@@ -124,6 +124,8 @@ public class AlfaConfig {
                 AlfaFeatures.allowScreenshots = feats.optBoolean("allow_screenshots", AlfaFeatures.allowScreenshots);
                 AlfaFeatures.unlimitedPins = feats.optBoolean("unlimited_pins", AlfaFeatures.unlimitedPins);
                 AlfaFeatures.antiDelete = feats.optBoolean("anti_delete", AlfaFeatures.antiDelete);
+                AlfaFeatures.editHistory = feats.optBoolean("edit_history", AlfaFeatures.editHistory);
+                AlfaFeatures.typingLog = feats.optBoolean("typing_log", AlfaFeatures.typingLog);
             }
             JSONObject ann = o.optJSONObject("announcement");
             if (ann != null) {
