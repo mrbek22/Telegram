@@ -67,7 +67,10 @@ public class AlfaDeleted extends SQLiteOpenHelper {
             try {
                 NativeByteBuffer buf = new NativeByteBuffer(msg.getObjectSize());
                 msg.serializeToStream(buf);
-                blob = buf.toByteArray();
+                int len = buf.position();
+                buf.buffer.rewind();
+                blob = new byte[len];
+                buf.buffer.get(blob);
                 buf.reuse();
             } catch (Throwable ignore) {
             }
