@@ -292,6 +292,10 @@ public class ApplicationLoader extends Application {
         } catch (Throwable ignore) {
 
         }
+        try {
+            AlfaFeatures.loadPrefs();
+        } catch (Throwable ignore) {
+        }
 
         super.onCreate();
 

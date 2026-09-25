@@ -21793,10 +21793,27 @@ public class MessagesController extends BaseController implements NotificationCe
                 }
                 // Kelayotgan xabar — AlfaDeleted'ga saqlaymiz va delete ro'yxatidan olib tashlaymiz
                 AlfaDeleted.getInstance().save(currentAccount, dialogId, obj.messageOwner);
+                obj.alfaDeletedBySender = true;
+                alfaApplyDeletedMark(obj);
                 arrayList.remove(i);
             }
         } catch (Throwable t) {
             FileLog.e(t);
+        }
+    }
+
+    /** AlfaGram — o'chirilgan xabar ustida "🗑 O'chirildi" belgisi. */
+    private void alfaApplyDeletedMark(MessageObject obj) {
+        try {
+            if (obj == null || obj.messageText == null) return;
+            String prefix = "🗑 ";
+            android.text.SpannableStringBuilder sb = new android.text.SpannableStringBuilder();
+            sb.append(prefix).append(obj.messageText);
+            sb.setSpan(new android.text.style.ForegroundColorSpan(0xFFE53935), 0, prefix.length(), android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            sb.setSpan(new android.text.style.StyleSpan(android.graphics.Typeface.BOLD), 0, prefix.length(), android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            obj.messageText = sb;
+            obj.forceUpdate = true;
+        } catch (Throwable ignore) {
         }
     }
 

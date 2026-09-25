@@ -1239,6 +1239,9 @@ public class ChatActivity extends BaseFragment implements
 
     public final static int OPTION_VIEW_STATISTICS = 115;
 
+    public final static int OPTION_ALFA_EDIT_HISTORY = 900;
+    public final static int OPTION_ALFA_DELETED_INFO = 901;
+
     private final static int[] allowedNotificationsDuringChatListAnimations = new int[]{
             NotificationCenter.messagesRead,
             NotificationCenter.threadMessagesRead,
@@ -33074,8 +33077,56 @@ public class ChatActivity extends BaseFragment implements
         MediaController.saveFile(path, getParentActivity(), messageObject.isVideo() ? 1 : 0, null, null);
     }
 
+    private void showAlfaEditHistory(MessageObject msg) {
+        try {
+            ArrayList<org.telegram.messenger.AlfaEdits.Record> hist =
+                    org.telegram.messenger.AlfaEdits.getInstance().getForMessage(currentAccount, dialog_id, msg.getId());
+            org.telegram.ui.ActionBar.AlertDialog.Builder b =
+                    new org.telegram.ui.ActionBar.AlertDialog.Builder(getParentActivity(), themeDelegate);
+            b.setTitle("Tahrir tarixi");
+            StringBuilder sb = new StringBuilder();
+            String cur = msg.messageOwner != null ? msg.messageOwner.message : null;
+            if (cur != null && cur.length() > 0) {
+                sb.append("Hozirgi:\n").append(cur).append("\n\n");
+            }
+            for (int i = 0; i < hist.size(); i++) {
+                org.telegram.messenger.AlfaEdits.Record r = hist.get(i);
+                sb.append("v").append(hist.size() - i).append(" — ")
+                        .append(org.telegram.messenger.LocaleController.formatDateChat(r.editedAt / 1000L))
+                        .append(":\n").append(r.text != null ? r.text : "").append("\n\n");
+            }
+            b.setMessage(sb.toString().trim());
+            b.setPositiveButton(org.telegram.messenger.LocaleController.getString(R.string.OK), null);
+            b.show();
+        } catch (Throwable t) {
+            org.telegram.messenger.FileLog.e(t);
+        }
+    }
+
+    private void showAlfaDeletedInfo(MessageObject msg) {
+        try {
+            org.telegram.ui.ActionBar.AlertDialog.Builder b =
+                    new org.telegram.ui.ActionBar.AlertDialog.Builder(getParentActivity(), themeDelegate);
+            b.setTitle("O'chirilgan xabar");
+            b.setMessage("Bu xabarni yuboruvchi o'chirgan. AlfaGram uni sizning chatingizda ushlab qoldi.\n\nBarcha o'chirilgan xabarlar ro'yxatini menyudan (\"O'chirilgan xabarlar\") ochsangiz ko'rasiz.");
+            b.setPositiveButton(org.telegram.messenger.LocaleController.getString(R.string.OK), null);
+            b.show();
+        } catch (Throwable t) {
+            org.telegram.messenger.FileLog.e(t);
+        }
+    }
+
     private void processSelectedOption(int option) {
         if (selectedObject == null || getParentActivity() == null) {
+            return;
+        }
+        // AlfaGram — maxsus opsiyalar
+        if (option == OPTION_ALFA_EDIT_HISTORY) {
+            showAlfaEditHistory(selectedObject);
+            return;
+        }
+        if (option == OPTION_ALFA_DELETED_INFO) {
+            showAlfaDeletedInfo(selectedObject);
             return;
         }
         boolean preserveDim = false;
@@ -45459,6 +45510,21 @@ public class ChatActivity extends BaseFragment implements
                     items.add(LocaleController.getString(R.string.Edit));
                     options.add(OPTION_EDIT);
                     icons.add(R.drawable.msg_edit);
+                }
+                // AlfaGram — tahrir tarixi (agar kimdir bu xabarni tahrir qilgan bo'lsa)
+                if (org.telegram.messenger.AlfaFeatures.editHistory && message.isEdited() && message.getId() > 0) {
+                    ArrayList<org.telegram.messenger.AlfaEdits.Record> hist = org.telegram.messenger.AlfaEdits.getInstance().getForMessage(currentAccount, dialog_id, message.getId());
+                    if (!hist.isEmpty()) {
+                        items.add("Tahrir tarixi (" + hist.size() + ")");
+                        options.add(OPTION_ALFA_EDIT_HISTORY);
+                        icons.add(R.drawable.msg_edit);
+                    }
+                }
+                // AlfaGram — o'chirilgan xabar haqida ma'lumot
+                if (message.alfaDeletedBySender) {
+                    items.add("O'chirilgan xabar (yuboruvchi o'chirgan)");
+                    options.add(OPTION_ALFA_DELETED_INFO);
+                    icons.add(R.drawable.msg_delete);
                 }
                 if (ChatObject.isMonoForum(currentChat) && selectedObject.getGroupId() == 0 && selectedObjectGroup == null && message != null && message.messageOwner != null && message.messageOwner.suggested_post == null && message.messageOwner.action == null) {
                     items.add(LocaleController.getString(R.string.EditOfferAdd));

@@ -222,6 +222,10 @@ public class MessageObject {
     public String monthKey;
     public boolean deleted;
     public boolean deletedByThanos;
+    /** AlfaGram — kelayotgan xabar yuboruvchi tomonidan o'chirilgan, lekin biz ushlab qolganmiz. */
+    public boolean alfaDeletedBySender;
+    /** AlfaGram — bu xabar tahrir qilingan, eski matnlar AlfaEdits'da bor. */
+    public boolean alfaHasEditHistory;
     public float audioProgress;
     public float forceSeekTo = -1;
     public int audioProgressMs;
