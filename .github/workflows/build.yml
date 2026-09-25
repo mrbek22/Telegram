@@ -4,7 +4,9 @@ name: Build APK
 on:
   workflow_dispatch:
   push:
-    branches: [ master ]
+    branches:
+      - master
+      - 'claude/**'
     paths-ignore:
       - '**.md'
       - 'PLAN.md'

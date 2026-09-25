@@ -404,6 +404,15 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
 
         instance = this;
         ApplicationLoader.postInitApplication();
+        // AlfaGram — recent apps ekranida ilova ichini yashirish (FLAG_SECURE)
+        try {
+            if (org.telegram.messenger.AlfaFeatures.blurAppInRecents) {
+                getWindow().setFlags(
+                        android.view.WindowManager.LayoutParams.FLAG_SECURE,
+                        android.view.WindowManager.LayoutParams.FLAG_SECURE);
+            }
+        } catch (Throwable ignore) {
+        }
         AndroidUtilities.checkDisplaySize(this, getResources().getConfiguration());
         currentAccount = UserConfig.selectedAccount;
         registerReceiver(batteryReceiver, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));

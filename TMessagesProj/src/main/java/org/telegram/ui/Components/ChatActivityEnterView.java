@@ -3470,6 +3470,23 @@ public class ChatActivityEnterView extends FrameLayout implements
             if ((messageSendPreview != null && messageSendPreview.isShowing()) || (runningAnimationAudio != null && runningAnimationAudio.isRunning()) || moveToSendStateRunnable != null) {
                 return;
             }
+            // AlfaGram — yuborishdan oldin tasdiq
+            if (org.telegram.messenger.AlfaFeatures.confirmSend) {
+                try {
+                    org.telegram.ui.ActionBar.AlertDialog.Builder b =
+                            new org.telegram.ui.ActionBar.AlertDialog.Builder(getContext(), resourcesProvider);
+                    b.setTitle("Yuborilsinmi?");
+                    CharSequence preview = messageEditText != null && messageEditText.getText() != null
+                            ? messageEditText.getText().toString() : "";
+                    if (preview.length() > 200) preview = preview.subSequence(0, 200) + "…";
+                    b.setMessage(preview.length() > 0 ? preview : "Xabar tayyor.");
+                    b.setPositiveButton(org.telegram.messenger.LocaleController.getString(org.telegram.messenger.R.string.Send), (d, w) -> sendMessage());
+                    b.setNegativeButton(org.telegram.messenger.LocaleController.getString(org.telegram.messenger.R.string.Cancel), null);
+                    b.show();
+                    return;
+                } catch (Throwable ignore) {
+                }
+            }
             sendMessage();
         });
         sendButton.setOnLongClickListener(this::onSendLongClick);

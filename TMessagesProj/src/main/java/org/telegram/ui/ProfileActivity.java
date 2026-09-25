@@ -10591,7 +10591,9 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     setAvatarSectionRow = rowCount++;
                 }
                 numberSectionRow = rowCount++;
-                numberRow = rowCount++;
+                if (!org.telegram.messenger.AlfaFeatures.hidePhoneInSettings) {
+                    numberRow = rowCount++;
+                }
                 setUsernameRow = rowCount++;
                 bioRow = rowCount++;
 

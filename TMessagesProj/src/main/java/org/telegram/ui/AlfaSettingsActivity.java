@@ -9,70 +9,114 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import org.telegram.messenger.AlfaFeatures;
-import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.R;
 import org.telegram.ui.ActionBar.ActionBar;
 import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Cells.HeaderCell;
-import org.telegram.ui.Cells.ShadowSectionCell;
 import org.telegram.ui.Cells.TextCheckCell;
 import org.telegram.ui.Cells.TextInfoPrivacyCell;
 import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.Components.RecyclerListView;
 
+import java.util.ArrayList;
+
 /**
- * AlfaGram — yashirin funksiyalar sozlamalari ekrani.
- * Har bir bayroq alohida switch bo'lib chiqadi; o'zgartirishlar darhol saqlanadi.
+ * AlfaGram sozlamalari — bo'limlarga ajratilgan switch-list.
  */
 public class AlfaSettingsActivity extends BaseFragment {
 
-    private ListAdapter adapter;
+    private static final int TYPE_HEADER = 0;
+    private static final int TYPE_SWITCH = 1;
+    private static final int TYPE_INFO = 2;
 
-    // Item ID'lari (bayroq nomlariga mos)
-    private static final int ROW_PROTECTION_HEADER = 100;
-    private static final int ROW_ANTI_DELETE = 1;
-    private static final int ROW_EDIT_HISTORY = 2;
-    private static final int ROW_TYPING_LOG = 3;
-    private static final int ROW_PROTECTION_INFO = 101;
+    private static class Row {
+        final int type;
+        final String key;
+        final String title;
+        final String info;
 
-    private static final int ROW_LIMITS_HEADER = 200;
-    private static final int ROW_UNRESTRICTED_SAVE = 4;
-    private static final int ROW_UNLIMITED_PINS = 5;
-    private static final int ROW_ALLOW_SCREENSHOTS = 6;
-    private static final int ROW_LIMITS_INFO = 201;
+        static Row header(String title) { return new Row(TYPE_HEADER, null, title, null); }
+        static Row info(String text)    { return new Row(TYPE_INFO, null, null, text); }
+        static Row toggle(String key, String title) { return new Row(TYPE_SWITCH, key, title, null); }
 
-    private static final int ROW_PRIVACY_HEADER = 300;
-    private static final int ROW_GHOST_MODE = 7;
-    private static final int ROW_STEALTH_STORIES = 8;
-    private static final int ROW_PRIVACY_INFO = 301;
+        private Row(int type, String key, String title, String info) {
+            this.type = type;
+            this.key = key;
+            this.title = title;
+            this.info = info;
+        }
+    }
 
-    private static final int ROW_ADS_HEADER = 400;
-    private static final int ROW_BLOCK_ADS = 9;
-    private static final int ROW_ADS_INFO = 401;
+    private final ArrayList<Row> rows = new ArrayList<>();
 
-    private final int[] rows = new int[]{
-            ROW_PROTECTION_HEADER,
-            ROW_ANTI_DELETE,
-            ROW_EDIT_HISTORY,
-            ROW_TYPING_LOG,
-            ROW_PROTECTION_INFO,
-            ROW_LIMITS_HEADER,
-            ROW_UNRESTRICTED_SAVE,
-            ROW_UNLIMITED_PINS,
-            ROW_ALLOW_SCREENSHOTS,
-            ROW_LIMITS_INFO,
-            ROW_PRIVACY_HEADER,
-            ROW_GHOST_MODE,
-            ROW_STEALTH_STORIES,
-            ROW_PRIVACY_INFO,
-            ROW_ADS_HEADER,
-            ROW_BLOCK_ADS,
-            ROW_ADS_INFO,
-    };
+    private void buildRows() {
+        rows.clear();
+
+        rows.add(Row.header("Xabar himoyasi"));
+        rows.add(Row.toggle("antiDelete", "O'chirilgan xabarlarni saqlash"));
+        rows.add(Row.toggle("editHistory", "Tahrir tarixini yozish"));
+        rows.add(Row.toggle("typingLog", "Yozdi-yubormadi jurnali"));
+        rows.add(Row.info("Kim yozib, o'chirsa yoki tahrirlagan bo'lsa — hammasi sizda qoladi. Long-press bilan tarixni ko'ring."));
+
+        rows.add(Row.header("Xabar yuborish"));
+        rows.add(Row.toggle("confirmSend", "Yuborishdan oldin tasdiq"));
+        rows.add(Row.toggle("sendByEnter", "Enter tugmasi bilan yuborish"));
+        rows.add(Row.toggle("silentByDefault", "Sukut (silent) rejim'da"));
+        rows.add(Row.info("Yuborishni tezlashtiring yoki tasodifiy yuborishning oldini oling."));
+
+        rows.add(Row.header("Cheklovlarsiz"));
+        rows.add(Row.toggle("unrestrictedSave", "Cheklovlarsiz saqlash/forward"));
+        rows.add(Row.toggle("allowScreenshots", "Screenshotga ruxsat"));
+        rows.add(Row.toggle("unlimitedPins", "Cheksiz pin"));
+        rows.add(Row.toggle("forwardWithoutAuthor", "Forward — muallifsiz"));
+        rows.add(Row.toggle("forwardWithoutReply", "Forward — javobsiz"));
+        rows.add(Row.info("Telegram'ning standart cheklovlarini olib tashlash."));
+
+        rows.add(Row.header("Chat ro'yxati"));
+        rows.add(Row.toggle("hideStories", "Storieslar qatorini yashirish"));
+        rows.add(Row.toggle("hideMuted", "Ovozsiz chatlarni yashirish"));
+        rows.add(Row.toggle("compactChats", "Kichik (compact) chat qatori"));
+        rows.add(Row.info("Chatlar sahifasini xohlaganingizday sozlang."));
+
+        rows.add(Row.header("Chat ichida"));
+        rows.add(Row.toggle("showMessageIds", "Xabar ID sini ko'rsatish"));
+        rows.add(Row.toggle("swipeToReply", "Chapga siljitib javob"));
+        rows.add(Row.toggle("disableStickerSuggest", "Stiker taklifini o'chirish"));
+        rows.add(Row.toggle("fastSendAnimation", "Tez yuborish animatsiyasi"));
+
+        rows.add(Row.header("Maxfiylik"));
+        rows.add(Row.toggle("ghostMode", "Ghost mode (o'qilgan/yozyapman signalisiz)"));
+        rows.add(Row.toggle("stealthStories", "Anonim story ko'rish"));
+        rows.add(Row.toggle("noReadReceipts", "O'qish tasdig'ini yubormaslik"));
+        rows.add(Row.toggle("hidePhoneInSettings", "Sozlamalarda telefonni yashirish"));
+        rows.add(Row.toggle("blurAppInRecents", "Recent apps'da blur (xiralik)"));
+        rows.add(Row.info("Sizdan hech qanday signal ketmaydi va hech kim sizni kuzatolmaydi."));
+
+        rows.add(Row.header("Ko'rinish"));
+        rows.add(Row.toggle("showIdInProfile", "Profilda ID ko'rinsin"));
+        rows.add(Row.toggle("hideSeenTicks", "Ko'rildi belgisini yashirish"));
+        rows.add(Row.toggle("disableAnimations", "Barcha animatsiyalarni o'chirish"));
+
+        rows.add(Row.header("Media"));
+        rows.add(Row.toggle("autoSaveVoice", "Barcha ovozli xabarlarni saqlash"));
+        rows.add(Row.toggle("autoSaveVideoNotes", "Barcha video-notelarni saqlash"));
+        rows.add(Row.info("Kelgan media avtomatik telefoningizga tushiriladi."));
+
+        rows.add(Row.header("Reklama"));
+        rows.add(Row.toggle("blockTelegramAds", "Telegram reklamalarini bloklash"));
+        rows.add(Row.toggle("hideSponsoredMessages", "\"Homiylik\" xabarlarni yashirish"));
+
+        rows.add(Row.header("Ilova"));
+        rows.add(Row.toggle("openLastChat", "Ochilganda so'nggi chatga o'tish"));
+        rows.add(Row.toggle("debugLogs", "Debug loglar"));
+        rows.add(Row.info("Versiya: AlfaGram alfa11"));
+    }
 
     @Override
     public View createView(Context context) {
+        buildRows();
+
         actionBar.setBackButtonImage(R.drawable.ic_ab_back);
         actionBar.setAllowOverlayTitle(true);
         actionBar.setTitle("AlfaGram sozlamalari");
@@ -90,90 +134,83 @@ public class AlfaSettingsActivity extends BaseFragment {
         frameLayout.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundGray));
 
         RecyclerListView listView = new RecyclerListView(context);
-        listView.setLayoutManager(new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false));
-        listView.setAdapter(adapter = new ListAdapter(context));
+        listView.setLayoutManager(new LinearLayoutManager(context));
+        listView.setAdapter(new ListAdapter(context));
         frameLayout.addView(listView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
 
         listView.setOnItemClickListener((view, position) -> {
-            if (position < 0 || position >= rows.length) return;
-            int row = rows[position];
-            String key = keyForRow(row);
-            if (key == null) return;
-            boolean newValue = !currentValue(row);
-            AlfaFeatures.setFlag(key, newValue);
+            if (position < 0 || position >= rows.size()) return;
+            Row row = rows.get(position);
+            if (row.type != TYPE_SWITCH) return;
+            boolean newVal = !currentValue(row.key);
+            AlfaFeatures.setFlag(row.key, newVal);
             if (view instanceof TextCheckCell) {
-                ((TextCheckCell) view).setChecked(newValue);
+                ((TextCheckCell) view).setChecked(newVal);
             }
         });
 
         return fragmentView;
     }
 
-    private String keyForRow(int row) {
-        switch (row) {
-            case ROW_ANTI_DELETE: return "antiDelete";
-            case ROW_EDIT_HISTORY: return "editHistory";
-            case ROW_TYPING_LOG: return "typingLog";
-            case ROW_UNRESTRICTED_SAVE: return "unrestrictedSave";
-            case ROW_UNLIMITED_PINS: return "unlimitedPins";
-            case ROW_ALLOW_SCREENSHOTS: return "allowScreenshots";
-            case ROW_GHOST_MODE: return "ghostMode";
-            case ROW_STEALTH_STORIES: return "stealthStories";
-            case ROW_BLOCK_ADS: return "blockTelegramAds";
-            default: return null;
-        }
-    }
-
-    private boolean currentValue(int row) {
-        switch (row) {
-            case ROW_ANTI_DELETE: return AlfaFeatures.antiDelete;
-            case ROW_EDIT_HISTORY: return AlfaFeatures.editHistory;
-            case ROW_TYPING_LOG: return AlfaFeatures.typingLog;
-            case ROW_UNRESTRICTED_SAVE: return AlfaFeatures.unrestrictedSave;
-            case ROW_UNLIMITED_PINS: return AlfaFeatures.unlimitedPins;
-            case ROW_ALLOW_SCREENSHOTS: return AlfaFeatures.allowScreenshots;
-            case ROW_GHOST_MODE: return AlfaFeatures.ghostMode;
-            case ROW_STEALTH_STORIES: return AlfaFeatures.stealthStories;
-            case ROW_BLOCK_ADS: return AlfaFeatures.blockTelegramAds;
+    private boolean currentValue(String key) {
+        switch (key) {
+            case "antiDelete": return AlfaFeatures.antiDelete;
+            case "editHistory": return AlfaFeatures.editHistory;
+            case "typingLog": return AlfaFeatures.typingLog;
+            case "confirmSend": return AlfaFeatures.confirmSend;
+            case "sendByEnter": return AlfaFeatures.sendByEnter;
+            case "silentByDefault": return AlfaFeatures.silentByDefault;
+            case "unrestrictedSave": return AlfaFeatures.unrestrictedSave;
+            case "allowScreenshots": return AlfaFeatures.allowScreenshots;
+            case "unlimitedPins": return AlfaFeatures.unlimitedPins;
+            case "forwardWithoutAuthor": return AlfaFeatures.forwardWithoutAuthor;
+            case "forwardWithoutReply": return AlfaFeatures.forwardWithoutReply;
+            case "hideStories": return AlfaFeatures.hideStories;
+            case "hideMuted": return AlfaFeatures.hideMuted;
+            case "compactChats": return AlfaFeatures.compactChats;
+            case "showMessageIds": return AlfaFeatures.showMessageIds;
+            case "swipeToReply": return AlfaFeatures.swipeToReply;
+            case "disableStickerSuggest": return AlfaFeatures.disableStickerSuggest;
+            case "fastSendAnimation": return AlfaFeatures.fastSendAnimation;
+            case "ghostMode": return AlfaFeatures.ghostMode;
+            case "stealthStories": return AlfaFeatures.stealthStories;
+            case "noReadReceipts": return AlfaFeatures.noReadReceipts;
+            case "hidePhoneInSettings": return AlfaFeatures.hidePhoneInSettings;
+            case "blurAppInRecents": return AlfaFeatures.blurAppInRecents;
+            case "showIdInProfile": return AlfaFeatures.showIdInProfile;
+            case "hideSeenTicks": return AlfaFeatures.hideSeenTicks;
+            case "disableAnimations": return AlfaFeatures.disableAnimations;
+            case "autoSaveVoice": return AlfaFeatures.autoSaveVoice;
+            case "autoSaveVideoNotes": return AlfaFeatures.autoSaveVideoNotes;
+            case "blockTelegramAds": return AlfaFeatures.blockTelegramAds;
+            case "hideSponsoredMessages": return AlfaFeatures.hideSponsoredMessages;
+            case "openLastChat": return AlfaFeatures.openLastChat;
+            case "debugLogs": return AlfaFeatures.debugLogs;
             default: return false;
         }
     }
 
     private class ListAdapter extends RecyclerListView.SelectionAdapter {
-
         private final Context mContext;
+        ListAdapter(Context context) { mContext = context; }
 
-        ListAdapter(Context context) {
-            mContext = context;
-        }
+        @Override public int getItemCount() { return rows.size(); }
 
-        @Override
-        public int getItemCount() {
-            return rows.length;
-        }
+        @Override public int getItemViewType(int position) { return rows.get(position).type; }
 
-        @Override
-        public int getItemViewType(int position) {
-            int row = rows[position];
-            if (row >= 100 && row < 200 && row % 100 == 0) return 0; // header
-            if (row >= 100 && row < 500 && row % 100 == 1) return 2; // info
-            return 1; // check
-        }
-
-        @Override
-        public boolean isEnabled(RecyclerView.ViewHolder holder) {
-            return getItemViewType(holder.getAdapterPosition()) == 1;
+        @Override public boolean isEnabled(RecyclerView.ViewHolder holder) {
+            return holder.getItemViewType() == TYPE_SWITCH;
         }
 
         @Override
         public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
             View v;
             switch (viewType) {
-                case 0:
+                case TYPE_HEADER:
                     v = new HeaderCell(mContext);
                     v.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundWhite));
                     break;
-                case 2:
+                case TYPE_INFO:
                     v = new TextInfoPrivacyCell(mContext);
                     v.setBackground(Theme.getThemedDrawableByKey(mContext, R.drawable.greydivider_bottom, Theme.key_windowBackgroundGrayShadow));
                     break;
@@ -188,64 +225,19 @@ public class AlfaSettingsActivity extends BaseFragment {
 
         @Override
         public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
-            int row = rows[position];
-            int viewType = holder.getItemViewType();
-            if (viewType == 0) {
-                HeaderCell h = (HeaderCell) holder.itemView;
-                switch (row) {
-                    case ROW_PROTECTION_HEADER: h.setText("Xabar himoyasi"); break;
-                    case ROW_LIMITS_HEADER: h.setText("Cheklovlar"); break;
-                    case ROW_PRIVACY_HEADER: h.setText("Maxfiylik"); break;
-                    case ROW_ADS_HEADER: h.setText("Reklama"); break;
-                }
-            } else if (viewType == 2) {
-                TextInfoPrivacyCell t = (TextInfoPrivacyCell) holder.itemView;
-                switch (row) {
-                    case ROW_PROTECTION_INFO:
-                        t.setText("O'chirilgan xabarlar chatingizda qoladi, tahrirlangan xabarlarning eski matnini saqlaymiz, kim yozdi-yubormaganini bilib turasiz.");
-                        break;
-                    case ROW_LIMITS_INFO:
-                        t.setText("Standart Telegram cheklovlarini olib tashlash — audio/rasm saqlash, pin cheki, screenshot.");
-                        break;
-                    case ROW_PRIVACY_INFO:
-                        t.setText("Ghost mode — o'qilgan/yozayotgan/onlayn signallarini yubormaslik. Anonim story — story ko'ruvchilar ro'yxatiga tushmaslik.");
-                        break;
-                    case ROW_ADS_INFO:
-                        t.setText("Telegram'ning kanalarda ko'rsatiladigan reklama xabarlarini yashirish.");
-                        break;
-                }
-            } else {
-                TextCheckCell c = (TextCheckCell) holder.itemView;
-                boolean divider = position + 1 < rows.length && (rows[position + 1] % 100 != 0);
-                switch (row) {
-                    case ROW_ANTI_DELETE:
-                        c.setTextAndCheck("O'chirilgan xabarlarni saqlash", AlfaFeatures.antiDelete, divider);
-                        break;
-                    case ROW_EDIT_HISTORY:
-                        c.setTextAndCheck("Tahrir tarixi", AlfaFeatures.editHistory, divider);
-                        break;
-                    case ROW_TYPING_LOG:
-                        c.setTextAndCheck("Yozdi, yubormadi jurnali", AlfaFeatures.typingLog, divider);
-                        break;
-                    case ROW_UNRESTRICTED_SAVE:
-                        c.setTextAndCheck("Cheklovlarsiz saqlash/forward", AlfaFeatures.unrestrictedSave, divider);
-                        break;
-                    case ROW_UNLIMITED_PINS:
-                        c.setTextAndCheck("Cheksiz pin", AlfaFeatures.unlimitedPins, divider);
-                        break;
-                    case ROW_ALLOW_SCREENSHOTS:
-                        c.setTextAndCheck("Screenshot cheklovini olib tashlash", AlfaFeatures.allowScreenshots, divider);
-                        break;
-                    case ROW_GHOST_MODE:
-                        c.setTextAndCheck("Ghost mode (o'qilgan/yozyapman signalisiz)", AlfaFeatures.ghostMode, divider);
-                        break;
-                    case ROW_STEALTH_STORIES:
-                        c.setTextAndCheck("Anonim story ko'rish", AlfaFeatures.stealthStories, divider);
-                        break;
-                    case ROW_BLOCK_ADS:
-                        c.setTextAndCheck("Telegram reklamalarini bloklash", AlfaFeatures.blockTelegramAds, divider);
-                        break;
-                }
+            Row row = rows.get(position);
+            switch (row.type) {
+                case TYPE_HEADER:
+                    ((HeaderCell) holder.itemView).setText(row.title);
+                    break;
+                case TYPE_INFO:
+                    ((TextInfoPrivacyCell) holder.itemView).setText(row.info);
+                    break;
+                case TYPE_SWITCH:
+                    TextCheckCell c = (TextCheckCell) holder.itemView;
+                    boolean nextIsSwitch = position + 1 < rows.size() && rows.get(position + 1).type == TYPE_SWITCH;
+                    c.setTextAndCheck(row.title, currentValue(row.key), nextIsSwitch);
+                    break;
             }
         }
     }
