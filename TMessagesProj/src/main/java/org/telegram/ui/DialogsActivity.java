@@ -13679,6 +13679,10 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             return;
         }
 
+        // AlfaGram — bosh ekrandagi "..." menyudan tez kirish
+        io.add(R.drawable.msg_settings_old, "AlfaGram sozlamalari", () -> presentFragment(new AlfaSettingsActivity()));
+        io.addGap();
+
         final boolean isCurrentThemeDark;
         if (resourceProvider != null) {
             isCurrentThemeDark = resourceProvider.isDark();
