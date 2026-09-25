@@ -5,6 +5,8 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
+import org.telegram.tgnet.TLRPC;
+
 import java.util.ArrayList;
 
 /**
