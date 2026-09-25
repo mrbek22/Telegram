@@ -188,10 +188,6 @@ public class SelfStoryViewsPage extends FrameLayout implements NotificationCente
         titleView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 20);
         titleView.setTypeface(AndroidUtilities.bold());
         titleView.setPadding(AndroidUtilities.dp(21), AndroidUtilities.dp(6), AndroidUtilities.dp(21), AndroidUtilities.dp(8));
-        titleView.setOnLongClickListener(v -> {
-            showAlfaHistoryDialog();
-            return true;
-        });
 
         headerView = new HeaderView(getContext());
 
