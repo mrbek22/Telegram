@@ -87,19 +87,26 @@ jobs:
         run: |
           if [ "${{ steps.ks.outputs.custom }}" = "true" ]; then
             ./gradlew :TMessagesProj_AppStandalone:assembleAfatStandalone \
+              :TMessagesProj_AppStandalone:bundleAfatStandalone \
               -PRELEASE_STORE_PASSWORD="$RSP" -PRELEASE_KEY_ALIAS="$RKA" -PRELEASE_KEY_PASSWORD="$RKP" \
               --stacktrace --no-daemon
           else
-            ./gradlew :TMessagesProj_AppStandalone:assembleAfatStandalone --stacktrace --no-daemon
+            ./gradlew :TMessagesProj_AppStandalone:assembleAfatStandalone \
+              :TMessagesProj_AppStandalone:bundleAfatStandalone \
+              --stacktrace --no-daemon
           fi
 
-      - name: APK'ni topish
+      - name: APK va AAB'ni topish
         id: apk
         run: |
           APK=$(find TMessagesProj_AppStandalone/build/outputs/apk -name "*.apk" | head -n1)
+          AAB=$(find TMessagesProj_AppStandalone/build/outputs/bundle -name "*.aab" | head -n1)
           echo "path=$APK" >> "$GITHUB_OUTPUT"
+          echo "aab=$AAB" >> "$GITHUB_OUTPUT"
           echo "APK topildi: $APK"
-          ls -lh "$APK"
+          echo "AAB topildi: $AAB"
+          ls -lh "$APK" || true
+          ls -lh "$AAB" || true
 
       - name: APK'ni yuklash (artifact)
         uses: actions/upload-artifact@v4
@@ -107,3 +114,11 @@ jobs:
           name: telegram-fork-apk
           path: ${{ steps.apk.outputs.path }}
           if-no-files-found: error
+
+      - name: AAB'ni yuklash (Play Console uchun)
+        uses: actions/upload-artifact@v4
+        if: steps.apk.outputs.aab != ''
+        with:
+          name: telegram-fork-aab
+          path: ${{ steps.apk.outputs.aab }}
+          if-no-files-found: warn
