@@ -542,12 +542,9 @@ public class ContactsAdapter extends RecyclerListView.SectionsAdapter {
                     arr = usersSectionsDict.get(sortedUsersSectionsArray.get(section - (onlyUsers != 0 && !isAdmin ? 0 : 1)));
                 }
                 TLRPC.User user = MessagesController.getInstance(currentAccount).getUser(arr.get(position).user_id);
-                CharSequence dispName = null;
-                if (user != null && user.mutual_contact) {
-                    String base = org.telegram.messenger.UserObject.getUserName(user);
-                    dispName = base + "  👥";
-                }
-                userCell.setData(user, dispName, null, 0);
+                int mutualIcon = (user != null && user.mutual_contact) ? R.drawable.msg_contacts : 0;
+                userCell.setImageAtRight(mutualIcon != 0);
+                userCell.setData(user, null, null, mutualIcon);
                 userCell.setChecked(selectedContacts.indexOfKey(user.id) >= 0, false);
                 if (ignoreUsers != null) {
                     if (ignoreUsers.indexOfKey(user.id) >= 0) {

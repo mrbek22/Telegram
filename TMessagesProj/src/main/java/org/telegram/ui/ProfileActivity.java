@@ -594,6 +594,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
     private final static int delete_group = 45;
     private final static int enable_no_forwards = 46;
     private final static int disable_no_forwards = 47;
+    private final static int alfa_copy_id = 200;
 
     private Rect rect = new Rect();
 
@@ -2586,6 +2587,13 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     TextView button = (TextView) dialog.getButton(DialogInterface.BUTTON_POSITIVE);
                     if (button != null) {
                         button.setTextColor(getThemedColor(Theme.key_text_RedBold));
+                    }
+                } else if (id == alfa_copy_id) {
+                    try {
+                        android.content.ClipboardManager cm = (android.content.ClipboardManager) getParentActivity().getSystemService(android.content.Context.CLIPBOARD_SERVICE);
+                        cm.setPrimaryClip(android.content.ClipData.newPlainText("id", String.valueOf(userId)));
+                        BulletinFactory.of(ProfileActivity.this).createSimpleBulletin(R.raw.copy, "User ID nusxa olindi: " + userId).show();
+                    } catch (Throwable ignore) {
                     }
                 } else if (id == leave_group) {
                     leaveChatPressed(false);
@@ -12149,6 +12157,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     otherItem.addSubItem(block_contact, !userBlocked ? R.drawable.msg_block : R.drawable.msg_block, !userBlocked ? LocaleController.getString(R.string.BlockContact) : LocaleController.getString(R.string.Unblock));
                     otherItem.addSubItem(edit_contact, R.drawable.msg_edit, LocaleController.getString(R.string.EditContact));
                     otherItem.addSubItem(delete_contact, R.drawable.msg_delete, LocaleController.getString(R.string.DeleteContact));
+                    otherItem.addSubItem(alfa_copy_id, R.drawable.msg_copy, "User ID: " + userId);
                 }
                 if (!UserObject.isDeleted(user) && !isBot && currentEncryptedChat == null && !userBlocked && userId != 333000 && userId != 777000 && userId != 42777) {
                     if (!BuildVars.IS_BILLING_UNAVAILABLE && !user.self && !user.bot && !MessagesController.isSupportUser(user) && !getMessagesController().premiumPurchaseBlocked()) {

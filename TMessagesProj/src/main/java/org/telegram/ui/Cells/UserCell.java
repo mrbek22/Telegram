@@ -318,6 +318,22 @@ public class UserCell extends FrameLayout implements NotificationCenter.Notifica
         if (bottom) statusTextView.setPadding(LocaleController.isRTL ? pad : 0, 0, !LocaleController.isRTL ? pad : 0, 0);
     }
 
+    /** AlfaGram: imageView'ni o'ng chetga ko'chirish (mutual contact belgisi uchun). */
+    public void setImageAtRight(boolean atRight) {
+        if (imageView == null) return;
+        android.widget.FrameLayout.LayoutParams lp = (android.widget.FrameLayout.LayoutParams) imageView.getLayoutParams();
+        if (atRight) {
+            lp.gravity = (LocaleController.isRTL ? Gravity.LEFT : Gravity.RIGHT) | Gravity.CENTER_VERTICAL;
+            lp.leftMargin = LocaleController.isRTL ? dp(16) : 0;
+            lp.rightMargin = LocaleController.isRTL ? 0 : dp(16);
+        } else {
+            lp.gravity = (LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT) | Gravity.CENTER_VERTICAL;
+            lp.leftMargin = LocaleController.isRTL ? 0 : dp(16);
+            lp.rightMargin = LocaleController.isRTL ? dp(16) : 0;
+        }
+        imageView.setLayoutParams(lp);
+    }
+
     public CharSequence getName() {
         return nameTextView.getText();
     }

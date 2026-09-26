@@ -57,13 +57,13 @@ public class AlfaSettingsActivity extends BaseFragment {
     private void buildRows() {
         rows.clear();
 
-        rows.add(Row.header("👻 Tezkor sozlamalar"));
+        rows.add(Row.header("Tezkor sozlamalar"));
         rows.add(Row.toggle("ghostMode", "Ghost mode (yashirin rejim)"));
         rows.add(Row.toggle("stealthStories", "Anonim story ko'rish"));
         rows.add(Row.toggle("noReadReceipts", "O'qildi tikini yubormaslik"));
         rows.add(Row.info("Yoqib qo'yish oson — bir bosishda ta'sir qiladi."));
 
-        rows.add(Row.header("🔒 Ilova qulfi"));
+        rows.add(Row.header("Ilova qulfi"));
         rows.add(Row.action("PIN kod sozlash", () -> {
             try {
                 presentFragment(new PasscodeActivity(PasscodeActivity.TYPE_SETUP_CODE));
@@ -72,7 +72,7 @@ public class AlfaSettingsActivity extends BaseFragment {
         }));
         rows.add(Row.info("Ilova ochilganda PIN so'raladi. Kimдир ilovangizni ochsa, xabarlaringizni ko'ra olmaydi."));
 
-        rows.add(Row.header("⚠️ Akkaunt boshqaruvi"));
+        rows.add(Row.header("Akkaunt boshqaruvi"));
         rows.add(Row.action("Maxfiylik va akkauntni o'chirish", () -> {
             try {
                 presentFragment(new PrivacySettingsActivity());
