@@ -29,22 +29,26 @@ public class AlfaSettingsActivity extends BaseFragment {
     private static final int TYPE_HEADER = 0;
     private static final int TYPE_SWITCH = 1;
     private static final int TYPE_INFO = 2;
+    private static final int TYPE_ACTION = 3;
 
     private static class Row {
         final int type;
         final String key;
         final String title;
         final String info;
+        final Runnable action;
 
-        static Row header(String title) { return new Row(TYPE_HEADER, null, title, null); }
-        static Row info(String text)    { return new Row(TYPE_INFO, null, null, text); }
-        static Row toggle(String key, String title) { return new Row(TYPE_SWITCH, key, title, null); }
+        static Row header(String title) { return new Row(TYPE_HEADER, null, title, null, null); }
+        static Row info(String text)    { return new Row(TYPE_INFO, null, null, text, null); }
+        static Row toggle(String key, String title) { return new Row(TYPE_SWITCH, key, title, null, null); }
+        static Row action(String title, Runnable r) { return new Row(TYPE_ACTION, null, title, null, r); }
 
-        private Row(int type, String key, String title, String info) {
+        private Row(int type, String key, String title, String info, Runnable action) {
             this.type = type;
             this.key = key;
             this.title = title;
             this.info = info;
+            this.action = action;
         }
     }
 
@@ -52,6 +56,15 @@ public class AlfaSettingsActivity extends BaseFragment {
 
     private void buildRows() {
         rows.clear();
+
+        rows.add(Row.header("🔒 Ilova qulfi"));
+        rows.add(Row.action("PIN kod sozlash", () -> {
+            try {
+                presentFragment(new PasscodeActivity(PasscodeActivity.TYPE_SETUP_CODE));
+            } catch (Throwable ignore) {
+            }
+        }));
+        rows.add(Row.info("Ilova ochilganda PIN so'raladi. Kimдир ilovangizni ochsa, xabarlaringizni ko'ra olmaydi."));
 
         rows.add(Row.header("Xabar himoyasi"));
         rows.add(Row.toggle("antiDelete", "O'chirilgan xabarlarni saqlash"));
@@ -141,6 +154,10 @@ public class AlfaSettingsActivity extends BaseFragment {
         listView.setOnItemClickListener((view, position) -> {
             if (position < 0 || position >= rows.size()) return;
             Row row = rows.get(position);
+            if (row.type == TYPE_ACTION) {
+                if (row.action != null) row.action.run();
+                return;
+            }
             if (row.type != TYPE_SWITCH) return;
             boolean newVal = !currentValue(row.key);
             AlfaFeatures.setFlag(row.key, newVal);
@@ -199,7 +216,8 @@ public class AlfaSettingsActivity extends BaseFragment {
         @Override public int getItemViewType(int position) { return rows.get(position).type; }
 
         @Override public boolean isEnabled(RecyclerView.ViewHolder holder) {
-            return holder.getItemViewType() == TYPE_SWITCH;
+            int t = holder.getItemViewType();
+            return t == TYPE_SWITCH || t == TYPE_ACTION;
         }
 
         @Override
@@ -213,6 +231,10 @@ public class AlfaSettingsActivity extends BaseFragment {
                 case TYPE_INFO:
                     v = new TextInfoPrivacyCell(mContext);
                     v.setBackground(Theme.getThemedDrawableByKey(mContext, R.drawable.greydivider_bottom, Theme.key_windowBackgroundGrayShadow));
+                    break;
+                case TYPE_ACTION:
+                    v = new org.telegram.ui.Cells.TextCell(mContext);
+                    v.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundWhite));
                     break;
                 default:
                     v = new TextCheckCell(mContext);
@@ -232,6 +254,9 @@ public class AlfaSettingsActivity extends BaseFragment {
                     break;
                 case TYPE_INFO:
                     ((TextInfoPrivacyCell) holder.itemView).setText(row.info);
+                    break;
+                case TYPE_ACTION:
+                    ((org.telegram.ui.Cells.TextCell) holder.itemView).setText(row.title, false);
                     break;
                 case TYPE_SWITCH:
                     TextCheckCell c = (TextCheckCell) holder.itemView;
