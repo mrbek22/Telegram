@@ -2530,7 +2530,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
                     }
                     req.random_id = randomIds;
                     req.id = ids;
-                    req.drop_author = forwardFromMyName;
+                    req.drop_author = forwardFromMyName || AlfaFeatures.forwardWithoutAuthor;
                     req.drop_media_captions = hideCaption;
                     req.with_my_score = messages.size() == 1 && messages.get(0).messageOwner.with_my_score;
                     if (video_timestamp >= 0) {
@@ -5113,7 +5113,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
                         reqSend.ephemeralReceiverBotId = ephemeralReceiverBotId;
                         reqSend.message = message;
                         reqSend.clear_draft = retryMessageObject == null;
-                        reqSend.silent = newMsg.silent;
+                        reqSend.silent = newMsg.silent || AlfaFeatures.silentByDefault;
                         reqSend.peer = sendToPeer;
                         reqSend.random_id = newMsg.random_id;
                         if (payStars > 0) {
@@ -5178,7 +5178,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
                         reqSend.ephemeralReceiverBotId = ephemeralReceiverBotId;
                         reqSend.message = message;
                         reqSend.clear_draft = retryMessageObject == null;
-                        reqSend.silent = newMsg.silent;
+                        reqSend.silent = newMsg.silent || AlfaFeatures.silentByDefault;
                         reqSend.peer = sendToPeer;
                         reqSend.random_id = newMsg.random_id;
                         if (payStars > 0) {

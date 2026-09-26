@@ -1643,8 +1643,10 @@ public class MessagesController extends BaseController implements NotificationCe
         stickersFavedLimitPremium = mainPreferences.getInt("stickersFavedLimitPremium", 200);
         maxPinnedDialogsCountDefault = mainPreferences.getInt("maxPinnedDialogsCountDefault", 5);
         maxPinnedDialogsCountPremium = mainPreferences.getInt("maxPinnedDialogsCountPremium", 5);
-        maxPinnedDialogsCountDefault = mainPreferences.getInt("maxPinnedDialogsCountDefault", 5);
-        maxPinnedDialogsCountPremium = mainPreferences.getInt("maxPinnedDialogsCountPremium", 5);
+        if (AlfaFeatures.unlimitedPins) {
+            maxPinnedDialogsCountDefault = 999;
+            maxPinnedDialogsCountPremium = 999;
+        }
         dialogFiltersLimitDefault = mainPreferences.getInt("dialogFiltersLimitDefault", 10);
         dialogFiltersLimitPremium = mainPreferences.getInt("dialogFiltersLimitPremium", 20);
         dialogFiltersChatsLimitDefault = mainPreferences.getInt("dialogFiltersChatsLimitDefault", 100);
@@ -14542,6 +14544,9 @@ public class MessagesController extends BaseController implements NotificationCe
                 request.peer = inputPeer;
                 request.max_id = task.maxId;
                 req = request;
+            }
+            if (AlfaFeatures.noReadReceipts) {
+                return;
             }
             getConnectionsManager().sendRequest(req, (response, error) -> {
                 if (error == null) {

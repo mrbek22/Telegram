@@ -24008,19 +24008,21 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                 canvas.save();
                 canvas.translate(0, transitionYOffsetForDrawables);
             }
-            if (statusDrawableAnimationInProgress) {
-                boolean outDrawCheck1 = (animateFromStatusDrawableParams & 1) != 0;
-                boolean outDrawCheck2 = (animateFromStatusDrawableParams & 2) != 0;
-                boolean outDrawClock = (animateFromStatusDrawableParams & 4) != 0;
-                boolean outDrawError = (animateFromStatusDrawableParams & 8) != 0;
-                if (!outDrawClock && outDrawCheck2 && drawCheck2 && !outDrawCheck1 && drawCheck1) {
-                    drawStatusDrawable(canvas, drawCheck1, drawCheck2, drawClock, drawError, alpha, bigRadius, timeYOffset, layoutHeight, statusDrawableProgress, true, drawSelectionBackground);
+            if (!org.telegram.messenger.AlfaFeatures.hideSeenTicks) {
+                if (statusDrawableAnimationInProgress) {
+                    boolean outDrawCheck1 = (animateFromStatusDrawableParams & 1) != 0;
+                    boolean outDrawCheck2 = (animateFromStatusDrawableParams & 2) != 0;
+                    boolean outDrawClock = (animateFromStatusDrawableParams & 4) != 0;
+                    boolean outDrawError = (animateFromStatusDrawableParams & 8) != 0;
+                    if (!outDrawClock && outDrawCheck2 && drawCheck2 && !outDrawCheck1 && drawCheck1) {
+                        drawStatusDrawable(canvas, drawCheck1, drawCheck2, drawClock, drawError, alpha, bigRadius, timeYOffset, layoutHeight, statusDrawableProgress, true, drawSelectionBackground);
+                    } else {
+                        drawStatusDrawable(canvas, outDrawCheck1, outDrawCheck2, outDrawClock, outDrawError, alpha, bigRadius, timeYOffset, layoutHeight, 1f - statusDrawableProgress, false, drawSelectionBackground);
+                        drawStatusDrawable(canvas, drawCheck1, drawCheck2, drawClock, drawError, alpha, bigRadius, timeYOffset, layoutHeight, statusDrawableProgress, false, drawSelectionBackground);
+                    }
                 } else {
-                    drawStatusDrawable(canvas, outDrawCheck1, outDrawCheck2, outDrawClock, outDrawError, alpha, bigRadius, timeYOffset, layoutHeight, 1f - statusDrawableProgress, false, drawSelectionBackground);
-                    drawStatusDrawable(canvas, drawCheck1, drawCheck2, drawClock, drawError, alpha, bigRadius, timeYOffset, layoutHeight, statusDrawableProgress, false, drawSelectionBackground);
+                    drawStatusDrawable(canvas, drawCheck1, drawCheck2, drawClock, drawError, alpha, bigRadius, timeYOffset, layoutHeight, 1, false, drawSelectionBackground);
                 }
-            } else {
-                drawStatusDrawable(canvas, drawCheck1, drawCheck2, drawClock, drawError, alpha, bigRadius, timeYOffset, layoutHeight, 1, false, drawSelectionBackground);
             }
             if (needRestore) {
                 canvas.restore();

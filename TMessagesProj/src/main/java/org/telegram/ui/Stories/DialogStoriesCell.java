@@ -183,6 +183,9 @@ public class DialogStoriesCell extends FrameLayout implements NotificationCenter
 
     public DialogStoriesCell(@NonNull Context context, BaseFragment fragment, int currentAccount, int type) {
         super(context);
+        if (org.telegram.messenger.AlfaFeatures.hideStories) {
+            setVisibility(View.GONE);
+        }
         this.type = type;
         this.currentAccount = currentAccount;
         this.fragment = fragment;
