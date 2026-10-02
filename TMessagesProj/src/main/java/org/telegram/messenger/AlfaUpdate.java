@@ -56,57 +56,29 @@ public class AlfaUpdate {
         }
     }
 
-    private static void downloadAndInstall(final Activity activity, final String url) {
-        if (activity == null || url == null || url.length() == 0) {
+    /**
+     * Google Play qoidasi: Play'dagi ilova o'zini faqat Play orqali yangilaydi.
+     * Shuning uchun APK yuklab o'rnatmaymiz — ilovaning Play sahifasini ochamiz.
+     */
+    private static void openStorePage(final Context context) {
+        if (context == null) {
             return;
         }
+        String pkg = context.getPackageName();
         try {
-            android.widget.Toast.makeText(activity, "Yangilanish yuklanmoqda…", android.widget.Toast.LENGTH_SHORT).show();
-        } catch (Throwable ignore) {
-        }
-        Utilities.globalQueue.postRunnable(() -> {
-            try {
-                java.io.File dir = new java.io.File(activity.getFilesDir(), "cache");
-                dir.mkdirs();
-                final java.io.File out = new java.io.File(dir, "AlfaGram-update.apk");
-                if (out.exists()) {
-                    out.delete();
-                }
-                java.net.HttpURLConnection c = (java.net.HttpURLConnection) new java.net.URL(url).openConnection();
-                c.setConnectTimeout(15000);
-                c.setReadTimeout(60000);
-                c.setInstanceFollowRedirects(true);
-                c.setRequestProperty("User-Agent", "AlfaGram");
-                java.io.InputStream in = c.getInputStream();
-                java.io.FileOutputStream fos = new java.io.FileOutputStream(out);
-                byte[] buf = new byte[32768];
-                int n;
-                while ((n = in.read(buf)) > 0) {
-                    fos.write(buf, 0, n);
-                }
-                fos.flush();
-                fos.close();
-                in.close();
-                c.disconnect();
-                AndroidUtilities.runOnUIThread(() -> {
-                    try {
-                        AndroidUtilities.openForView(out, "AlfaGram.apk", "application/vnd.android.package-archive", activity, null, false);
-                    } catch (Throwable t) {
-                        FileLog.e(t);
-                        try { Browser.openUrl(activity, url); } catch (Throwable ignore) {}
-                    }
-                });
-            } catch (Throwable t) {
-                FileLog.e(t);
-                AndroidUtilities.runOnUIThread(() -> {
-                    try {
-                        android.widget.Toast.makeText(activity, "Yuklab bo'lmadi — brauzerda ochilmoqda", android.widget.Toast.LENGTH_SHORT).show();
-                        Browser.openUrl(activity, url);
-                    } catch (Throwable ignore) {
-                    }
-                });
+            android.content.Intent market = new android.content.Intent(android.content.Intent.ACTION_VIEW,
+                    android.net.Uri.parse("market://details?id=" + pkg));
+            market.setPackage("com.android.vending");
+            if (!(context instanceof Activity)) {
+                market.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
             }
-        });
+            context.startActivity(market);
+        } catch (Throwable t) {
+            try {
+                Browser.openUrl(context, "https://play.google.com/store/apps/details?id=" + pkg);
+            } catch (Throwable ignore) {
+            }
+        }
     }
 
     private static boolean hasPromo() {
@@ -220,11 +192,7 @@ public class AlfaUpdate {
                 if (ref[0] != null) {
                     ref[0].dismiss();
                 }
-                if (context instanceof Activity) {
-                    downloadAndInstall((Activity) context, AlfaConfig.updateUrl);
-                } else {
-                    try { Browser.openUrl(context, AlfaConfig.updateUrl); } catch (Exception ignore) {}
-                }
+                openStorePage(context);
             });
             ll.addView(update, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 50));
 
