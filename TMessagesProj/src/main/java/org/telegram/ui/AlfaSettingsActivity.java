@@ -138,7 +138,25 @@ public class AlfaSettingsActivity extends BaseFragment {
         rows.add(Row.header("Ilova"));
         rows.add(Row.toggle("openLastChat", "Ochilganda so'nggi chatga o'tish"));
         rows.add(Row.toggle("debugLogs", "Debug loglar"));
-        rows.add(Row.info("Versiya: AlfaGram alfa11"));
+
+        rows.add(Row.header("Ilova haqida"));
+        rows.add(Row.action("Maxfiylik siyosati", () -> openLink("https://alfagram.uz/privacy")));
+        rows.add(Row.action("Hisob va ma'lumotlarni o'chirish", () -> openLink("https://alfagram.uz/delete-account")));
+        rows.add(Row.action("Sayt: alfagram.uz", () -> openLink("https://alfagram.uz")));
+        String version = "";
+        try {
+            android.content.Context c = org.telegram.messenger.ApplicationLoader.applicationContext;
+            version = c.getPackageManager().getPackageInfo(c.getPackageName(), 0).versionName;
+        } catch (Throwable ignore) {
+        }
+        rows.add(Row.info("AlfaGram " + version + " — Telegram API asosidagi norasmiy klient. Telegram bilan bog'liq emas."));
+    }
+
+    private void openLink(String url) {
+        try {
+            org.telegram.messenger.browser.Browser.openUrl(getParentActivity(), url);
+        } catch (Throwable ignore) {
+        }
     }
 
     @Override

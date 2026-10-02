@@ -12,6 +12,12 @@ public class AlfaFeatures {
     private static final String PREFS = "alfa_features";
     private static boolean loaded;
 
+    /**
+     * Google Play versiyasi: Telegram'ning Play uchun cheklovlari (restriction_reason "android")
+     * qo'llanadi va Telegram'ning o'z ichki yangilanish tekshiruvi o'chiriladi.
+     */
+    public static final boolean PLAY_BUILD = true;
+
     // ── Xabar himoyasi ─────────────────────────────
     public static boolean antiDelete = true;
     public static boolean editHistory = true;

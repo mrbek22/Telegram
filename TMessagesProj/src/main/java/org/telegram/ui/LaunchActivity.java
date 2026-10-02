@@ -5977,6 +5977,13 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
 
     private boolean firstAppUpdateCheck = true;
     public void checkAppUpdate(boolean force, Browser.Progress progress) {
+        if (org.telegram.messenger.AlfaFeatures.PLAY_BUILD) {
+            // Google Play: ilova faqat Play orqali yangilanadi
+            if (progress != null) {
+                progress.end();
+            }
+            return;
+        }
         if (!ApplicationLoader.isStandaloneBuild() && !ApplicationLoader.isBetaBuild()) {
             return;
         }

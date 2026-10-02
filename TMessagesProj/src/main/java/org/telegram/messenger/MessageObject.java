@@ -659,7 +659,7 @@ public class MessageObject {
                     "sensitive".equals(reason.reason) &&
                     (
                         "all".equals(reason.platform) ||
-                        "android".equals(reason.platform) && (!ApplicationLoader.isStandaloneBuild() && !BuildVars.isBetaApp() || BuildVars.DEBUG_PRIVATE_VERSION) ||
+                        "android".equals(reason.platform) && (AlfaFeatures.PLAY_BUILD || !ApplicationLoader.isStandaloneBuild() && !BuildVars.isBetaApp() || BuildVars.DEBUG_PRIVATE_VERSION) ||
                         "android-all".equals(reason.platform)
                     )
                 ) {
@@ -676,7 +676,7 @@ public class MessageObject {
                         "sensitive".equals(reason.reason) &&
                         (
                             "all".equals(reason.platform) ||
-                            "android".equals(reason.platform) && (!ApplicationLoader.isStandaloneBuild() && !BuildVars.isBetaApp() || BuildVars.DEBUG_PRIVATE_VERSION) ||
+                            "android".equals(reason.platform) && (AlfaFeatures.PLAY_BUILD || !ApplicationLoader.isStandaloneBuild() && !BuildVars.isBetaApp() || BuildVars.DEBUG_PRIVATE_VERSION) ||
                             "android-all".equals(reason.platform)
                         )
                     ) {
