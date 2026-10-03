@@ -19,7 +19,7 @@ import com.android.billingclient.api.BillingFlowParams;
 import com.android.billingclient.api.BillingResult;
 import com.android.billingclient.api.ConsumeParams;
 import com.android.billingclient.api.ProductDetails;
-import com.android.billingclient.api.ProductDetailsResponseListener;
+import com.android.billingclient.api.PendingPurchasesParams;
 import com.android.billingclient.api.Purchase;
 import com.android.billingclient.api.PurchasesResponseListener;
 import com.android.billingclient.api.PurchasesUpdatedListener;
@@ -79,7 +79,7 @@ public class BillingController implements PurchasesUpdatedListener, BillingClien
 
     private BillingController(Context ctx) {
         billingClient = BillingClient.newBuilder(ctx)
-                .enablePendingPurchases()
+                .enablePendingPurchases(PendingPurchasesParams.newBuilder().enableOneTimeProducts().build())
                 .setListener(this)
                 .build();
     }
@@ -175,11 +175,19 @@ public class BillingController implements PurchasesUpdatedListener, BillingClien
         return billingClient.isReady();
     }
 
+    // Billing 8: listener endi QueryProductDetailsResult oladi; chaqiruvchilar uchun eski (result, list) ko'rinishi saqlanadi
+    public interface ProductDetailsResponseListener {
+        void onProductDetailsResponse(BillingResult billingResult, List<ProductDetails> list);
+    }
+
     public void queryProductDetails(List<QueryProductDetailsParams.Product> products, ProductDetailsResponseListener responseListener) {
         if (!isReady()) {
             throw new IllegalStateException("Billing: Controller should be ready for this call!");
         }
-        billingClient.queryProductDetailsAsync(QueryProductDetailsParams.newBuilder().setProductList(products).build(), responseListener);
+        billingClient.queryProductDetailsAsync(QueryProductDetailsParams.newBuilder().setProductList(products).build(), (billingResult, result) -> {
+            List<ProductDetails> list = result != null ? result.getProductDetailsList() : null;
+            responseListener.onProductDetailsResponse(billingResult, list != null ? list : Collections.emptyList());
+        });
     }
 
     /**
