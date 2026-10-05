@@ -5,6 +5,8 @@
 
     <!-- Google Play: o'rnatish ruxsati alohida deklaratsiya talab qiladi, AlfaGram'ga kerak emas -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" tools:node="remove" />
+    <!-- Google Play: fon joylashuvi alohida deklaratsiya + video talab qiladi; jonli joylashuv foreground service orqali ishlaydi -->
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" tools:node="remove" />
 
     <application android:name="org.telegram.messenger.ApplicationLoaderImpl" tools:replace="name">
         <service
