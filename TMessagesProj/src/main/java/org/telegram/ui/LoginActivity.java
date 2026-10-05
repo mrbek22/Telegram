@@ -1991,9 +1991,19 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
                 .setTitle(LocaleController.getString(R.string.SettingsDebug))
                 .setItems(new String[] {
                     BuildVars.LOGS_ENABLED ? LocaleController.getString(R.string.DebugMenuDisableLogs) : LocaleController.getString(R.string.DebugMenuEnableLogs),
-                    LocaleController.getString(R.string.DebugSendLogs)
+                    LocaleController.getString(R.string.DebugSendLogs),
+                    // AlfaGram: Google Play tekshiruvchisi uchun Telegram test serveri (+99966 X YYYY, kod XXXXX)
+                    getConnectionsManager().isTestBackend() ? "Switch to production server" : "Switch to test server"
                 }, (di, b) -> {
-                    if (b == 0) {
+                    if (b == 2) {
+                        testBackend = !getConnectionsManager().isTestBackend();
+                        getConnectionsManager().switchBackend(false);
+                        if (testBackendCheckBox != null) {
+                            testBackendCheckBox.setChecked(testBackend, true);
+                        }
+                        loadCountries();
+                        BulletinFactory.of(slideViewsContainer, null).createSimpleBulletin(R.raw.chats_infotip, testBackend ? "Test server: ON" : "Test server: OFF").show();
+                    } else if (b == 0) {
                         BuildVars.LOGS_ENABLED = !BuildVars.LOGS_ENABLED;
                         ApplicationLoader.applicationContext.getSharedPreferences("systemConfig", Context.MODE_PRIVATE).edit().putBoolean("logsEnabled", BuildVars.LOGS_ENABLED).commit();
                         BulletinFactory.of(LoginActivity.this).createSimpleBulletin(R.raw.chats_infotip, BuildVars.LOGS_ENABLED ? "Logs enabled." : "Logs disabled.").show();
@@ -3042,7 +3052,7 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
                 needShowAlert(getString(R.string.RestorePasswordNoEmailTitle), getString("ChooseCountry", R.string.ChooseCountry));
                 needHideProgress(false);
                 return;
-            } else if (countryState == COUNTRY_STATE_INVALID && !BuildVars.DEBUG_VERSION && !(TEST_BACKEND_IN_STORE && !BuildConfig.BUNDLE)) {
+            } else if (countryState == COUNTRY_STATE_INVALID && !BuildVars.DEBUG_VERSION && !(TEST_BACKEND_IN_STORE && !BuildConfig.BUNDLE) && !getConnectionsManager().isTestBackend()) {
                 needShowAlert(getString(R.string.RestorePasswordNoEmailTitle), getString(R.string.WrongCountry));
                 needHideProgress(false);
                 return;
