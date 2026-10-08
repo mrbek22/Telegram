@@ -18,6 +18,10 @@ public class AlfaFeatures {
      */
     public static final boolean PLAY_BUILD = true;
 
+    /** Brend gradienti (alfagram-design/icons.json "brand"): binafsha → pushti. */
+    public static final int BRAND_START = 0xFF7C3AED;
+    public static final int BRAND_END = 0xFFEC4899;
+
     // ── Xabar himoyasi ─────────────────────────────
     public static boolean antiDelete = true;
     public static boolean editHistory = true;

@@ -1,9 +1,17 @@
 package org.telegram.ui;
 
 import android.content.Context;
+import android.graphics.PorterDuff;
+import android.util.TypedValue;
+import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+
+import org.telegram.messenger.AndroidUtilities;
 
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -30,6 +38,16 @@ public class AlfaSettingsActivity extends BaseFragment {
     private static final int TYPE_SWITCH = 1;
     private static final int TYPE_INFO = 2;
     private static final int TYPE_ACTION = 3;
+    private static final int TYPE_HERO = 4;
+    private static final int TYPE_QUICK = 5;
+
+    // Tezkor kafellar: kalit, nom, ikonka, gradient
+    private static final String[] QUICK_KEYS = { "ghostMode", "stealthStories", "noReadReceipts" };
+    private static final String[] QUICK_TITLES = { "Ghost", "Story", "O'qildi" };
+    private static final int[] QUICK_ICONS = { R.drawable.alfa_ic_ghost, R.drawable.alfa_ic_stealth, R.drawable.alfa_ic_privacy };
+    private static final int[][] QUICK_GRADIENTS = { { 0xFF4F46E5, 0xFF8B5CF6 }, { 0xFF7C3AED, 0xFFEC4899 }, { 0xFF06B6D4, 0xFF6366F1 } };
+
+    private ListAdapter listAdapter;
 
     private static class Row {
         final int type;
@@ -57,11 +75,10 @@ public class AlfaSettingsActivity extends BaseFragment {
     private void buildRows() {
         rows.clear();
 
-        rows.add(Row.header("Tezkor sozlamalar"));
-        rows.add(Row.toggle("ghostMode", "Ghost mode (yashirin rejim)"));
-        rows.add(Row.toggle("stealthStories", "Anonim story ko'rish"));
-        rows.add(Row.toggle("noReadReceipts", "O'qildi tikini yubormaslik"));
-        rows.add(Row.info("Yoqib qo'yish oson — bir bosishda ta'sir qiladi."));
+        rows.add(new Row(TYPE_HERO, null, null, null, null));
+        rows.add(Row.header("Tezkor"));
+        rows.add(new Row(TYPE_QUICK, null, null, null, null));
+        rows.add(Row.info("Ghost — onlayn/yozyapman signali ketmaydi. Story — anonim ko'rish. O'qildi — o'qish tasdig'i yuborilmaydi."));
 
         rows.add(Row.header("Ilova qulfi"));
         rows.add(Row.action("PIN kod sozlash", () -> {
@@ -181,7 +198,7 @@ public class AlfaSettingsActivity extends BaseFragment {
 
         RecyclerListView listView = new RecyclerListView(context);
         listView.setLayoutManager(new LinearLayoutManager(context));
-        listView.setAdapter(new ListAdapter(context));
+        listView.setAdapter(listAdapter = new ListAdapter(context));
         frameLayout.addView(listView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
 
         listView.setOnItemClickListener((view, position) -> {
@@ -197,9 +214,134 @@ public class AlfaSettingsActivity extends BaseFragment {
             if (view instanceof TextCheckCell) {
                 ((TextCheckCell) view).setChecked(newVal);
             }
+            if (isQuickKey(row.key)) {
+                // tezkor kafellar ham yangilansin
+                int quickPos = indexOfType(TYPE_QUICK);
+                if (quickPos >= 0) listAdapter.notifyItemChanged(quickPos);
+            }
         });
 
         return fragmentView;
+    }
+
+    private static boolean isQuickKey(String key) {
+        for (String k : QUICK_KEYS) if (k.equals(key)) return true;
+        return false;
+    }
+
+    private int indexOfType(int type) {
+        for (int i = 0; i < rows.size(); i++) if (rows.get(i).type == type) return i;
+        return -1;
+    }
+
+    private static android.graphics.drawable.GradientDrawable gradient(int[] colors, float radiusDp) {
+        android.graphics.drawable.GradientDrawable d = new android.graphics.drawable.GradientDrawable(
+            android.graphics.drawable.GradientDrawable.Orientation.TL_BR, colors);
+        d.setCornerRadius(AndroidUtilities.dp(radiusDp));
+        return d;
+    }
+
+    /** Gradient bosh karta: belgi + "AlfaGram <versiya>" + izoh. */
+    private View createHero(Context context) {
+        FrameLayout wrap = new FrameLayout(context);
+        wrap.setPadding(AndroidUtilities.dp(14), AndroidUtilities.dp(14), AndroidUtilities.dp(14), AndroidUtilities.dp(6));
+
+        LinearLayout card = new LinearLayout(context);
+        card.setOrientation(LinearLayout.HORIZONTAL);
+        card.setGravity(Gravity.CENTER_VERTICAL);
+        card.setPadding(AndroidUtilities.dp(18), AndroidUtilities.dp(18), AndroidUtilities.dp(18), AndroidUtilities.dp(18));
+        card.setBackground(gradient(new int[] { AlfaFeatures.BRAND_START, AlfaFeatures.BRAND_END }, 22));
+        wrap.addView(card, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
+
+        ImageView icon = new ImageView(context);
+        icon.setScaleType(ImageView.ScaleType.CENTER);
+        icon.setImageResource(R.drawable.alfa_ic_alfagram);
+        icon.setColorFilter(0xFFFFFFFF, PorterDuff.Mode.SRC_IN);
+        android.graphics.drawable.GradientDrawable iconBg = new android.graphics.drawable.GradientDrawable();
+        iconBg.setColor(0x38FFFFFF);
+        iconBg.setCornerRadius(AndroidUtilities.dp(16));
+        icon.setBackground(iconBg);
+        card.addView(icon, LayoutHelper.createLinear(48, 48));
+
+        LinearLayout texts = new LinearLayout(context);
+        texts.setOrientation(LinearLayout.VERTICAL);
+        card.addView(texts, LayoutHelper.createLinear(0, LayoutHelper.WRAP_CONTENT, 1f, Gravity.CENTER_VERTICAL, 14, 0, 0, 0));
+
+        String version = "";
+        try {
+            version = " " + context.getPackageManager().getPackageInfo(context.getPackageName(), 0).versionName;
+        } catch (Throwable ignore) {
+        }
+        TextView title = new TextView(context);
+        title.setText("AlfaGram" + version);
+        title.setTextColor(0xFFFFFFFF);
+        title.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 18);
+        title.setTypeface(AndroidUtilities.bold());
+        texts.addView(title);
+
+        TextView subtitle = new TextView(context);
+        subtitle.setText("Yashirin funksiyalar · bepul");
+        subtitle.setTextColor(0xFFF3E8FF);
+        subtitle.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13);
+        texts.addView(subtitle, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, 0, 3, 0, 0));
+        return wrap;
+    }
+
+    /** Tezkor kafellar qatori: bosilganda bayroq almashadi. */
+    private View createQuickRow(Context context) {
+        LinearLayout row = new LinearLayout(context);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setPadding(AndroidUtilities.dp(9), AndroidUtilities.dp(4), AndroidUtilities.dp(9), AndroidUtilities.dp(12));
+        for (int i = 0; i < QUICK_KEYS.length; i++) {
+            LinearLayout tile = new LinearLayout(context);
+            tile.setOrientation(LinearLayout.VERTICAL);
+            tile.setGravity(Gravity.CENTER_HORIZONTAL);
+            tile.setPadding(0, AndroidUtilities.dp(14), 0, AndroidUtilities.dp(12));
+            ImageView icon = new ImageView(context);
+            icon.setScaleType(ImageView.ScaleType.FIT_CENTER);
+            tile.addView(icon, LayoutHelper.createLinear(24, 24));
+            TextView name = new TextView(context);
+            name.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13);
+            name.setTypeface(AndroidUtilities.bold());
+            name.setGravity(Gravity.CENTER);
+            tile.addView(name, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, 0, 8, 0, 0));
+            TextView state = new TextView(context);
+            state.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 11);
+            state.setGravity(Gravity.CENTER);
+            tile.addView(state, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, 0, 2, 0, 0));
+            final int index = i;
+            tile.setOnClickListener(v -> {
+                String key = QUICK_KEYS[index];
+                AlfaFeatures.setFlag(key, !currentValue(key));
+                listAdapter.notifyDataSetChanged();
+            });
+            row.addView(tile, LayoutHelper.createLinear(0, LayoutHelper.WRAP_CONTENT, 1f, 5, 0, 5, 0));
+        }
+        return row;
+    }
+
+    private void bindQuickRow(LinearLayout row) {
+        for (int i = 0; i < row.getChildCount() && i < QUICK_KEYS.length; i++) {
+            LinearLayout tile = (LinearLayout) row.getChildAt(i);
+            boolean on = currentValue(QUICK_KEYS[i]);
+            if (on) {
+                tile.setBackground(gradient(QUICK_GRADIENTS[i], 18));
+            } else {
+                android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable();
+                bg.setColor(Theme.getColor(Theme.key_windowBackgroundWhite));
+                bg.setCornerRadius(AndroidUtilities.dp(18));
+                tile.setBackground(bg);
+            }
+            ImageView icon = (ImageView) tile.getChildAt(0);
+            icon.setImageResource(QUICK_ICONS[i]);
+            icon.setColorFilter(on ? 0xFFFFFFFF : Theme.getColor(Theme.key_windowBackgroundWhiteGrayText), PorterDuff.Mode.SRC_IN);
+            TextView name = (TextView) tile.getChildAt(1);
+            name.setText(QUICK_TITLES[i]);
+            name.setTextColor(on ? 0xFFFFFFFF : Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
+            TextView state = (TextView) tile.getChildAt(2);
+            state.setText(on ? "Yoqilgan" : "O'chiq");
+            state.setTextColor(on ? 0xFFF3E8FF : Theme.getColor(Theme.key_windowBackgroundWhiteGrayText));
+        }
     }
 
     private boolean currentValue(String key) {
@@ -269,6 +411,12 @@ public class AlfaSettingsActivity extends BaseFragment {
                     v = new org.telegram.ui.Cells.TextCell(mContext);
                     v.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundWhite));
                     break;
+                case TYPE_HERO:
+                    v = createHero(mContext);
+                    break;
+                case TYPE_QUICK:
+                    v = createQuickRow(mContext);
+                    break;
                 default:
                     v = new TextCheckCell(mContext);
                     v.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundWhite));
@@ -290,6 +438,9 @@ public class AlfaSettingsActivity extends BaseFragment {
                     break;
                 case TYPE_ACTION:
                     ((org.telegram.ui.Cells.TextCell) holder.itemView).setText(row.title, false);
+                    break;
+                case TYPE_QUICK:
+                    bindQuickRow((LinearLayout) holder.itemView);
                     break;
                 case TYPE_SWITCH:
                     TextCheckCell c = (TextCheckCell) holder.itemView;

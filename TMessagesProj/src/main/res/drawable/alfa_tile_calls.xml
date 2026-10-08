@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- AlfaGram plitka ikonka (icons.json dan yasalgan) -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <size android:width="30dp" android:height="30dp" />
+            <corners android:radius="9dp" />
+            <gradient android:angle="315" android:startColor="#10B981" android:endColor="#06B6D4" android:type="linear" />
+        </shape>
+    </item>
+    <item android:drawable="@drawable/alfa_glyph_calls" />
+</layer-list>

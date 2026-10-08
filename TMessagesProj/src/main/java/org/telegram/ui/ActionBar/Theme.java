@@ -2626,6 +2626,24 @@ public class Theme {
             accentBaseColor = themeAccentsMap.get(0).accentColor;
         }
 
+        // AlfaGram: brend accent — butun palitra shu rangga hisoblanadi, chiquvchi xabarlar gradient pufakda
+        private void addAlfaAccent(int accent, int myMessages, int myMessagesGradient, int background, int backgroundGradient1, int backgroundGradient2, int backgroundGradient3) {
+            ThemeAccent themeAccent = new ThemeAccent();
+            themeAccent.id = ALFA_ACCENT_ID;
+            themeAccent.accentColor = accent;
+            themeAccent.parentTheme = this;
+            themeAccent.myMessagesAccentColor = myMessages;
+            themeAccent.myMessagesGradientAccentColor1 = myMessagesGradient;
+            themeAccent.backgroundOverrideColor = background;
+            themeAccent.backgroundGradientOverrideColor1 = backgroundGradient1;
+            themeAccent.backgroundGradientOverrideColor2 = backgroundGradient2;
+            themeAccent.backgroundGradientOverrideColor3 = backgroundGradient3;
+            themeAccent.patternSlug = "";
+            themeAccentsMap.put(themeAccent.id, themeAccent);
+            themeAccents.add(themeAccent);
+            defaultAccentCount++;
+        }
+
         @UiThread
         private void loadThemeDocument() {
             loaded = false;
@@ -3030,6 +3048,8 @@ public class Theme {
     };
 
     public static int DEFALT_THEME_ACCENT_ID = 99;
+    // AlfaGram brend accent'i (binafsha → pushti). Blue va Dark Blue temalarida sukut bo'yicha tanlanadi.
+    public static final int ALFA_ACCENT_ID = 20;
     public static int selectedAutoNightType = AUTO_NIGHT_TYPE_NONE;
     public static boolean autoNightScheduleByLocation;
     public static float autoNightBrighnessThreshold = 0.25f;
@@ -4629,6 +4649,9 @@ public class Theme {
                 new int[]    {          0,                            180,                            45,                             0,                            45,                           180,                             0,                             0,                             0,                             0,                             0,                             0,                             0,                             0,                             0,                             0 },
                 new int[]    {          0,                             52,                            46,                            57,                            45,                            64,                            52,                            35,                            36,                            41,                            50,                            50,                            35,                            38,                            37,                            30 }
                 );
+        // AlfaGram: binafsha accent, gradient pufaklar, yumshoq lavanda-pushti fon
+        themeInfo.addAlfaAccent(0xFF7C3AED, 0xFF7C3AED, 0xFFEC4899, 0xFFE9E2FB, 0xFFF6E3F1, 0xFFDDD8F8, 0xFFF1E6FA);
+        themeInfo.currentAccentId = ALFA_ACCENT_ID;
         sortAccents(themeInfo);
         themes.add(currentDayTheme = defaultTheme = themeInfo);
         themesDict.put("Blue", themeInfo);
@@ -4653,6 +4676,9 @@ public class Theme {
                 new int[]    {                           225,                            45,                           225,                           135,                            45,                           225,                            45,                             0,                             0,                             0,                             0,                             0,                             0,                             0,                             0,                             0,                             0,                             0 },
                 new int[]    {                            40,                            40,                            31,                            50,                            25,                            34,                            35,                            35,                            38,                            29,                            24,                            34,                            34,                            31,                            29,                            37,                            21,                            38 }
                 );
+        // AlfaGram: tungi tema uchun yorqinroq binafsha accent, to'q siyohrang fon
+        themeInfo.addAlfaAccent(0xFFA78BFA, 0xFF7C3AED, 0xFFDB2777, 0xFF140E24, 0xFF22123A, 0xFF0F0B1A, 0xFF2A1035);
+        themeInfo.currentAccentId = ALFA_ACCENT_ID;
         sortAccents(themeInfo);
         themes.add(themeInfo);
         themesDict.put("Dark Blue", currentNightTheme = themeInfo);
@@ -4820,7 +4846,14 @@ public class Theme {
             for (ThemeInfo info : themesDict.values()) {
                 if (info.assetName != null && info.accentBaseColor != 0) {
                     String accents = themeConfig.getString("accents_" + info.assetName, null);
-                    info.currentAccentId = themeConfig.getInt("accent_current_" + info.assetName, info.firstAccentIsDefault ? DEFALT_THEME_ACCENT_ID : 0);
+                    info.currentAccentId = themeConfig.getInt("accent_current_" + info.assetName, alfaDefaultAccentId(info));
+                    // AlfaGram: eski build'lardan qolgan Telegram accent'ini bir marta brend accent'iga o'tkazish
+                    if (!themeConfig.getBoolean("alfa_accent_v1_" + info.assetName, false)) {
+                        if (info.themeAccentsMap != null && info.themeAccentsMap.get(ALFA_ACCENT_ID) != null) {
+                            info.currentAccentId = ALFA_ACCENT_ID;
+                            themeConfig.edit().putInt("accent_current_" + info.assetName, ALFA_ACCENT_ID).putBoolean("alfa_accent_v1_" + info.assetName, true).apply();
+                        }
+                    }
                     ArrayList<ThemeAccent> newAccents = new ArrayList<>();
                     if (!TextUtils.isEmpty(accents)) {
                         try {
@@ -4954,7 +4987,7 @@ public class Theme {
                         sortAccents(info);
                     }
                     if (info.themeAccentsMap != null && info.themeAccentsMap.get(info.currentAccentId) == null) {
-                        info.currentAccentId = info.firstAccentIsDefault ? DEFALT_THEME_ACCENT_ID : 0;
+                        info.currentAccentId = alfaDefaultAccentId(info);
                     }
                     info.loadWallpapers(themeConfig);
                     ThemeAccent accent = info.getAccent(false);
@@ -10566,6 +10599,13 @@ public class Theme {
 
     public static boolean isCurrentThemeDay() {
         return !getActiveTheme().isDark();
+    }
+
+    private static int alfaDefaultAccentId(ThemeInfo info) {
+        if (info.themeAccentsMap != null && info.themeAccentsMap.get(ALFA_ACCENT_ID) != null) {
+            return ALFA_ACCENT_ID;
+        }
+        return info.firstAccentIsDefault ? DEFALT_THEME_ACCENT_ID : 0;
     }
 
     public static boolean isHome(ThemeAccent accent) {

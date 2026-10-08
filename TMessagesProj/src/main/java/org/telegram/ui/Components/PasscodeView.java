@@ -1336,6 +1336,10 @@ public class PasscodeView extends FrameLayout implements NotificationCenter.Noti
             }
             ((MotionBackgroundDrawable) backgroundDrawable).setParentView(backgroundFrameLayout);
         }
+        // AlfaGram: qulf ekrani har doim brend gradientida (to'q binafsha → to'q pushti)
+        backgroundDrawable = new MotionBackgroundDrawable(0xFF2E1065, 0xFF831843, 0xFF4C1D95, 0xFF9D174D, false);
+        ((MotionBackgroundDrawable) backgroundDrawable).setParentView(backgroundFrameLayout);
+        backgroundFrameLayout.setBackgroundColor(backgroundFrameLayoutColor = 0x22000000);
 
         passcodeTextView.setText(LocaleController.getString(R.string.AppLocked));
 

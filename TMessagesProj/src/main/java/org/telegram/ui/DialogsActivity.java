@@ -498,6 +498,9 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
     private ValueAnimator contactsAlphaAnimator;
     private ViewPage[] viewPages;
     private ActionBarMenuItem passcodeItem;
+    // AlfaGram: sarlavhadagi Ghost rejimi tugmasi
+    private static final int ALFA_GHOST_ITEM_ID = 0x41FA;
+    private ActionBarMenuItem ghostItem;
     private ActionBarMenuItem downloadsItem;
     private DownloadProgressIcon downloadProgressIcon;
     private boolean downloadsItemVisible;
@@ -3270,6 +3273,12 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             passcodeItem = menu.addItem(1, R.drawable.outline_header_lock_24);
             passcodeItem.setContentDescription(getString(R.string.AccDescrPasscodeLock));
 
+            if (initialDialogsType == DIALOGS_TYPE_DEFAULT && folderId == 0) {
+                ghostItem = menu.addItem(ALFA_GHOST_ITEM_ID, R.drawable.alfa_ic_ghost);
+                ghostItem.setContentDescription("Ghost");
+                updateAlfaGhostItem();
+            }
+
             downloadsItem = menu.addItem(3, new ColorDrawable(Color.TRANSPARENT));
             downloadsItem.addView(downloadProgressIcon = new DownloadProgressIcon(currentAccount, context));
             downloadsItem.setContentDescription(getString(R.string.DownloadsTabs));
@@ -3896,6 +3905,12 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                     } else if (onlySelect || folderId != 0 || communityId != 0) {
                         finishFragment();
                     }
+                } else if (id == ALFA_GHOST_ITEM_ID) {
+                    boolean on = !org.telegram.messenger.AlfaFeatures.ghostMode;
+                    org.telegram.messenger.AlfaFeatures.setFlag("ghostMode", on);
+                    updateAlfaGhostItem();
+                    BulletinFactory.of(DialogsActivity.this).createSimpleBulletin(R.raw.chats_infotip,
+                        on ? "Ghost yoqildi — onlayn va «yozyapti» ko'rinmaydi" : "Ghost o'chirildi").show();
                 } else if (id == 1) {
                     if (getParentActivity() == null) {
                         return;
@@ -7020,6 +7035,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
     @Override
     public void onResume() {
         super.onResume();
+        updateAlfaGhostItem();
         if (!onlySelect && folderId == 0 && communityId == 0) {
             org.telegram.messenger.AlfaUpdate.onMainScreen(this);
             org.telegram.messenger.AlfaAds.onTransition(getParentActivity());
@@ -8847,6 +8863,62 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             return true;
         }
         return false;
+    }
+
+    // AlfaGram: Ghost yoqilgan bo'lsa — gradient squircle ichida oq belgi, aks holda oddiy sarlavha ikonkasi
+    private void updateAlfaGhostItem() {
+        if (ghostItem == null) {
+            return;
+        }
+        if (ghostDefaultFilter == null) {
+            ghostDefaultFilter = ghostItem.getIconView().getColorFilter();
+        }
+        boolean on = org.telegram.messenger.AlfaFeatures.ghostMode;
+        if (on) {
+            ghostItem.getIconView().setBackground(new AlfaSquircleDrawable(dp(34), dp(11)));
+            ghostItem.getIconView().setColorFilter(new PorterDuffColorFilter(0xFFFFFFFF, PorterDuff.Mode.SRC_IN));
+        } else {
+            ghostItem.getIconView().setBackground(null);
+            ghostItem.getIconView().setColorFilter(ghostDefaultFilter);
+        }
+    }
+
+    private android.graphics.ColorFilter ghostDefaultFilter;
+
+    /** Markazda brend gradientli squircle chizadigan fon. */
+    private static class AlfaSquircleDrawable extends Drawable {
+        private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private final RectF rect = new RectF();
+        private final float size, radius;
+
+        AlfaSquircleDrawable(float size, float radius) {
+            this.size = size;
+            this.radius = radius;
+        }
+
+        @Override
+        public void draw(@NonNull Canvas canvas) {
+            android.graphics.Rect b = getBounds();
+            float l = b.centerX() - size / 2f, t = b.centerY() - size / 2f;
+            rect.set(l, t, l + size, t + size);
+            paint.setShader(new android.graphics.LinearGradient(l, t, l + size, t + size,
+                org.telegram.messenger.AlfaFeatures.BRAND_START, org.telegram.messenger.AlfaFeatures.BRAND_END, android.graphics.Shader.TileMode.CLAMP));
+            canvas.drawRoundRect(rect, radius, radius, paint);
+        }
+
+        @Override
+        public void setAlpha(int alpha) {
+            paint.setAlpha(alpha);
+        }
+
+        @Override
+        public void setColorFilter(@Nullable android.graphics.ColorFilter colorFilter) {
+        }
+
+        @Override
+        public int getOpacity() {
+            return PixelFormat.TRANSLUCENT;
+        }
     }
 
     private void updateFloatingButtonVisibility(boolean animated) {
