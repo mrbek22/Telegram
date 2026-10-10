@@ -3048,7 +3048,7 @@ public class Theme {
     };
 
     public static int DEFALT_THEME_ACCENT_ID = 99;
-    // AlfaGram brend accent'i (binafsha → pushti). Blue va Dark Blue temalarida sukut bo'yicha tanlanadi.
+    // AlfaGram brend accent'i (ko'k, logotip ranglari). Blue va Dark Blue temalarida sukut bo'yicha tanlanadi.
     public static final int ALFA_ACCENT_ID = 20;
     public static int selectedAutoNightType = AUTO_NIGHT_TYPE_NONE;
     public static boolean autoNightScheduleByLocation;
@@ -4637,7 +4637,7 @@ public class Theme {
         themeInfo.currentAccentId = DEFALT_THEME_ACCENT_ID;
         themeInfo.sortIndex = 1;
         themeInfo.setAccentColorOptions(
-                new int[]    { 0xFF7C3AED,                     0xFF239853,                    0xFFCE5E82,                    0xFF7F63C3,                    0xFF2491AD,                    0xFF299C2F,                    0xFF8854B4,                    0xFF328ACF,                    0xFF43ACC7,                    0xFF52AC44,                    0xFFCD5F93,                    0xFFD28036,                    0xFF8366CC,                    0xFFCE4E57,                    0xFFD3AE40,                    0xFF7B88AB },
+                new int[]    { 0xFF5890C5,                     0xFF239853,                    0xFFCE5E82,                    0xFF7F63C3,                    0xFF2491AD,                    0xFF299C2F,                    0xFF8854B4,                    0xFF328ACF,                    0xFF43ACC7,                    0xFF52AC44,                    0xFFCD5F93,                    0xFFD28036,                    0xFF8366CC,                    0xFFCE4E57,                    0xFFD3AE40,                    0xFF7B88AB },
                 new int[]    { 0xFFB8E18D,                     0xFFFAFBCC,                    0xFFFFF9DC,                    0xFFC14F6E,                    0xFFD1BD1B,                    0xFFFFFAC9,                    0xFFFCF6D8,                    0x00000000,                    0x00000000,                    0x00000000,                    0x00000000,                    0x00000000,                    0x00000000,                    0x00000000,                    0x00000000,                    0x00000000 },
                 new int[]    { 0x00000000,                     0xFFF2FBC9,                    0xFFFBF4DF, 	                         0,	                             0,                    0xFFFDEDB4,                    0xFFFCF7B6,                    0x00000000,                    0x00000000,                    0x00000000,                    0x00000000,                    0x00000000,                    0x00000000,                    0x00000000,                    0x00000000,                    0x00000000 },
                 new int[]    { 0x00000000,                     0xFFdfe2a0,                    0xFFf1b290,                    0xFFd7c1e9,                    0xFFd7b89e,                    0xFFec9e73,                    0xFFcbb0e4,                    0xff9bbce7,                    0xff91c5ec,                    0xff9bc982,                    0xffe4a1c1,                    0xffe3ae7d,                    0xffb8aaea,                    0xffeb9c79,                    0xffd3bc74,                    0xffa0aace },
@@ -4649,8 +4649,8 @@ public class Theme {
                 new int[]    {          0,                            180,                            45,                             0,                            45,                           180,                             0,                             0,                             0,                             0,                             0,                             0,                             0,                             0,                             0,                             0 },
                 new int[]    {          0,                             52,                            46,                            57,                            45,                            64,                            52,                            35,                            36,                            41,                            50,                            50,                            35,                            38,                            37,                            30 }
                 );
-        // AlfaGram: binafsha accent, gradient pufaklar, yumshoq lavanda-pushti fon
-        themeInfo.addAlfaAccent(0xFF7C3AED, 0xFF7C3AED, 0xFFEC4899, 0xFFE9E2FB, 0xFFF6E3F1, 0xFFDDD8F8, 0xFFF1E6FA);
+        // AlfaGram: ko'k accent (logotip), ko'k gradient pufaklar (oq matn kontrasti >= 5.1:1), yumshoq ko'kish fon
+        themeInfo.addAlfaAccent(0xFF1A73E8, 0xFF2563EB, 0xFF0270B0, 0xFFD9E6FB, 0xFFEAF2FE, 0xFFCFDFF7, 0xFFE2EDFC);
         themeInfo.currentAccentId = ALFA_ACCENT_ID;
         sortAccents(themeInfo);
         themes.add(currentDayTheme = defaultTheme = themeInfo);
@@ -4676,8 +4676,8 @@ public class Theme {
                 new int[]    {                           225,                            45,                           225,                           135,                            45,                           225,                            45,                             0,                             0,                             0,                             0,                             0,                             0,                             0,                             0,                             0,                             0,                             0 },
                 new int[]    {                            40,                            40,                            31,                            50,                            25,                            34,                            35,                            35,                            38,                            29,                            24,                            34,                            34,                            31,                            29,                            37,                            21,                            38 }
                 );
-        // AlfaGram: tungi tema uchun yorqinroq binafsha accent, to'q siyohrang fon
-        themeInfo.addAlfaAccent(0xFFA78BFA, 0xFF7C3AED, 0xFFDB2777, 0xFF140E24, 0xFF22123A, 0xFF0F0B1A, 0xFF2A1035);
+        // AlfaGram: tungi tema — yorqin ko'k accent, to'q ko'k pufaklar (oq matn >= 5.9:1), to'q navy fon
+        themeInfo.addAlfaAccent(0xFF3D9BFF, 0xFF1D4ED8, 0xFF0369A1, 0xFF0B1226, 0xFF12224A, 0xFF080D1C, 0xFF0C1A3A);
         themeInfo.currentAccentId = ALFA_ACCENT_ID;
         sortAccents(themeInfo);
         themes.add(themeInfo);
@@ -4847,11 +4847,20 @@ public class Theme {
                 if (info.assetName != null && info.accentBaseColor != 0) {
                     String accents = themeConfig.getString("accents_" + info.assetName, null);
                     info.currentAccentId = themeConfig.getInt("accent_current_" + info.assetName, alfaDefaultAccentId(info));
-                    // AlfaGram: eski build'lardan qolgan Telegram accent'ini bir marta brend accent'iga o'tkazish
-                    if (!themeConfig.getBoolean("alfa_accent_v1_" + info.assetName, false)) {
+                    // AlfaGram: brend accent migratsiyasi (v2 — ko'k), bir marta.
+                    // Accent 20 ranglari saqlanmaydi (id < 100), koddan olinadi: v1'da binafsha 20 olganlar avtomatik ko'k bo'ladi.
+                    // v1 bajarilgan bo'lsa, keyin foydalanuvchi o'zi tanlagan accent/temaga tegilmaydi.
+                    if (!themeConfig.getBoolean("alfa_accent_v2_" + info.assetName, false)) {
                         if (info.themeAccentsMap != null && info.themeAccentsMap.get(ALFA_ACCENT_ID) != null) {
-                            info.currentAccentId = ALFA_ACCENT_ID;
-                            themeConfig.edit().putInt("accent_current_" + info.assetName, ALFA_ACCENT_ID).putBoolean("alfa_accent_v1_" + info.assetName, true).apply();
+                            SharedPreferences.Editor alfaEditor = themeConfig.edit()
+                                    .putBoolean("alfa_accent_v1_" + info.assetName, true)
+                                    .putBoolean("alfa_accent_v2_" + info.assetName, true);
+                            if (!themeConfig.getBoolean("alfa_accent_v1_" + info.assetName, false)) {
+                                // eski build'lardan qolgan Telegram accent'i -> brend accent
+                                info.currentAccentId = ALFA_ACCENT_ID;
+                                alfaEditor.putInt("accent_current_" + info.assetName, ALFA_ACCENT_ID);
+                            }
+                            alfaEditor.apply();
                         }
                     }
                     ArrayList<ThemeAccent> newAccents = new ArrayList<>();

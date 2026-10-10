@@ -18,9 +18,9 @@ public class AlfaFeatures {
      */
     public static final boolean PLAY_BUILD = true;
 
-    /** Brend gradienti (alfagram-design/icons.json "brand"): binafsha → pushti. */
-    public static final int BRAND_START = 0xFF7C3AED;
-    public static final int BRAND_END = 0xFFEC4899;
+    /** Brend gradienti (ko'k logotip): royal ko'k → okean ko'k. Oq matn kontrasti har nuqtada >= 5.1:1. */
+    public static final int BRAND_START = 0xFF2563EB;
+    public static final int BRAND_END = 0xFF0270B0;
 
     // ── Xabar himoyasi ─────────────────────────────
     public static boolean antiDelete = true;

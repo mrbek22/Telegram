@@ -10,12 +10,20 @@
                 android:type="linear"
                 android:startX="64" android:startY="64"
                 android:endX="256" android:endY="256"
-                android:startColor="#7C3AED"
-                android:endColor="#EC4899" />
+                android:startColor="#0A2470"
+                android:endColor="#010728" />
         </aapt:attr>
     </path>
     <path
-        android:fillColor="#FFFFFF"
         android:fillType="evenOdd"
-        android:pathData="M160,93 L227,227 L93,227 Z M160,136 L186,179 L134,179 Z M143,227 L160,194 L177,227 Z" />
+        android:pathData="M160,93 L227,227 L93,227 Z M160,136 L186,179 L134,179 Z M143,227 L160,194 L177,227 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="linear"
+                android:startX="160" android:startY="93"
+                android:endX="160" android:endY="227"
+                android:startColor="#FFFFFF"
+                android:endColor="#4DB2FF" />
+        </aapt:attr>
+    </path>
 </vector>

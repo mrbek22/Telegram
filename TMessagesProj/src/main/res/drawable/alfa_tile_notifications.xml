@@ -5,7 +5,7 @@
         <shape android:shape="rectangle">
             <size android:width="30dp" android:height="30dp" />
             <corners android:radius="9dp" />
-            <gradient android:angle="315" android:startColor="#EC4899" android:endColor="#F97316" android:type="linear" />
+            <gradient android:angle="315" android:startColor="#EF4444" android:endColor="#F97316" android:type="linear" />
         </shape>
     </item>
     <item android:drawable="@drawable/alfa_glyph_notifications" />

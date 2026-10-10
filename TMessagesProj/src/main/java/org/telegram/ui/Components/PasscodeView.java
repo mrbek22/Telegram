@@ -1336,8 +1336,8 @@ public class PasscodeView extends FrameLayout implements NotificationCenter.Noti
             }
             ((MotionBackgroundDrawable) backgroundDrawable).setParentView(backgroundFrameLayout);
         }
-        // AlfaGram: qulf ekrani har doim brend gradientida (to'q binafsha → to'q pushti)
-        backgroundDrawable = new MotionBackgroundDrawable(0xFF2E1065, 0xFF831843, 0xFF4C1D95, 0xFF9D174D, false);
+        // AlfaGram: qulf ekrani har doim brend gradientida (logotip: to'q navy → ko'k)
+        backgroundDrawable = new MotionBackgroundDrawable(0xFF010728, 0xFF0034B6, 0xFF061A52, 0xFF0B5CC0, false);
         ((MotionBackgroundDrawable) backgroundDrawable).setParentView(backgroundFrameLayout);
         backgroundFrameLayout.setBackgroundColor(backgroundFrameLayoutColor = 0x22000000);
 

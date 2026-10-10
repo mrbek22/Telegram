@@ -45,7 +45,7 @@ public class AlfaSettingsActivity extends BaseFragment {
     private static final String[] QUICK_KEYS = { "ghostMode", "stealthStories", "noReadReceipts" };
     private static final String[] QUICK_TITLES = { "Ghost", "Story", "O'qildi" };
     private static final int[] QUICK_ICONS = { R.drawable.alfa_ic_ghost, R.drawable.alfa_ic_stealth, R.drawable.alfa_ic_privacy };
-    private static final int[][] QUICK_GRADIENTS = { { 0xFF4F46E5, 0xFF8B5CF6 }, { 0xFF7C3AED, 0xFFEC4899 }, { 0xFF06B6D4, 0xFF6366F1 } };
+    private static final int[][] QUICK_GRADIENTS = { { 0xFF0034B6, 0xFF2563EB }, { AlfaFeatures.BRAND_START, AlfaFeatures.BRAND_END }, { 0xFF0E7490, 0xFF1D4ED8 } };
 
     private ListAdapter listAdapter;
 
@@ -281,7 +281,7 @@ public class AlfaSettingsActivity extends BaseFragment {
 
         TextView subtitle = new TextView(context);
         subtitle.setText("Yashirin funksiyalar · bepul");
-        subtitle.setTextColor(0xFFF3E8FF);
+        subtitle.setTextColor(0xFFEFF6FF);
         subtitle.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13);
         texts.addView(subtitle, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, 0, 3, 0, 0));
         return wrap;
@@ -340,7 +340,7 @@ public class AlfaSettingsActivity extends BaseFragment {
             name.setTextColor(on ? 0xFFFFFFFF : Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
             TextView state = (TextView) tile.getChildAt(2);
             state.setText(on ? "Yoqilgan" : "O'chiq");
-            state.setTextColor(on ? 0xFFF3E8FF : Theme.getColor(Theme.key_windowBackgroundWhiteGrayText));
+            state.setTextColor(on ? 0xFFEFF6FF : Theme.getColor(Theme.key_windowBackgroundWhiteGrayText));
         }
     }
 
