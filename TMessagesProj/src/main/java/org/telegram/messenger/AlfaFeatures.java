@@ -2,10 +2,18 @@ package org.telegram.messenger;
 
 import android.content.SharedPreferences;
 
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+
 /**
  * AlfaGram — yashirin funksiyalar bayroqlari.
  * Bo'limlar bo'yicha guruhlangan, sozlamalar ekranidan boshqariladi.
  * loadPrefs() bir marta ilova ishga tushganda chaqirilishi kerak.
+ *
+ * Public static maydonlar — SAMARALI qiymat = foydalanuvchi tanlovi && server ruxsati.
+ * Server (AlfaConfig) funksiyani faqat O'CHIRA oladi (kill-switch), majburan yoqa olmaydi.
+ * Yangi bayroq: maydon + KEYS + getField() + setField().
  */
 public class AlfaFeatures {
 
@@ -97,106 +105,249 @@ public class AlfaFeatures {
     /** Debug: Loglarni ko'rsatish. */
     public static boolean debugLogs = false;
 
+    /** Barcha bayroq kalitlari (SharedPreferences kaliti = maydon nomi). */
+    private static final String[] KEYS = {
+            "antiDelete", "editHistory", "typingLog",
+            "confirmSend", "sendByEnter", "silentByDefault",
+            "unrestrictedSave", "allowScreenshots", "unlimitedPins", "forwardWithoutAuthor", "forwardWithoutReply",
+            "hideStories", "hideMuted", "compactChats",
+            "showMessageIds", "swipeToReply", "disableStickerSuggest", "fastSendAnimation",
+            "ghostMode", "stealthStories", "hidePhoneInSettings", "blurAppInRecents", "noReadReceipts",
+            "showIdInProfile", "hideSeenTicks", "disableAnimations",
+            "autoSaveVoice", "autoSaveVideoNotes",
+            "blockTelegramAds", "hideSponsoredMessages",
+            "openLastChat", "debugLogs",
+    };
+
+    /** Foydalanuvchi tanlovi (server ta'sirisiz) — sozlamalar switch'i shuni ko'rsatadi. */
+    private static final HashMap<String, Boolean> userPrefs = new HashMap<>();
+    /** Server o'chirib qo'ygan (kill-switch) kalitlar. */
+    private static final HashSet<String> remoteDisabled = new HashSet<>();
+    /** loadPrefs tugadi — endi yon ta'sirlar ishlashi mumkin. */
+    private static boolean ready;
+
+    static {
+        // Boshlang'ich tanlov = maydonlardagi sukut qiymatlari
+        for (String k : KEYS) {
+            userPrefs.put(k, getField(k));
+        }
+    }
+
+    private static SharedPreferences prefs() {
+        return ApplicationLoader.applicationContext.getSharedPreferences(PREFS, 0);
+    }
+
     /** Sozlamalarni SharedPreferences'dan yuklash (bir marta). */
     public static void loadPrefs() {
-        if (loaded) return;
-        loaded = true;
+        synchronized (AlfaFeatures.class) {
+            if (loaded) return;
+            loaded = true;
+            try {
+                SharedPreferences p = prefs();
+                for (String k : KEYS) {
+                    try {
+                        if (p.contains(k)) {
+                            userPrefs.put(k, p.getBoolean(k, getUserPref(k)));
+                        }
+                    } catch (Throwable ignore) {
+                    }
+                }
+            } catch (Throwable ignore) {
+            }
+            recomputeAll(null);
+        }
+        // Keshdagi server cheklovlari ilova boshidanoq qo'llansin
         try {
-            SharedPreferences p = ApplicationLoader.applicationContext.getSharedPreferences(PREFS, 0);
-            antiDelete = p.getBoolean("antiDelete", antiDelete);
-            editHistory = p.getBoolean("editHistory", editHistory);
-            typingLog = p.getBoolean("typingLog", typingLog);
+            AlfaConfig.loadCached();
+        } catch (Throwable ignore) {
+        }
+        synchronized (AlfaFeatures.class) {
+            ready = true;
+        }
+    }
 
-            confirmSend = p.getBoolean("confirmSend", confirmSend);
-            sendByEnter = p.getBoolean("sendByEnter", sendByEnter);
-            silentByDefault = p.getBoolean("silentByDefault", silentByDefault);
+    /** Bitta bayroqni yozib qo'yish (sozlamalar ekranidan): foydalanuvchi tanlovi saqlanadi. */
+    public static void setFlag(String key, boolean value) {
+        if (key == null) return;
+        boolean changed = false;
+        boolean effective;
+        synchronized (AlfaFeatures.class) {
+            userPrefs.put(key, value);
+            try {
+                prefs().edit().putBoolean(key, value).apply();
+            } catch (Throwable ignore) {
+            }
+            effective = value && !remoteDisabled.contains(key);
+            if (getField(key) != effective) {
+                setField(key, effective);
+                changed = true;
+            }
+        }
+        if (changed) {
+            onFlagChanged(key, effective);
+        }
+    }
 
-            unrestrictedSave = p.getBoolean("unrestrictedSave", unrestrictedSave);
-            allowScreenshots = p.getBoolean("allowScreenshots", allowScreenshots);
-            unlimitedPins = p.getBoolean("unlimitedPins", unlimitedPins);
-            forwardWithoutAuthor = p.getBoolean("forwardWithoutAuthor", forwardWithoutAuthor);
-            forwardWithoutReply = p.getBoolean("forwardWithoutReply", forwardWithoutReply);
+    /**
+     * Server cheklovlari (AlfaConfig.parse, UI oqimida). disabled — server false bergan kalitlar;
+     * null yoki bo'sh = hammasiga ruxsat. loadPrefs'dan oldin ham, keyin ham chaqirilishi mumkin.
+     */
+    public static void applyRemote(Collection<String> disabled) {
+        HashSet<String> changed = new HashSet<>();
+        boolean notify;
+        synchronized (AlfaFeatures.class) {
+            remoteDisabled.clear();
+            if (disabled != null) {
+                for (String k : disabled) {
+                    if (k != null) remoteDisabled.add(k);
+                }
+            }
+            recomputeAll(changed);
+            notify = ready;
+        }
+        if (notify) {
+            for (String k : changed) {
+                onFlagChanged(k, getField(k));
+            }
+        }
+    }
 
-            hideStories = p.getBoolean("hideStories", hideStories);
-            hideMuted = p.getBoolean("hideMuted", hideMuted);
-            compactChats = p.getBoolean("compactChats", compactChats);
+    /** Foydalanuvchi tanlovi (server cheklovisiz). */
+    public static synchronized boolean getUserPref(String key) {
+        if (key == null) return false;
+        Boolean v = userPrefs.get(key);
+        if (v == null) {
+            // KEYS'da yo'q kalit — saqlangan qiymatdan o'qiladi
+            try {
+                v = prefs().getBoolean(key, false);
+            } catch (Throwable ignore) {
+                v = false;
+            }
+            userPrefs.put(key, v);
+        }
+        return v;
+    }
 
-            showMessageIds = p.getBoolean("showMessageIds", showMessageIds);
-            swipeToReply = p.getBoolean("swipeToReply", swipeToReply);
-            disableStickerSuggest = p.getBoolean("disableStickerSuggest", disableStickerSuggest);
-            fastSendAnimation = p.getBoolean("fastSendAnimation", fastSendAnimation);
+    /** Server bu funksiyaga ruxsat beradimi (false = server o'chirgan). */
+    public static synchronized boolean isRemoteAllowed(String key) {
+        return key == null || !remoteDisabled.contains(key);
+    }
 
-            ghostMode = p.getBoolean("ghostMode", ghostMode);
-            stealthStories = p.getBoolean("stealthStories", stealthStories);
-            hidePhoneInSettings = p.getBoolean("hidePhoneInSettings", hidePhoneInSettings);
-            blurAppInRecents = p.getBoolean("blurAppInRecents", blurAppInRecents);
-            noReadReceipts = p.getBoolean("noReadReceipts", noReadReceipts);
+    /** Samarali qiymatlarni qayta hisoblash; o'zgarganlar changed'ga yoziladi. */
+    private static void recomputeAll(Collection<String> changed) {
+        for (String k : KEYS) {
+            boolean effective = getUserPref(k) && !remoteDisabled.contains(k);
+            if (getField(k) != effective) {
+                setField(k, effective);
+                if (changed != null) changed.add(k);
+            }
+        }
+    }
 
-            showIdInProfile = p.getBoolean("showIdInProfile", showIdInProfile);
-            hideSeenTicks = p.getBoolean("hideSeenTicks", hideSeenTicks);
-            disableAnimations = p.getBoolean("disableAnimations", disableAnimations);
-
-            autoSaveVoice = p.getBoolean("autoSaveVoice", autoSaveVoice);
-            autoSaveVideoNotes = p.getBoolean("autoSaveVideoNotes", autoSaveVideoNotes);
-
-            blockTelegramAds = p.getBoolean("blockTelegramAds", blockTelegramAds);
-            hideSponsoredMessages = p.getBoolean("hideSponsoredMessages", hideSponsoredMessages);
-
-            openLastChat = p.getBoolean("openLastChat", openLastChat);
-            debugLogs = p.getBoolean("debugLogs", debugLogs);
+    /**
+     * Bayroqning samarali qiymati o'zgarganda chaqiriladi (setFlag yoki server cheklovi, UI oqimida).
+     * Toggle paytidagi yon ta'sirlar shu switch'ga: 'value' — yangi samarali qiymat.
+     */
+    private static void onFlagChanged(String key, boolean value) {
+        try {
+            switch (key) {
+                default:
+                    break;
+            }
         } catch (Throwable ignore) {
         }
     }
 
-    /** Bitta bayroqni yozib qo'yish (sozlamalar ekranidan). */
-    public static void setFlag(String key, boolean value) {
-        try {
-            SharedPreferences p = ApplicationLoader.applicationContext.getSharedPreferences(PREFS, 0);
-            p.edit().putBoolean(key, value).apply();
-            switch (key) {
-                case "antiDelete": antiDelete = value; break;
-                case "editHistory": editHistory = value; break;
-                case "typingLog": typingLog = value; break;
+    private static boolean getField(String key) {
+        switch (key) {
+            case "antiDelete": return antiDelete;
+            case "editHistory": return editHistory;
+            case "typingLog": return typingLog;
 
-                case "confirmSend": confirmSend = value; break;
-                case "sendByEnter": sendByEnter = value; break;
-                case "silentByDefault": silentByDefault = value; break;
+            case "confirmSend": return confirmSend;
+            case "sendByEnter": return sendByEnter;
+            case "silentByDefault": return silentByDefault;
 
-                case "unrestrictedSave": unrestrictedSave = value; break;
-                case "allowScreenshots": allowScreenshots = value; break;
-                case "unlimitedPins": unlimitedPins = value; break;
-                case "forwardWithoutAuthor": forwardWithoutAuthor = value; break;
-                case "forwardWithoutReply": forwardWithoutReply = value; break;
+            case "unrestrictedSave": return unrestrictedSave;
+            case "allowScreenshots": return allowScreenshots;
+            case "unlimitedPins": return unlimitedPins;
+            case "forwardWithoutAuthor": return forwardWithoutAuthor;
+            case "forwardWithoutReply": return forwardWithoutReply;
 
-                case "hideStories": hideStories = value; break;
-                case "hideMuted": hideMuted = value; break;
-                case "compactChats": compactChats = value; break;
+            case "hideStories": return hideStories;
+            case "hideMuted": return hideMuted;
+            case "compactChats": return compactChats;
 
-                case "showMessageIds": showMessageIds = value; break;
-                case "swipeToReply": swipeToReply = value; break;
-                case "disableStickerSuggest": disableStickerSuggest = value; break;
-                case "fastSendAnimation": fastSendAnimation = value; break;
+            case "showMessageIds": return showMessageIds;
+            case "swipeToReply": return swipeToReply;
+            case "disableStickerSuggest": return disableStickerSuggest;
+            case "fastSendAnimation": return fastSendAnimation;
 
-                case "ghostMode": ghostMode = value; break;
-                case "stealthStories": stealthStories = value; break;
-                case "hidePhoneInSettings": hidePhoneInSettings = value; break;
-                case "blurAppInRecents": blurAppInRecents = value; break;
-                case "noReadReceipts": noReadReceipts = value; break;
+            case "ghostMode": return ghostMode;
+            case "stealthStories": return stealthStories;
+            case "hidePhoneInSettings": return hidePhoneInSettings;
+            case "blurAppInRecents": return blurAppInRecents;
+            case "noReadReceipts": return noReadReceipts;
 
-                case "showIdInProfile": showIdInProfile = value; break;
-                case "hideSeenTicks": hideSeenTicks = value; break;
-                case "disableAnimations": disableAnimations = value; break;
+            case "showIdInProfile": return showIdInProfile;
+            case "hideSeenTicks": return hideSeenTicks;
+            case "disableAnimations": return disableAnimations;
 
-                case "autoSaveVoice": autoSaveVoice = value; break;
-                case "autoSaveVideoNotes": autoSaveVideoNotes = value; break;
+            case "autoSaveVoice": return autoSaveVoice;
+            case "autoSaveVideoNotes": return autoSaveVideoNotes;
 
-                case "blockTelegramAds": blockTelegramAds = value; break;
-                case "hideSponsoredMessages": hideSponsoredMessages = value; break;
+            case "blockTelegramAds": return blockTelegramAds;
+            case "hideSponsoredMessages": return hideSponsoredMessages;
 
-                case "openLastChat": openLastChat = value; break;
-                case "debugLogs": debugLogs = value; break;
-            }
-        } catch (Throwable ignore) {
+            case "openLastChat": return openLastChat;
+            case "debugLogs": return debugLogs;
+            default: return false;
+        }
+    }
+
+    private static void setField(String key, boolean value) {
+        switch (key) {
+            case "antiDelete": antiDelete = value; break;
+            case "editHistory": editHistory = value; break;
+            case "typingLog": typingLog = value; break;
+
+            case "confirmSend": confirmSend = value; break;
+            case "sendByEnter": sendByEnter = value; break;
+            case "silentByDefault": silentByDefault = value; break;
+
+            case "unrestrictedSave": unrestrictedSave = value; break;
+            case "allowScreenshots": allowScreenshots = value; break;
+            case "unlimitedPins": unlimitedPins = value; break;
+            case "forwardWithoutAuthor": forwardWithoutAuthor = value; break;
+            case "forwardWithoutReply": forwardWithoutReply = value; break;
+
+            case "hideStories": hideStories = value; break;
+            case "hideMuted": hideMuted = value; break;
+            case "compactChats": compactChats = value; break;
+
+            case "showMessageIds": showMessageIds = value; break;
+            case "swipeToReply": swipeToReply = value; break;
+            case "disableStickerSuggest": disableStickerSuggest = value; break;
+            case "fastSendAnimation": fastSendAnimation = value; break;
+
+            case "ghostMode": ghostMode = value; break;
+            case "stealthStories": stealthStories = value; break;
+            case "hidePhoneInSettings": hidePhoneInSettings = value; break;
+            case "blurAppInRecents": blurAppInRecents = value; break;
+            case "noReadReceipts": noReadReceipts = value; break;
+
+            case "showIdInProfile": showIdInProfile = value; break;
+            case "hideSeenTicks": hideSeenTicks = value; break;
+            case "disableAnimations": disableAnimations = value; break;
+
+            case "autoSaveVoice": autoSaveVoice = value; break;
+            case "autoSaveVideoNotes": autoSaveVideoNotes = value; break;
+
+            case "blockTelegramAds": blockTelegramAds = value; break;
+            case "hideSponsoredMessages": hideSponsoredMessages = value; break;
+
+            case "openLastChat": openLastChat = value; break;
+            case "debugLogs": debugLogs = value; break;
         }
     }
 }
