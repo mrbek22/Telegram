@@ -1709,6 +1709,8 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
     public int timeX;
     public int signWidth;
     private CharSequence currentTimeString;
+    // AlfaGram: vaqt qatori qaysi xabar ID si bilan o'lchangan
+    private int alfaTimeMsgId;
     private boolean drawTime = true;
     private boolean forceNotDrawTime;
     private Paint drillHolePaint;
@@ -6740,6 +6742,11 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                 wasPinned != isPinned ||
                 newReply != lastReplyMessage ||
                 messageObject.translated != lastTranslated;
+        // AlfaGram: yangi yuborilgan xabar server ID olganda vaqt qatori (#ID) qayta o'lchanadi
+        if (org.telegram.messenger.AlfaFeatures.showMessageIds && currentMessageObject == messageObject && !messageObject.scheduled && alfaTimeMsgId < 0 && messageObject.getId() > 0) {
+            alfaTimeMsgId = messageObject.getId();
+            dataChanged = true;
+        }
         boolean groupChanged = groupedMessages != currentMessagesGroup;
         boolean pollChanged = false;
 
@@ -18410,6 +18417,11 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
         if (currentMessageObject.messageOwner.video_processing_pending) {
             timeString = formatString(R.string.ScheduledTimeApprox, timeString);
         }
+        // AlfaGram: xabar ID si vaqt oldida: "#1234 · 15:59" (faqat server xabarlari)
+        alfaTimeMsgId = messageObject.getId();
+        if (org.telegram.messenger.AlfaFeatures.showMessageIds && !TextUtils.isEmpty(timeString) && !messageObject.scheduled && messageObject.getId() > 0) {
+            timeString = "#" + messageObject.getId() + " · " + timeString;
+        }
         if (signString != null) {
             if (messageObject.messageOwner.via_business_bot_id != 0) {
                 currentTimeString = timeString + ", ";
@@ -24008,21 +24020,25 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                 canvas.save();
                 canvas.translate(0, transitionYOffsetForDrawables);
             }
-            if (!org.telegram.messenger.AlfaFeatures.hideSeenTicks) {
-                if (statusDrawableAnimationInProgress) {
-                    boolean outDrawCheck1 = (animateFromStatusDrawableParams & 1) != 0;
-                    boolean outDrawCheck2 = (animateFromStatusDrawableParams & 2) != 0;
-                    boolean outDrawClock = (animateFromStatusDrawableParams & 4) != 0;
-                    boolean outDrawError = (animateFromStatusDrawableParams & 8) != 0;
-                    if (!outDrawClock && outDrawCheck2 && drawCheck2 && !outDrawCheck1 && drawCheck1) {
-                        drawStatusDrawable(canvas, drawCheck1, drawCheck2, drawClock, drawError, alpha, bigRadius, timeYOffset, layoutHeight, statusDrawableProgress, true, drawSelectionBackground);
-                    } else {
-                        drawStatusDrawable(canvas, outDrawCheck1, outDrawCheck2, outDrawClock, outDrawError, alpha, bigRadius, timeYOffset, layoutHeight, 1f - statusDrawableProgress, false, drawSelectionBackground);
-                        drawStatusDrawable(canvas, drawCheck1, drawCheck2, drawClock, drawError, alpha, bigRadius, timeYOffset, layoutHeight, statusDrawableProgress, false, drawSelectionBackground);
-                    }
+            // AlfaGram: tiklar (yuborildi/ko'rildi) yashiriladi, soat va xato belgisi esa ko'rinib turadi
+            final boolean alfaHideTicks = org.telegram.messenger.AlfaFeatures.hideSeenTicks;
+            if (alfaHideTicks) {
+                drawCheck1 = false;
+                drawCheck2 = false;
+            }
+            if (statusDrawableAnimationInProgress) {
+                boolean outDrawCheck1 = !alfaHideTicks && (animateFromStatusDrawableParams & 1) != 0;
+                boolean outDrawCheck2 = !alfaHideTicks && (animateFromStatusDrawableParams & 2) != 0;
+                boolean outDrawClock = (animateFromStatusDrawableParams & 4) != 0;
+                boolean outDrawError = (animateFromStatusDrawableParams & 8) != 0;
+                if (!outDrawClock && outDrawCheck2 && drawCheck2 && !outDrawCheck1 && drawCheck1) {
+                    drawStatusDrawable(canvas, drawCheck1, drawCheck2, drawClock, drawError, alpha, bigRadius, timeYOffset, layoutHeight, statusDrawableProgress, true, drawSelectionBackground);
                 } else {
-                    drawStatusDrawable(canvas, drawCheck1, drawCheck2, drawClock, drawError, alpha, bigRadius, timeYOffset, layoutHeight, 1, false, drawSelectionBackground);
+                    drawStatusDrawable(canvas, outDrawCheck1, outDrawCheck2, outDrawClock, outDrawError, alpha, bigRadius, timeYOffset, layoutHeight, 1f - statusDrawableProgress, false, drawSelectionBackground);
+                    drawStatusDrawable(canvas, drawCheck1, drawCheck2, drawClock, drawError, alpha, bigRadius, timeYOffset, layoutHeight, statusDrawableProgress, false, drawSelectionBackground);
                 }
+            } else {
+                drawStatusDrawable(canvas, drawCheck1, drawCheck2, drawClock, drawError, alpha, bigRadius, timeYOffset, layoutHeight, 1, false, drawSelectionBackground);
             }
             if (needRestore) {
                 canvas.restore();
