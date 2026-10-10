@@ -1,21 +1,8 @@
-<vector xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:aapt="http://schemas.android.com/aapt"
-    android:width="320dp"
-    android:height="320dp"
-    android:viewportWidth="320"
-    android:viewportHeight="320">
-    <path android:pathData="M108,64 L212,64 A44,44 0 0 1 256,108 L256,212 A44,44 0 0 1 212,256 L108,256 A44,44 0 0 1 64,212 L64,108 A44,44 0 0 1 108,64 Z">
-        <aapt:attr name="android:fillColor">
-            <gradient
-                android:type="linear"
-                android:startX="64" android:startY="64"
-                android:endX="256" android:endY="256"
-                android:startColor="#7C3AED"
-                android:endColor="#EC4899" />
-        </aapt:attr>
-    </path>
-    <path
-        android:fillColor="#FFFFFF"
-        android:fillType="evenOdd"
-        android:pathData="M160,93 L227,227 L93,227 Z M160,136 L186,179 L134,179 Z M143,227 L160,194 L177,227 Z" />
-</vector>
+<?xml version="1.0" encoding="utf-8"?>
+<!-- AlfaGram: Android 12+ splash ikonkasi — yangi ko'k "A" logotipi (eski binafsha belgi o'rniga).
+     alfa_splash_logo.png: alfa_logo kanvasning 50% ida, tizim doira niqobi (2/3) burchaklarni kesmaydi. -->
+<bitmap xmlns:android="http://schemas.android.com/apk/res/android"
+    android:src="@drawable/alfa_splash_logo"
+    android:antialias="true"
+    android:filter="true"
+    android:gravity="fill" />
