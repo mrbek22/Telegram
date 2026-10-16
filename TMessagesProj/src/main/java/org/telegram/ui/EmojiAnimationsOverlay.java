@@ -881,6 +881,11 @@ public class EmojiAnimationsOverlay implements NotificationCenter.NotificationCe
         if (lastTappedMsgId == 0) {
             return;
         }
+        // AlfaGram — ghostMode: emoji o'zaro ta'siri (typing action) yuborilmaydi
+        if (org.telegram.messenger.AlfaFeatures.ghostMode) {
+            clearSendingInfo();
+            return;
+        }
         TLRPC.TL_sendMessageEmojiInteraction interaction = new TLRPC.TL_sendMessageEmojiInteraction();
         interaction.msg_id = lastTappedMsgId;
         interaction.emoticon = lastTappedEmoji;

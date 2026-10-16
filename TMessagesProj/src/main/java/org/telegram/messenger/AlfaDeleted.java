@@ -9,6 +9,9 @@ import org.telegram.tgnet.NativeByteBuffer;
 import org.telegram.tgnet.TLRPC;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * AlfaGram — o'chirilgan xabarlar arxivi.
@@ -19,6 +22,9 @@ public class AlfaDeleted extends SQLiteOpenHelper {
 
     private static volatile AlfaDeleted instance;
     private static final int LIMIT_PER_DIALOG = 500;
+
+    // Shu sessiyada ushlab qolingan xabarlar (account_dialog_mid) — UI uchun tez tekshiruv, DB'siz
+    private final Set<String> keptKeys = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     public static AlfaDeleted getInstance() {
         if (instance == null) {
@@ -53,6 +59,7 @@ public class AlfaDeleted extends SQLiteOpenHelper {
         if (msg == null || msg.id == 0) {
             return;
         }
+        keptKeys.add(account + "_" + dialogId + "_" + msg.id);
         try {
             SQLiteDatabase db = getWritableDatabase();
             long now = System.currentTimeMillis();
@@ -82,6 +89,11 @@ public class AlfaDeleted extends SQLiteOpenHelper {
         } catch (Throwable t) {
             FileLog.e(t);
         }
+    }
+
+    /** Bu xabar shu sessiyada yuboruvchi tomonidan o'chirilib, ushlab qolinganmi (DB'siz). */
+    public boolean isKept(int account, long dialogId, int messageId) {
+        return keptKeys.contains(account + "_" + dialogId + "_" + messageId);
     }
 
     public static class Record {
@@ -117,6 +129,15 @@ public class AlfaDeleted extends SQLiteOpenHelper {
 
     /** Chat uchun barcha o'chirilgan xabarlarni tozalaydi. */
     public void clear(int account, long dialogId) {
+        try {
+            String prefix = account + "_" + dialogId + "_";
+            for (java.util.Iterator<String> it = keptKeys.iterator(); it.hasNext(); ) {
+                if (it.next().startsWith(prefix)) {
+                    it.remove();
+                }
+            }
+        } catch (Throwable ignore) {
+        }
         try {
             SQLiteDatabase db = getWritableDatabase();
             db.execSQL("DELETE FROM deleted WHERE account=? AND dialog_id=?",
