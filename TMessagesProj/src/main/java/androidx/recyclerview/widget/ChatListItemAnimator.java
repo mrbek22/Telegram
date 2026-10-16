@@ -350,7 +350,9 @@ public class ChatListItemAnimator extends DefaultItemAnimator {
         if (activity != null && chatMessageCell != null && activity.animatingMessageObjects.contains(chatMessageCell.getMessageObject())) {
             activity.animatingMessageObjects.remove(chatMessageCell.getMessageObject());
             if (activity.getChatActivityEnterView().canShowMessageTransition()) {
-                if (chatMessageCell.getMessageObject().isVoice()) {
+                if (org.telegram.messenger.AlfaFeatures.fastSendAnimation) {
+                    // AlfaGram: tez yuborish — kirish maydonidan "uchib kelish" animatsiyasisiz, xabar darhol o'z joyida
+                } else if (chatMessageCell.getMessageObject().isVoice()) {
                     if (Math.abs(view.getTranslationY()) < view.getMeasuredHeight() * 3f) {
                         VoiceMessageEnterTransition transition = new VoiceMessageEnterTransition(chatMessageCell, activity.getChatActivityEnterView(), recyclerListView, activity.messageEnterTransitionContainer, resourcesProvider);
                         transition.start();

@@ -4957,7 +4957,8 @@ public class ChatActivity extends BaseFragment implements
                 if (e != null) {
                     wasManualScroll = true;
                 }
-                if (e != null && e.getAction() == MotionEvent.ACTION_DOWN && !startedTrackingSlidingView && !maybeStartTrackingSlidingView && slidingView == null && !inPreviewMode) {
+                // AlfaGram: "Chapga siljitib javob" o'chirilgan bo'lsa — siljitish boshlanmaydi
+                if (e != null && e.getAction() == MotionEvent.ACTION_DOWN && !startedTrackingSlidingView && !maybeStartTrackingSlidingView && slidingView == null && !inPreviewMode && org.telegram.messenger.AlfaFeatures.swipeToReply) {
                     View view = getPressedChildView();
                     if (view instanceof ChatMessageCell) {
                         if (slidingView != null) {
