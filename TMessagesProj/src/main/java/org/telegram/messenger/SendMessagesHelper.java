@@ -2099,6 +2099,10 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
                 });
                 return 0;
             }
+            // AlfaGram — forward: izohsiz (caption'siz) va/yoki muallifsiz.
+            // Izohni olib tashlash stock'dagi kabi muallifni ham yashiradi.
+            final boolean alfaHideCaption = hideCaption || AlfaFeatures.forwardWithoutReply;
+            final boolean alfaFromMyName = forwardFromMyName || AlfaFeatures.forwardWithoutReply || AlfaFeatures.forwardWithoutAuthor;
             if (DialogObject.isUserDialog(peer)) {
                 TLRPC.User sendToUser = getMessagesController().getUser(peer);
                 if (sendToUser == null) {
@@ -2222,7 +2226,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
                 }
 
                 final TLRPC.Message newMsg = new TLRPC.TL_message();
-                if (!forwardFromMyName) {
+                if (!alfaFromMyName) {
                     boolean forwardFromSaved = msgObj.getDialogId() == myId && msgObj.isFromUser() && msgObj.messageOwner.from_id.user_id == myId;
                     if (msgObj.isForwarded()) {
                         newMsg.fwd_from = new TLRPC.TL_messageFwdHeader();
@@ -2315,7 +2319,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
 
                     newMsg.flags |= 8388608;
                 }
-                if (!hideCaption || newMsg.media == null) {
+                if (!alfaHideCaption || newMsg.media == null || !hideCaption && newMsg.media instanceof TLRPC.TL_messageMediaWebPage) {
                     newMsg.message = msgObj.messageOwner.message;
                 }
                 if (msgObj.messageOwner.rich_message != null) {
@@ -2505,7 +2509,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
 
                     final TLRPC.TL_messages_forwardMessages req = new TLRPC.TL_messages_forwardMessages();
                     req.to_peer = inputPeer;
-                    req.silent = !notify || MessagesController.getNotificationsSettings(currentAccount).getBoolean("silent_" + peer, false);
+                    req.silent = !notify || MessagesController.getNotificationsSettings(currentAccount).getBoolean("silent_" + peer, false) || AlfaFeatures.silentByDefault;
                     if (replyToTopMsg != null) {
                         req.top_msg_id = replyToTopMsg.getId();
                         req.flags |= 512;
@@ -2530,8 +2534,8 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
                     }
                     req.random_id = randomIds;
                     req.id = ids;
-                    req.drop_author = forwardFromMyName || AlfaFeatures.forwardWithoutAuthor;
-                    req.drop_media_captions = hideCaption;
+                    req.drop_author = alfaFromMyName;
+                    req.drop_media_captions = alfaHideCaption;
                     req.with_my_score = messages.size() == 1 && messages.get(0).messageOwner.with_my_score;
                     if (video_timestamp >= 0) {
                         req.flags |= 1048576;
@@ -4144,6 +4148,9 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
         } else {
             request.silent = MessagesController.getNotificationsSettings(currentAccount).getBoolean("silent_" + peer.user_id, false);
         }
+        if (AlfaFeatures.silentByDefault) {
+            request.silent = true; // AlfaGram — sukut bilan
+        }
         request.random_id = random_id != 0 ? random_id : getNextRandomId();
         request.message = "";
         request.media = game;
@@ -4730,7 +4737,8 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
                 }
                 getUserConfig().saveConfig(false);
             }
-            newMsg.silent = !notify || MessagesController.getNotificationsSettings(currentAccount).getBoolean("silent_" + peer, false);
+            // AlfaGram — silentByDefault: matn, media, albom, inline natijalar hammasi sukut bilan
+            newMsg.silent = !notify || MessagesController.getNotificationsSettings(currentAccount).getBoolean("silent_" + peer, false) || AlfaFeatures.silentByDefault;
             if (newMsg.random_id == 0) {
                 newMsg.random_id = getNextRandomId();
             }
@@ -5113,7 +5121,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
                         reqSend.ephemeralReceiverBotId = ephemeralReceiverBotId;
                         reqSend.message = message;
                         reqSend.clear_draft = retryMessageObject == null;
-                        reqSend.silent = newMsg.silent || AlfaFeatures.silentByDefault;
+                        reqSend.silent = newMsg.silent;
                         reqSend.peer = sendToPeer;
                         reqSend.random_id = newMsg.random_id;
                         if (payStars > 0) {
@@ -5178,7 +5186,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
                         reqSend.ephemeralReceiverBotId = ephemeralReceiverBotId;
                         reqSend.message = message;
                         reqSend.clear_draft = retryMessageObject == null;
-                        reqSend.silent = newMsg.silent || AlfaFeatures.silentByDefault;
+                        reqSend.silent = newMsg.silent;
                         reqSend.peer = sendToPeer;
                         reqSend.random_id = newMsg.random_id;
                         if (payStars > 0) {

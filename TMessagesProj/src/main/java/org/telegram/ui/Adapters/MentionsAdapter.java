@@ -30,6 +30,7 @@ import android.widget.TextView;
 import androidx.collection.LongSparseArray;
 import androidx.recyclerview.widget.RecyclerView;
 
+import org.telegram.messenger.AlfaFeatures;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ChatObject;
 import org.telegram.messenger.ContactsController;
@@ -1015,8 +1016,10 @@ public class MentionsAdapter extends RecyclerListView.SelectionAdapter implement
 
         if (allowStickers && isValidEmoji && (currentChat == null || ChatObject.canSendStickers(currentChat))) {
             stickersToLoad.clear();
-            if (SharedConfig.suggestStickers == 2 || !isValidEmoji) {
-                if (visibleByStickersSearch && SharedConfig.suggestStickers == 2) {
+            // AlfaGram — stiker taklifini o'chirish ("hech qachon" kabi)
+            final boolean noStickerSuggest = SharedConfig.suggestStickers == 2 || AlfaFeatures.disableStickerSuggest;
+            if (noStickerSuggest || !isValidEmoji) {
+                if (visibleByStickersSearch && noStickerSuggest) {
                     visibleByStickersSearch = false;
                     delegate.needChangePanelVisibility(false);
                     notifyDataSetChanged();

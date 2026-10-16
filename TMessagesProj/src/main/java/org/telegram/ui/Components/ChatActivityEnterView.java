@@ -3471,23 +3471,7 @@ public class ChatActivityEnterView extends FrameLayout implements
                 return;
             }
             // AlfaGram — yuborishdan oldin tasdiq
-            if (org.telegram.messenger.AlfaFeatures.confirmSend) {
-                try {
-                    org.telegram.ui.ActionBar.AlertDialog.Builder b =
-                            new org.telegram.ui.ActionBar.AlertDialog.Builder(getContext(), resourcesProvider);
-                    b.setTitle("Yuborilsinmi?");
-                    CharSequence preview = messageEditText != null && messageEditText.getText() != null
-                            ? messageEditText.getText().toString() : "";
-                    if (preview.length() > 200) preview = preview.subSequence(0, 200) + "…";
-                    b.setMessage(preview.length() > 0 ? preview : "Xabar tayyor.");
-                    b.setPositiveButton(org.telegram.messenger.LocaleController.getString(org.telegram.messenger.R.string.Send), (d, w) -> sendMessage());
-                    b.setNegativeButton(org.telegram.messenger.LocaleController.getString(org.telegram.messenger.R.string.Cancel), null);
-                    b.show();
-                    return;
-                } catch (Throwable ignore) {
-                }
-            }
-            sendMessage();
+            alfaSendWithConfirm();
         });
         sendButton.setOnLongClickListener(this::onSendLongClick);
         if (AndroidUtilities.isAccessibilityScreenReaderEnabled()) {
@@ -3533,6 +3517,41 @@ public class ChatActivityEnterView extends FrameLayout implements
         checkChannelRights();
 
         createMessageEditText();
+    }
+
+    // AlfaGram — Enter bilan yuborish: stock sozlama YOKI Alfa flag
+    private boolean isSendByEnter() {
+        return sendByEnter || org.telegram.messenger.AlfaFeatures.sendByEnter;
+    }
+
+    // AlfaGram — tasdiq oynasi ochiq (ikki marta yubormaslik uchun)
+    private AlertDialog alfaConfirmDialog;
+
+    // AlfaGram — confirmSend yoqilgan bo'lsa avval tasdiq so'raydi, aks holda stock sendMessage()
+    private boolean alfaSendWithConfirm() {
+        if (org.telegram.messenger.AlfaFeatures.confirmSend) {
+            if (alfaConfirmDialog != null && alfaConfirmDialog.isShowing()) {
+                return true;
+            }
+            try {
+                AlertDialog.Builder b = new AlertDialog.Builder(getContext(), resourcesProvider);
+                b.setTitle("Yuborilsinmi?");
+                CharSequence preview = messageEditText != null && messageEditText.getText() != null
+                        ? messageEditText.getText().toString().trim() : "";
+                if (preview.length() > 200) preview = preview.subSequence(0, 200) + "…";
+                b.setMessage(preview.length() > 0 ? preview : "Xabar tayyor.");
+                b.setPositiveButton(LocaleController.getString(R.string.Send), (d, w) -> {
+                    alfaConfirmDialog = null;
+                    sendMessage();
+                });
+                b.setNegativeButton(LocaleController.getString(R.string.Cancel), (d, w) -> alfaConfirmDialog = null);
+                alfaConfirmDialog = b.show();
+                return true;
+            } catch (Throwable ignore) {
+                alfaConfirmDialog = null;
+            }
+        }
+        return sendMessage();
     }
 
     public void setViewParentForEmoji(ViewGroup viewParent) {
@@ -5829,8 +5848,8 @@ public class ChatActivityEnterView extends FrameLayout implements
                         }
                     }
                     return true;
-                } else if (keyCode == KeyEvent.KEYCODE_ENTER && !keyEvent.isShiftPressed() && (sendByEnter ? !keyEvent.isCtrlPressed() : keyEvent.isCtrlPressed()) && keyEvent.getAction() == KeyEvent.ACTION_DOWN && editingMessageObject == null) {
-                    sendMessage();
+                } else if (keyCode == KeyEvent.KEYCODE_ENTER && !keyEvent.isShiftPressed() && (isSendByEnter() ? !keyEvent.isCtrlPressed() : keyEvent.isCtrlPressed()) && keyEvent.getAction() == KeyEvent.ACTION_DOWN && editingMessageObject == null) {
+                    alfaSendWithConfirm();
                     return true;
                 }
                 return false;
@@ -5841,11 +5860,11 @@ public class ChatActivityEnterView extends FrameLayout implements
             @Override
             public boolean onEditorAction(TextView textView, int i, KeyEvent keyEvent) {
                 if (i == EditorInfo.IME_ACTION_SEND) {
-                    sendMessage();
+                    alfaSendWithConfirm();
                     return true;
                 } else if (keyEvent != null && i == EditorInfo.IME_NULL) {
-                    if (!keyEvent.isShiftPressed() && (sendByEnter ? !keyEvent.isCtrlPressed() : keyEvent.isCtrlPressed()) && keyEvent.getAction() == KeyEvent.ACTION_DOWN && editingMessageObject == null) {
-                        sendMessage();
+                    if (!keyEvent.isShiftPressed() && (isSendByEnter() ? !keyEvent.isCtrlPressed() : keyEvent.isCtrlPressed()) && keyEvent.getAction() == KeyEvent.ACTION_DOWN && editingMessageObject == null) {
+                        alfaSendWithConfirm();
                         return true;
                     }
                 }
@@ -5905,7 +5924,7 @@ public class ChatActivityEnterView extends FrameLayout implements
                 if (innerTextChange == 1) {
                     return;
                 }
-                if (sendByEnter && !ctrlPressed && !shiftPressed && !ignoreTextChange && !isPaste && editingMessageObject == null && count > before && charSequence.length() > 0 && charSequence.length() == start + count && charSequence.charAt(charSequence.length() - 1) == '\n') {
+                if (isSendByEnter() && !ctrlPressed && !shiftPressed && !ignoreTextChange && !isPaste && editingMessageObject == null && count > before && charSequence.length() > 0 && charSequence.length() == start + count && charSequence.charAt(charSequence.length() - 1) == '\n') {
                     nextChangeIsSend = true;
                 }
                 isPaste = false;
@@ -5945,7 +5964,7 @@ public class ChatActivityEnterView extends FrameLayout implements
                 }
                 if (innerTextChange == 0) {
                     if (nextChangeIsSend) {
-                        sendMessage();
+                        alfaSendWithConfirm();
                         nextChangeIsSend = false;
                     }
                     if (processChange) {
