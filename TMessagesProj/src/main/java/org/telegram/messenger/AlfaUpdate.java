@@ -136,7 +136,7 @@ public class AlfaUpdate {
         btn.setTextColor(Color.WHITE);
         btn.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
         btn.setTypeface(AndroidUtilities.bold());
-        GradientDrawable bg = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, new int[]{0xFF7C3AED, 0xFFEC4899});
+        GradientDrawable bg = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, new int[]{AlfaFeatures.BRAND_START, AlfaFeatures.BRAND_END});
         bg.setCornerRadius(AndroidUtilities.dp(12));
         btn.setBackground(bg);
         btn.setOnClickListener(v -> {
@@ -185,7 +185,7 @@ public class AlfaUpdate {
             update.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
             update.setTypeface(AndroidUtilities.bold());
             GradientDrawable bg = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
-                    new int[]{0xFF7C3AED, 0xFFEC4899});
+                    new int[]{AlfaFeatures.BRAND_START, AlfaFeatures.BRAND_END});
             bg.setCornerRadius(AndroidUtilities.dp(12));
             update.setBackground(bg);
             update.setOnClickListener(v -> {
