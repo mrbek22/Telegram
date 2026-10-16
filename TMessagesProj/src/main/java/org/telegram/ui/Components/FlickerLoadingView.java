@@ -195,7 +195,7 @@ public class FlickerLoadingView extends View implements Theme.Colorable {
                 checkRtl(rectF);
                 canvas.drawRoundRect(rectF, dp(4), dp(4), paint);
 
-                if (SharedConfig.useThreeLinesLayout) {
+                if (SharedConfig.useThreeLinesLayout()) {
                     rectF.set(dp(76), h + dp(46 + 8), dp(220), h + dp(46 + 8 + 8));
                     checkRtl(rectF);
                     canvas.drawRoundRect(rectF, dp(4), dp(4), paint);
@@ -229,7 +229,7 @@ public class FlickerLoadingView extends View implements Theme.Colorable {
                 checkRtl(rectF);
                 canvas.drawRoundRect(rectF, dp(4), dp(4), paint);
 
-                if (SharedConfig.useThreeLinesLayout) {
+                if (SharedConfig.useThreeLinesLayout()) {
                     rectF.set(dp(50), h + dp(46 + 8), dp(220), h + dp(46 + 8 + 8));
                     checkRtl(rectF);
                     canvas.drawRoundRect(rectF, dp(4), dp(4), paint);
@@ -952,9 +952,9 @@ public class FlickerLoadingView extends View implements Theme.Colorable {
     private int getCellHeight(int width) {
         switch (getViewType()) {
             case DIALOG_CELL_TYPE:
-                return dp((SharedConfig.useThreeLinesLayout ? 78 : 72) + 1);
+                return dp((SharedConfig.useThreeLinesLayout() ? 78 : 72) + 1);
             case TOPIC_CELL_TYPE:
-                return dp((SharedConfig.useThreeLinesLayout ? 76 : 64) + 1);
+                return dp((SharedConfig.useThreeLinesLayout() ? 76 : 64) + 1);
             case DIALOG_TYPE:
                 return dp(78) + 1;
             case PHOTOS_TYPE:

@@ -467,7 +467,7 @@ public abstract class RightSlidingDialogContainer extends FrameLayout {
     }
 
     public static int getRightPaddingSize() {
-        return SharedConfig.useThreeLinesLayout ? 74 : 76;
+        return SharedConfig.useThreeLinesLayout() ? 74 : 76;
     }
 
     public View getFragmentView() {

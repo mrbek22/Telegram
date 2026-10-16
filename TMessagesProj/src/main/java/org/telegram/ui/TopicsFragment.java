@@ -1131,7 +1131,7 @@ public class TopicsFragment extends BaseFragment implements NotificationCenter.N
                     if (!isDragging) {
                         View view = layoutManager.findViewByPosition(currentPosition);
                         if (view != null) {
-                            int dialogHeight = AndroidUtilities.dp(SharedConfig.useThreeLinesLayout ? 78 : 72) + 1;
+                            int dialogHeight = AndroidUtilities.dp(SharedConfig.useThreeLinesLayout() ? 78 : 72) + 1;
                             int canScrollDy = -(view.getTop() - pTop) + (currentPosition - 1) * dialogHeight;
                             int positiveDy = Math.abs(dy);
                             if (canScrollDy < positiveDy) {
@@ -1838,7 +1838,7 @@ public class TopicsFragment extends BaseFragment implements NotificationCenter.N
                 if (currentPosition == 0) {
                     int pTop = getPaddingTop();
                     View view = layoutManager.findViewByPosition(currentPosition);
-                    int height = (int) (AndroidUtilities.dp(SharedConfig.useThreeLinesLayout ? 78 : 72) * PullForegroundDrawable.SNAP_HEIGHT);
+                    int height = (int) (AndroidUtilities.dp(SharedConfig.useThreeLinesLayout() ? 78 : 72) * PullForegroundDrawable.SNAP_HEIGHT);
                     int diff = (view.getTop() - pTop) + view.getMeasuredHeight();
                     if (view != null) {
                         long pullingTime = System.currentTimeMillis() - startArchivePullingTime;

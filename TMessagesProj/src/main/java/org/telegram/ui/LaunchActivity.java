@@ -413,6 +413,17 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
             }
         } catch (Throwable ignore) {
         }
+        // AlfaGram — openLastChat: faqat launcher'dan sovuq ishga tushish (deep link/bildirishnoma/share emas)
+        try {
+            Intent alfaIntent = getIntent();
+            boolean fromLauncher = savedInstanceState == null && alfaIntent != null
+                    && Intent.ACTION_MAIN.equals(alfaIntent.getAction())
+                    && alfaIntent.getData() == null
+                    && alfaIntent.hasCategory(Intent.CATEGORY_LAUNCHER)
+                    && UserConfig.getInstance(UserConfig.selectedAccount).isClientActivated();
+            DialogsActivity.alfaOnAppLaunch(fromLauncher);
+        } catch (Throwable ignore) {
+        }
         AndroidUtilities.checkDisplaySize(this, getResources().getConfiguration());
         currentAccount = UserConfig.selectedAccount;
         registerReceiver(batteryReceiver, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));

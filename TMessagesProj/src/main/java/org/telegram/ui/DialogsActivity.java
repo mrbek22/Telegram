@@ -2245,7 +2245,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                     int pTop = getPaddingTop();
                     DialogCell view = findArchiveDialogCell(parentPage);
                     if (view != null) {
-                        int height = (int) (dp(SharedConfig.useThreeLinesLayout ? 76 : 70) * PullForegroundDrawable.SNAP_HEIGHT);
+                        int height = (int) (dp(SharedConfig.useThreeLinesLayout() ? 76 : 70) * PullForegroundDrawable.SNAP_HEIGHT);
                         int diff = (view.getTop() - pTop) + view.getMeasuredHeight();
 
                         long pullingTime = System.currentTimeMillis() - startArchivePullingTime;
@@ -2571,7 +2571,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                                     parentPage.updateList(true);
                                     if (!SharedConfig.archiveHidden && parentPage.layoutManager.findFirstVisibleItemPosition() == 0) {
                                         disableActionBarScrolling = true;
-                                        parentPage.listView.smoothScrollBy(0, -dp(SharedConfig.useThreeLinesLayout ? 76 : 70));
+                                        parentPage.listView.smoothScrollBy(0, -dp(SharedConfig.useThreeLinesLayout() ? 76 : 70));
                                     }
                                 }
                                 ArrayList<TLRPC.Dialog> dialogs = getDialogsArray(currentAccount, parentPage.dialogsType, folderId, false);
@@ -2927,6 +2927,10 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 .add(NotificationCenter.currentUserPremiumStatusChanged);
 
             globalObserversGroup.add(NotificationCenter.didSetPasscode);
+            if (!onlySelect) {
+                // Alfa: openLastChat — parol ochilgandan keyin urinish
+                globalObserversGroup.add(NotificationCenter.passcodeDismissed);
+            }
         }
         observersGroup
             .add(NotificationCenter.messagesDeleted)
@@ -7050,11 +7054,13 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             blurredView.setVisibility(View.GONE);
             blurredView.setBackground(null);
         }
+        alfaInvalidateMuted();
         if (viewPages != null) {
             for (int a = 0; a < viewPages.length; a++) {
                 viewPages[a].dialogsAdapter.notifyDataSetChanged();
             }
         }
+        alfaTryOpenLastChatLater(300);
         if (commentView != null) {
             commentView.onResume();
         }
@@ -10588,6 +10594,8 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
     @Override
     public void didReceivedNotification(int id, int account, Object... args) {
         if (id == NotificationCenter.dialogsNeedReload) {
+            alfaInvalidateMuted();
+            alfaTryOpenLastChatLater(0);
             if (viewPages == null || dialogsListFrozen) {
                 return;
             }
@@ -10735,7 +10743,18 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             }
             updateVisibleRows(MessagesController.UPDATE_MASK_SELECT_DIALOG);
         } else if (id == NotificationCenter.notificationsSettingsUpdated) {
+            alfaInvalidateMuted();
+            if (org.telegram.messenger.AlfaFeatures.hideMuted && viewPages != null && !dialogsListFrozen) {
+                // Alfa: hideMuted — ovozsizga qo'yilgan/olingan chat ro'yxatdan darhol chiqsin/kirsin
+                for (int a = 0; a < viewPages.length; a++) {
+                    if (viewPages[a] != null && viewPages[a].dialogsType == DIALOGS_TYPE_DEFAULT) {
+                        reloadViewPageDialogs(viewPages[a], false);
+                    }
+                }
+            }
             updateVisibleRows(0);
+        } else if (id == NotificationCenter.passcodeDismissed) {
+            alfaTryOpenLastChatLater(300);
         } else if (id == NotificationCenter.messageReceivedByAck || id == NotificationCenter.messageReceivedByServer || id == NotificationCenter.messageSendError) {
             updateVisibleRows(MessagesController.UPDATE_MASK_SEND_STATE);
         } else if (id == NotificationCenter.didSetPasscode) {
@@ -11064,6 +11083,149 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
 
     private ArrayList<TLRPC.Dialog> botShareDialogs;
 
+    // Alfa: openLastChat — jarayon boshida bir martalik
+    private static boolean alfaLastChatChecked;
+    private static boolean alfaLastChatPending;
+    private static long alfaLastChatDeadline;
+
+    /** LaunchActivity.onCreate dan: faqat launcher'dan sovuq ishga tushishda qurollanadi. */
+    public static void alfaOnAppLaunch(boolean fromLauncher) {
+        if (alfaLastChatChecked) {
+            return;
+        }
+        alfaLastChatChecked = true;
+        alfaLastChatPending = fromLauncher;
+    }
+
+    private void alfaTryOpenLastChatLater(long delay) {
+        if (!alfaLastChatPending) {
+            return;
+        }
+        AndroidUtilities.runOnUIThread(this::alfaTryOpenLastChat, delay);
+    }
+
+    private void alfaTryOpenLastChat() {
+        if (!alfaLastChatPending) {
+            return;
+        }
+        try {
+            if (!org.telegram.messenger.AlfaFeatures.openLastChat) {
+                alfaLastChatPending = false;
+                return;
+            }
+            if (onlySelect || folderId != 0 || communityId != 0 || initialDialogsType != DIALOGS_TYPE_DEFAULT || searchString != null) {
+                return;
+            }
+            if (getParentActivity() == null || fragmentView == null || isPaused) {
+                return;
+            }
+            // Parol ekrani ochiq — qulf ochilgach qayta urinamiz
+            if (SharedConfig.isWaitingForPasscodeEnter || SharedConfig.appLocked) {
+                return;
+            }
+            INavigationLayout layout = getParentLayout();
+            if (layout == null) {
+                return;
+            }
+            List<BaseFragment> stack = layout.getFragmentStack();
+            if (stack == null || stack.size() != 1 || !(stack.get(0) == this || stack.get(0) instanceof MainTabsActivity)
+                    || searchIsShowed || actionBar != null && actionBar.isActionModeShowed()) {
+                // Foydalanuvchi boshqa ekranga o'tgan yoki ishlayapti — bekor
+                alfaLastChatPending = false;
+                return;
+            }
+            long now = android.os.SystemClock.elapsedRealtime();
+            if (alfaLastChatDeadline == 0) {
+                alfaLastChatDeadline = now + 10_000;
+            } else if (now > alfaLastChatDeadline) {
+                alfaLastChatPending = false;
+                return;
+            }
+            MessagesController mc = getMessagesController();
+            ArrayList<TLRPC.Dialog> dialogs = getDialogsArray(currentAccount, DIALOGS_TYPE_DEFAULT, 0, false);
+            TLRPC.Dialog best = null;
+            for (int i = 0, N = dialogs.size(); i < N; i++) {
+                TLRPC.Dialog d = dialogs.get(i);
+                if (d == null || d instanceof TLRPC.TL_dialogFolder || d.id == 0 || mc.isPromoDialog(d.id, false)) {
+                    continue;
+                }
+                if (!DialogObject.isUserDialog(d.id) && !DialogObject.isEncryptedDialog(d.id)) {
+                    TLRPC.Chat chat = mc.getChat(-d.id);
+                    // Forum/monoforum/community oddiy ChatActivity bilan ochilmaydi — o'tkazib yuboramiz
+                    if (chat == null || ChatObject.isForum(chat) || chat.monoforum || ChatObject.isCommunity(chat)) {
+                        continue;
+                    }
+                }
+                if (best == null || d.last_message_date > best.last_message_date) {
+                    best = d;
+                }
+            }
+            if (best == null) {
+                return; // dialoglar hali yuklanmagan
+            }
+            alfaLastChatPending = false;
+            Bundle args = new Bundle();
+            if (DialogObject.isEncryptedDialog(best.id)) {
+                args.putInt("enc_id", DialogObject.getEncryptedChatId(best.id));
+            } else if (DialogObject.isUserDialog(best.id)) {
+                args.putLong("user_id", best.id);
+            } else {
+                args.putLong("chat_id", -best.id);
+            }
+            if (mc.checkCanOpenChat(args, this)) {
+                presentFragment(new ChatActivity(args));
+            }
+        } catch (Throwable e) {
+            alfaLastChatPending = false;
+            FileLog.e(e);
+        }
+    }
+
+    // Alfa: hideMuted — asosiy ro'yxatning filtrlangan nusxasi (kesh)
+    private ArrayList<TLRPC.Dialog> alfaMutedSource;
+    private ArrayList<TLRPC.Dialog> alfaMutedFiltered;
+    private boolean alfaMutedDirty = true;
+
+    private void alfaInvalidateMuted() {
+        alfaMutedDirty = true;
+    }
+
+    // Alfa: ovozsiz chatlarni olib tashlangan nusxa; MessagesController ro'yxati o'zgartirilmaydi
+    private ArrayList<TLRPC.Dialog> alfaFilterMuted(MessagesController messagesController, ArrayList<TLRPC.Dialog> source) {
+        try {
+            if (!alfaMutedDirty && alfaMutedFiltered != null && alfaMutedSource != null && alfaMutedSource.size() == source.size()) {
+                boolean same = true;
+                for (int i = 0, N = source.size(); i < N; i++) {
+                    if (alfaMutedSource.get(i) != source.get(i)) {
+                        same = false;
+                        break;
+                    }
+                }
+                if (same) {
+                    return alfaMutedFiltered;
+                }
+            }
+            ArrayList<TLRPC.Dialog> filtered = new ArrayList<>(source.size());
+            for (int i = 0, N = source.size(); i < N; i++) {
+                TLRPC.Dialog d = source.get(i);
+                if (d == null) {
+                    continue;
+                }
+                if (!(d instanceof TLRPC.TL_dialogFolder) && messagesController.isDialogMuted(d.id, 0)) {
+                    continue;
+                }
+                filtered.add(d);
+            }
+            alfaMutedSource = new ArrayList<>(source);
+            alfaMutedFiltered = filtered;
+            alfaMutedDirty = false;
+            return filtered;
+        } catch (Throwable e) {
+            FileLog.e(e);
+            return source;
+        }
+    }
+
     @NonNull
     public ArrayList<TLRPC.Dialog> getDialogsArray(int currentAccount, int dialogsType, int folderId, boolean frozen) {
         if (frozen && frozenDialogsList != null) {
@@ -11071,7 +11233,11 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         }
         MessagesController messagesController = AccountInstance.getInstance(currentAccount).getMessagesController();
         if (dialogsType == DIALOGS_TYPE_DEFAULT) {
-            return messagesController.getDialogs(folderId);
+            ArrayList<TLRPC.Dialog> dialogs = messagesController.getDialogs(folderId);
+            if (org.telegram.messenger.AlfaFeatures.hideMuted && folderId == 0 && initialDialogsType == DIALOGS_TYPE_DEFAULT && !onlySelect && communityId == 0 && searchString == null) {
+                return alfaFilterMuted(messagesController, dialogs);
+            }
+            return dialogs;
         } else if (dialogsType == DIALOGS_TYPE_WIDGET || dialogsType == DIALOGS_TYPE_IMPORT_HISTORY) {
             return messagesController.dialogsServerOnly;
         } else if (dialogsType == DIALOGS_TYPE_ADD_USERS_TO) {
@@ -12832,6 +12998,11 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         } else {
             newVisibility = !onlySelfStories && getStoriesController().hasStories();
             onlySelfStories = getStoriesController().hasOnlySelfStories();
+        }
+        if (org.telegram.messenger.AlfaFeatures.hideStories) {
+            // Alfa: storieslar qatori butunlay yashiriladi (bo'sh joy va tortib ochish ham yo'q)
+            newVisibility = false;
+            onlySelfStories = false;
         }
 
         hasOnlySlefStories = onlySelfStories;
