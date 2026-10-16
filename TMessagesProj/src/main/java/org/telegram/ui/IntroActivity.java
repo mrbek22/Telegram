@@ -34,17 +34,14 @@ import android.opengl.GLES20;
 import android.opengl.GLUtils;
 import android.os.Looper;
 import android.os.Parcelable;
-import android.text.SpannableStringBuilder;
-import android.text.Spanned;
-import android.text.style.ImageSpan;
 import android.util.TypedValue;
 import android.view.Display;
 import android.view.Gravity;
-import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
@@ -75,6 +72,7 @@ import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.ActionBar.ThemeColors;
 import org.telegram.ui.ActionBar.ThemeDescription;
 import org.telegram.ui.Components.BottomPagesView;
+import org.telegram.ui.Components.CubicBezierInterpolator;
 import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.Components.RLottieDrawable;
 import org.telegram.ui.Components.RLottieImageView;
@@ -93,6 +91,9 @@ import javax.microedition.khronos.opengles.GL10;
 
 public class IntroActivity extends BaseFragment implements NotificationCenter.NotificationCenterDelegate {
     private final static int ICON_WIDTH_DP = 200, ICON_HEIGHT_DP = 150;
+    // AlfaGram: kirish ekrani logotipi o'lchami va 1-sahifa sarlavhasi
+    private final static int ALFA_LOGO_DP = 160;
+    private final static String ALFA_TITLE = "AlfaGram";
 
     private final Object pagerHeaderTag = new Object(),
             pagerMessageTag = new Object();
@@ -112,7 +113,6 @@ public class IntroActivity extends BaseFragment implements NotificationCenter.No
     private int lastPage = 0;
     private boolean justCreated = false;
     private boolean startPressed = false;
-    private Drawable logoDrawable;
     private CharSequence[] titles;
     private String[] messages;
     private int currentViewPagerPage;
@@ -133,7 +133,7 @@ public class IntroActivity extends BaseFragment implements NotificationCenter.No
         MessagesController.getGlobalMainSettings().edit().putLong("intro_crashed_time", System.currentTimeMillis()).apply();
 
         titles = new CharSequence[]{
-                null,
+                ALFA_TITLE, // AlfaGram: langpack "Page1Title"ni ("Telegram") qayta yoza olmasin
                 LocaleController.getString(R.string.Page2Title),
                 LocaleController.getString(R.string.Page3Title),
                 LocaleController.getString(R.string.Page5Title),
@@ -153,12 +153,8 @@ public class IntroActivity extends BaseFragment implements NotificationCenter.No
 
     @Override
     public View createView(Context context) {
-        logoDrawable = context.getResources().getDrawable(R.drawable.telegram_logo).mutate();
-        logoDrawable.setBounds(0, dp(8.666f), dp(115), dp(35));
-        SpannableStringBuilder ssb = new SpannableStringBuilder(LocaleController.getString(R.string.Page1Title));
-        ssb.setSpan(new ImageSpan(logoDrawable), 0, ssb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        titles[0] = ssb;
-
+        // AlfaGram: 1-sahifada "Telegram" so'z-logotipi (ImageSpan) o'rniga oddiy "AlfaGram" matni
+        titles[0] = ALFA_TITLE;
 
         actionBar.setAddToContainer(false);
 
@@ -247,48 +243,26 @@ public class IntroActivity extends BaseFragment implements NotificationCenter.No
         frameLayout2 = new FrameLayout(context);
         frameContainerView.addView(frameLayout2, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.LEFT | Gravity.TOP, 0, 78, 0, 0));
 
-        TextureView textureView = new TextureView(context);
-        frameLayout2.addView(textureView, LayoutHelper.createFrame(ICON_WIDTH_DP, ICON_HEIGHT_DP, Gravity.CENTER));
-        textureView.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
-            @Override
-            public void onSurfaceTextureAvailable(@NonNull SurfaceTexture surface, int width, int height) {
-                if (eglThread == null && surface != null) {
-                    eglThread = new EGLThread(surface);
-                    eglThread.setSurfaceTextureSize(width, height);
-                    eglThread.postRunnable(()->{
-                        float time = (System.currentTimeMillis() - currentDate) / 1000.0f;
-                        Intro.setPage(currentViewPagerPage);
-                        Intro.setDate(time);
-                        Intro.onDrawFrame(0);
-                        if (eglThread != null && eglThread.isAlive() && eglThread.eglDisplay != null && eglThread.eglSurface != null) {
-                            try {
-                                eglThread.egl10.eglSwapBuffers(eglThread.eglDisplay, eglThread.eglSurface);
-                            } catch (Exception ignored) {} // If display or surface already destroyed
-                        }
-                    });
-                    eglThread.postRunnable(eglThread.drawRunnable);
-                }
-            }
-
-            @Override
-            public void onSurfaceTextureSizeChanged(@NonNull SurfaceTexture surface, final int width, final int height) {
-                if (eglThread != null) {
-                    eglThread.setSurfaceTextureSize(width, height);
-                }
-            }
-
-            @Override
-            public boolean onSurfaceTextureDestroyed(@NonNull SurfaceTexture surface) {
-                if (eglThread != null) {
-                    eglThread.shutdown();
-                    eglThread = null;
-                }
-                return true;
-            }
-
-            @Override
-            public void onSurfaceTextureUpdated(@NonNull SurfaceTexture surface) {
-
+        // AlfaGram: Telegram'ning GL shar/samolyot animatsiyasi (Intro.*, EGLThread) umuman yaratilmaydi —
+        // o'rniga statik AlfaGram logotipi. GL yo'q => native resurslar ham, onDestroy muammolari ham yo'q.
+        ImageView alfaLogoView = new ImageView(context);
+        alfaLogoView.setImageResource(R.drawable.alfa_logo);
+        alfaLogoView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        alfaLogoView.setContentDescription(ALFA_TITLE);
+        alfaLogoView.setTranslationY(-dp((ALFA_LOGO_DP - ICON_HEIGHT_DP) / 2f));
+        frameLayout2.setClipChildren(false);
+        frameLayout2.addView(alfaLogoView, LayoutHelper.createFrame(ALFA_LOGO_DP, ALFA_LOGO_DP, Gravity.CENTER));
+        // yumshoq kirish animatsiyasi (oyna biriktirilganda boshlanadi)
+        alfaLogoView.setAlpha(0f);
+        alfaLogoView.setScaleX(0.85f);
+        alfaLogoView.setScaleY(0.85f);
+        alfaLogoView.post(() -> {
+            try {
+                alfaLogoView.animate().alpha(1f).scaleX(1f).scaleY(1f).setStartDelay(80).setDuration(450).setInterpolator(CubicBezierInterpolator.EASE_OUT_BACK).start();
+            } catch (Throwable e) {
+                alfaLogoView.setAlpha(1f);
+                alfaLogoView.setScaleX(1f);
+                alfaLogoView.setScaleY(1f);
             }
         });
 
@@ -307,7 +281,9 @@ public class IntroActivity extends BaseFragment implements NotificationCenter.No
                     return;
                 }
                 float offset = (position * width + positionOffsetPixels - currentViewPagerPage * width) / width;
-                Intro.setScrollOffset(offset);
+                if (eglThread != null) { // AlfaGram: GL renderer yo'q bo'lsa native chaqiruv kerak emas
+                    Intro.setScrollOffset(offset);
+                }
             }
 
             @Override
@@ -973,7 +949,6 @@ public class IntroActivity extends BaseFragment implements NotificationCenter.No
 
     private void updateColors(boolean fromTheme) {
         startMessagingButtonBackground.setColors(new int[]{getThemedColor(Theme.key_featuredStickers_addButton), getThemedColor(Theme.key_featuredStickers_addButton2)});
-        logoDrawable.setColorFilter(Theme.multAlpha(getThemedColor(Theme.key_actionBarDefaultTitle), 0.9f), PorterDuff.Mode.MULTIPLY);
         fragmentView.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundWhite));
         switchLanguageTextView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlueText4));
         startMessagingButton.setTextColor(Theme.getColor(Theme.key_featuredStickers_buttonText));
@@ -999,7 +974,7 @@ public class IntroActivity extends BaseFragment implements NotificationCenter.No
                 TextView messageTextView = ch.findViewWithTag(pagerMessageTag);
                 messageTextView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
             }
-        } else Intro.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundWhite));
+        } else if (eglThread != null) Intro.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundWhite));
     }
 
     @Override

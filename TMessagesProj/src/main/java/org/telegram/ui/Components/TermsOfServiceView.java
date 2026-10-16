@@ -58,8 +58,10 @@ public class TermsOfServiceView extends FrameLayout {
         linearLayout.setOrientation(LinearLayout.VERTICAL);
 
         ImageView imageView = new ImageView(context);
-        imageView.setImageResource(R.drawable.logo_middle);
-        linearLayout.addView(imageView, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.LEFT, 0, 28, 0, 0));
+        // AlfaGram: Telegram samolyot logotipi (logo_middle, 68dp) o'rniga AlfaGram logotipi
+        imageView.setImageResource(R.drawable.alfa_logo);
+        imageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        linearLayout.addView(imageView, LayoutHelper.createLinear(68, 68, Gravity.LEFT, 0, 28, 0, 0));
 
         titleTextView = new TextView(context);
         titleTextView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
