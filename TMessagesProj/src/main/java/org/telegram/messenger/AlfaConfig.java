@@ -10,11 +10,13 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Iterator;
 
 /**
  * AlfaGram — serverdagi admin paneldan "remote config" oladi.
  * Endpoint: https://alfagram.anonimbot.uz/api/config
- * Beradi: yangilanish banneri, maxsus tugmalar, Yandex reklama sozlamalari.
+ * Beradi: yangilanish banneri, maxsus tugmalar, Yandex reklama sozlamalari,
+ * funksiyalar kill-switch'i (faqat o'chirish — AlfaFeatures.applyRemote).
  * Config SharedPreferences'ga keshlanadi — internet bo'lmasa oxirgi holat ishlatiladi.
  */
 public class AlfaConfig {
@@ -114,19 +116,20 @@ public class AlfaConfig {
                 yandexBlockId = ads.optString("yandex_block_id", "");
                 adsInterval = Math.max(1, ads.optInt("interval", 3));
             }
-            // Yashirin funksiyalarni paneldan boshqarish
+            // Yashirin funksiyalar: server faqat O'CHIRA oladi (kill-switch).
+            // false = o'chiq; true yoki kalit yo'q = ruxsat. Foydalanuvchi tanlovi majburan yoqilmaydi.
+            ArrayList<String> disabledFeatures = new ArrayList<>();
             JSONObject feats = o.optJSONObject("features");
             if (feats != null) {
-                AlfaFeatures.blockTelegramAds = feats.optBoolean("block_ads", AlfaFeatures.blockTelegramAds);
-                AlfaFeatures.unrestrictedSave = feats.optBoolean("unrestricted_save", AlfaFeatures.unrestrictedSave);
-                AlfaFeatures.stealthStories = feats.optBoolean("stealth_stories", AlfaFeatures.stealthStories);
-                AlfaFeatures.ghostMode = feats.optBoolean("ghost_mode", AlfaFeatures.ghostMode);
-                AlfaFeatures.allowScreenshots = feats.optBoolean("allow_screenshots", AlfaFeatures.allowScreenshots);
-                AlfaFeatures.unlimitedPins = feats.optBoolean("unlimited_pins", AlfaFeatures.unlimitedPins);
-                AlfaFeatures.antiDelete = feats.optBoolean("anti_delete", AlfaFeatures.antiDelete);
-                AlfaFeatures.editHistory = feats.optBoolean("edit_history", AlfaFeatures.editHistory);
-                AlfaFeatures.typingLog = feats.optBoolean("typing_log", AlfaFeatures.typingLog);
+                Iterator<String> it = feats.keys();
+                while (it.hasNext()) {
+                    String rk = it.next();
+                    if (rk != null && !feats.optBoolean(rk, true)) {
+                        disabledFeatures.add(featureKey(rk));
+                    }
+                }
             }
+            AlfaFeatures.applyRemote(disabledFeatures);
             JSONObject ann = o.optJSONObject("announcement");
             if (ann != null) {
                 announcementEnabled = ann.optBoolean("enabled", false);
@@ -155,6 +158,25 @@ public class AlfaConfig {
         } catch (Exception e) {
             FileLog.e(e);
         }
+    }
+
+    /** Server kaliti → AlfaFeatures kaliti: "ghost_mode" → "ghostMode", "block_ads" → "blockTelegramAds". */
+    private static String featureKey(String remoteKey) {
+        if ("block_ads".equals(remoteKey)) {
+            return "blockTelegramAds";
+        }
+        StringBuilder sb = new StringBuilder(remoteKey.length());
+        boolean upper = false;
+        for (int i = 0; i < remoteKey.length(); i++) {
+            char ch = remoteKey.charAt(i);
+            if (ch == '_') {
+                upper = sb.length() > 0;
+                continue;
+            }
+            sb.append(upper ? Character.toUpperCase(ch) : ch);
+            upper = false;
+        }
+        return sb.toString();
     }
 
     /** Hozirgi o'rnatilgan APK versiya kodi (runtime, PackageManager orqali). */

@@ -209,10 +209,13 @@ public class AlfaSettingsActivity extends BaseFragment {
                 return;
             }
             if (row.type != TYPE_SWITCH) return;
-            boolean newVal = !currentValue(row.key);
-            AlfaFeatures.setFlag(row.key, newVal);
+            if (!isAllowed(row.key)) {
+                showRemoteDisabled();
+                return;
+            }
+            AlfaFeatures.setFlag(row.key, !currentValue(row.key));
             if (view instanceof TextCheckCell) {
-                ((TextCheckCell) view).setChecked(newVal);
+                ((TextCheckCell) view).setChecked(currentValue(row.key));
             }
             if (isQuickKey(row.key)) {
                 // tezkor kafellar ham yangilansin
@@ -222,6 +225,28 @@ public class AlfaSettingsActivity extends BaseFragment {
         });
 
         return fragmentView;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        // Boshqa joyda (masalan Ghost tugmasi) yoki server o'zgartirgan holat ko'rinsin
+        if (listAdapter != null) {
+            listAdapter.notifyDataSetChanged();
+        }
+    }
+
+    /** Server bu funksiyani o'chirib qo'ymaganmi. */
+    private static boolean isAllowed(String key) {
+        return AlfaFeatures.isRemoteAllowed(key);
+    }
+
+    private void showRemoteDisabled() {
+        try {
+            org.telegram.ui.Components.BulletinFactory.of(this).createSimpleBulletin(R.raw.chats_infotip,
+                "Bu funksiya vaqtincha o'chirilgan").show();
+        } catch (Throwable ignore) {
+        }
     }
 
     private static boolean isQuickKey(String key) {
@@ -312,6 +337,10 @@ public class AlfaSettingsActivity extends BaseFragment {
             final int index = i;
             tile.setOnClickListener(v -> {
                 String key = QUICK_KEYS[index];
+                if (!isAllowed(key)) {
+                    showRemoteDisabled();
+                    return;
+                }
                 AlfaFeatures.setFlag(key, !currentValue(key));
                 listAdapter.notifyDataSetChanged();
             });
@@ -324,6 +353,8 @@ public class AlfaSettingsActivity extends BaseFragment {
         for (int i = 0; i < row.getChildCount() && i < QUICK_KEYS.length; i++) {
             LinearLayout tile = (LinearLayout) row.getChildAt(i);
             boolean on = currentValue(QUICK_KEYS[i]);
+            boolean allowed = isAllowed(QUICK_KEYS[i]);
+            tile.setAlpha(allowed ? 1f : 0.5f);
             if (on) {
                 tile.setBackground(gradient(QUICK_GRADIENTS[i], 18));
             } else {
@@ -339,47 +370,14 @@ public class AlfaSettingsActivity extends BaseFragment {
             name.setText(QUICK_TITLES[i]);
             name.setTextColor(on ? 0xFFFFFFFF : Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
             TextView state = (TextView) tile.getChildAt(2);
-            state.setText(on ? "Yoqilgan" : "O'chiq");
+            state.setText(!allowed ? "Vaqtincha o'chiq" : on ? "Yoqilgan" : "O'chiq");
             state.setTextColor(on ? 0xFFF3E8FF : Theme.getColor(Theme.key_windowBackgroundWhiteGrayText));
         }
     }
 
+    /** Switch foydalanuvchi tanlovini ko'rsatadi (server cheklovi alohida — isAllowed). */
     private boolean currentValue(String key) {
-        switch (key) {
-            case "antiDelete": return AlfaFeatures.antiDelete;
-            case "editHistory": return AlfaFeatures.editHistory;
-            case "typingLog": return AlfaFeatures.typingLog;
-            case "confirmSend": return AlfaFeatures.confirmSend;
-            case "sendByEnter": return AlfaFeatures.sendByEnter;
-            case "silentByDefault": return AlfaFeatures.silentByDefault;
-            case "unrestrictedSave": return AlfaFeatures.unrestrictedSave;
-            case "allowScreenshots": return AlfaFeatures.allowScreenshots;
-            case "unlimitedPins": return AlfaFeatures.unlimitedPins;
-            case "forwardWithoutAuthor": return AlfaFeatures.forwardWithoutAuthor;
-            case "forwardWithoutReply": return AlfaFeatures.forwardWithoutReply;
-            case "hideStories": return AlfaFeatures.hideStories;
-            case "hideMuted": return AlfaFeatures.hideMuted;
-            case "compactChats": return AlfaFeatures.compactChats;
-            case "showMessageIds": return AlfaFeatures.showMessageIds;
-            case "swipeToReply": return AlfaFeatures.swipeToReply;
-            case "disableStickerSuggest": return AlfaFeatures.disableStickerSuggest;
-            case "fastSendAnimation": return AlfaFeatures.fastSendAnimation;
-            case "ghostMode": return AlfaFeatures.ghostMode;
-            case "stealthStories": return AlfaFeatures.stealthStories;
-            case "noReadReceipts": return AlfaFeatures.noReadReceipts;
-            case "hidePhoneInSettings": return AlfaFeatures.hidePhoneInSettings;
-            case "blurAppInRecents": return AlfaFeatures.blurAppInRecents;
-            case "showIdInProfile": return AlfaFeatures.showIdInProfile;
-            case "hideSeenTicks": return AlfaFeatures.hideSeenTicks;
-            case "disableAnimations": return AlfaFeatures.disableAnimations;
-            case "autoSaveVoice": return AlfaFeatures.autoSaveVoice;
-            case "autoSaveVideoNotes": return AlfaFeatures.autoSaveVideoNotes;
-            case "blockTelegramAds": return AlfaFeatures.blockTelegramAds;
-            case "hideSponsoredMessages": return AlfaFeatures.hideSponsoredMessages;
-            case "openLastChat": return AlfaFeatures.openLastChat;
-            case "debugLogs": return AlfaFeatures.debugLogs;
-            default: return false;
-        }
+        return AlfaFeatures.getUserPref(key);
     }
 
     private class ListAdapter extends RecyclerListView.SelectionAdapter {
@@ -446,6 +444,7 @@ public class AlfaSettingsActivity extends BaseFragment {
                     TextCheckCell c = (TextCheckCell) holder.itemView;
                     boolean nextIsSwitch = position + 1 < rows.size() && rows.get(position + 1).type == TYPE_SWITCH;
                     c.setTextAndCheck(row.title, currentValue(row.key), nextIsSwitch);
+                    c.setEnabled(isAllowed(row.key), null);
                     break;
             }
         }
