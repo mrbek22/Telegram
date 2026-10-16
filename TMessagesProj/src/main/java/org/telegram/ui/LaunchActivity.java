@@ -374,6 +374,35 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
     };
 
     private FlagSecureReason flagSecureReason;
+    // AlfaGram — recents blur: API 33+ da setRecentsScreenshotEnabled, eskida FLAG_SECURE
+    private FlagSecureReason alfaRecentsSecure;
+    private boolean alfaRecentsScreenshotDisabled;
+
+    /** AlfaGram — blurAppInRecents holatini oynaga qo'llash (UI thread, jonli). */
+    public void alfaUpdateRecentsBlur() {
+        try {
+            final boolean blur = org.telegram.messenger.AlfaFeatures.blurAppInRecents;
+            if (Build.VERSION.SDK_INT >= 33) {
+                // Screenshotlarni bloklamaydi — faqat recents rasmini yashiradi
+                if (blur != alfaRecentsScreenshotDisabled) {
+                    setRecentsScreenshotEnabled(!blur);
+                    alfaRecentsScreenshotDisabled = blur;
+                }
+            } else {
+                if (alfaRecentsSecure == null) {
+                    if (!blur) {
+                        return;
+                    }
+                    alfaRecentsSecure = new FlagSecureReason(getWindow(), () -> org.telegram.messenger.AlfaFeatures.blurAppInRecents).alfaKeepSecure();
+                    alfaRecentsSecure.attach();
+                } else {
+                    alfaRecentsSecure.invalidate();
+                }
+            }
+        } catch (Throwable ignore) {
+        }
+    }
+
     private final LiteMode.BatteryReceiver batteryReceiver = new LiteMode.BatteryReceiver();
     private WindowAnimatedInsetsProvider rootAnimatedInsetsListener;
 
@@ -404,15 +433,8 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
 
         instance = this;
         ApplicationLoader.postInitApplication();
-        // AlfaGram — recent apps ekranida ilova ichini yashirish (FLAG_SECURE)
-        try {
-            if (org.telegram.messenger.AlfaFeatures.blurAppInRecents) {
-                getWindow().setFlags(
-                        android.view.WindowManager.LayoutParams.FLAG_SECURE,
-                        android.view.WindowManager.LayoutParams.FLAG_SECURE);
-            }
-        } catch (Throwable ignore) {
-        }
+        // AlfaGram — recent apps ekranida ilova ichini yashirish
+        alfaUpdateRecentsBlur();
         AndroidUtilities.checkDisplaySize(this, getResources().getConfiguration());
         currentAccount = UserConfig.selectedAccount;
         registerReceiver(batteryReceiver, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
@@ -441,7 +463,8 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
 
         }
         getWindow().setBackgroundDrawableResource(R.drawable.transparent);
-        flagSecureReason = new FlagSecureReason(getWindow(), () -> SharedConfig.passcodeHash.length() > 0 && !SharedConfig.allowScreenCapture);
+        // AlfaGram — passcode himoyasi allowScreenshots'dan qat'i nazar saqlanadi
+        flagSecureReason = new FlagSecureReason(getWindow(), () -> SharedConfig.passcodeHash.length() > 0 && !SharedConfig.allowScreenCapture).alfaKeepSecure();
         flagSecureReason.attach();
 
         super.onCreate(savedInstanceState);
@@ -6923,6 +6946,9 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         onFinish();
         if (flagSecureReason != null) {
             flagSecureReason.detach();
+        }
+        if (alfaRecentsSecure != null) {
+            alfaRecentsSecure.detach();
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && frameMetricsOverlayView != null) {

@@ -1034,7 +1034,8 @@ public class TranslateAlert2 extends BottomSheet implements NotificationCenter.N
         if (textView != null) {
             textView.setTextIsSelectable(!noforwards);
         }
-        if (noforwards) {
+        // AlfaGram — screenshotga ruxsat
+        if (noforwards && !org.telegram.messenger.AlfaFeatures.allowScreenshots) {
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
             AndroidUtilities.logFlagSecure();
         } else {

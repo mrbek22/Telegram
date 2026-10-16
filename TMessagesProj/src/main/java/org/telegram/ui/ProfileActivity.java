@@ -2514,7 +2514,10 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
             flagSecure = null;
         }
         if (layout != null && layout.getParentActivity() != null) {
-            flagSecure = new FlagSecureReason(layout.getParentActivity().getWindow(), () -> currentEncryptedChat != null || isPeerNoForwards());
+            // AlfaGram — FLAG_SECURE asl noforwards bo'yicha (allowScreenshots boshqaradi)
+            flagSecure = new FlagSecureReason(layout.getParentActivity().getWindow(), () -> currentEncryptedChat != null || (currentChat != null ?
+                getMessagesController().isChatNoForwardsRaw(currentChat) :
+                getMessagesController().isUserNoForwardsRaw(userInfo)));
         }
     }
 

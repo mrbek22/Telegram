@@ -2261,7 +2261,7 @@ public class AudioPlayerAlert extends BottomSheet implements NotificationCenter.
             final boolean noforwards = (
                 dialogId < 0 && MessagesController.getInstance(currentAccount).isPeerNoForwards(dialogId) ||
                 MessagesController.getInstance(currentAccount).isPeerNoForwards(messageObject.getDialogId()) ||
-                messageObject.messageOwner.noforwards
+                MessageObject.isNoforwards(messageObject.messageOwner)
             );
             if (noforwards != this.noforwards) {
                 this.noforwards = noforwards;

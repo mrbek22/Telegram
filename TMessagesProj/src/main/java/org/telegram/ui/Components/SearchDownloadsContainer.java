@@ -144,13 +144,14 @@ public class SearchDownloadsContainer extends FrameLayout implements Notificatio
                     }
                     boolean openInPhotoViewer = message.canPreviewDocument();
                     if (!openInPhotoViewer) {
-                        boolean noforwards = message.messageOwner != null && message.messageOwner.noforwards;
+                        boolean noforwards = message.messageOwner != null && MessageObject.isNoforwards(message.messageOwner);
                         TLRPC.Chat chatTo = messageObject.messageOwner.peer_id.channel_id != 0 ? MessagesController.getInstance(UserConfig.selectedAccount).getChat(messageObject.messageOwner.peer_id.channel_id) : null;
                         if (chatTo == null) {
                             chatTo = messageObject.messageOwner.peer_id.chat_id != 0 ? MessagesController.getInstance(UserConfig.selectedAccount).getChat(messageObject.messageOwner.peer_id.chat_id) : null;
                         }
                         if (chatTo != null) {
-                            noforwards = chatTo.noforwards;
+                            // AlfaGram — unrestrictedSave hisobga olinadi
+                            noforwards = MessagesController.getInstance(UserConfig.selectedAccount).isChatNoForwards(chatTo);
                         }
                         openInPhotoViewer = openInPhotoViewer || noforwards;
                     }

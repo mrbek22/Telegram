@@ -296,6 +296,13 @@ public class ApplicationLoader extends Application {
             AlfaFeatures.loadPrefs();
         } catch (Throwable ignore) {
         }
+        try {
+            // AlfaGram — debug loglar (FileLog); o'chiq bo'lsa stock holat o'zgarmaydi
+            if (AlfaFeatures.debugLogs) {
+                BuildVars.LOGS_ENABLED = true;
+            }
+        } catch (Throwable ignore) {
+        }
 
         super.onCreate();
 

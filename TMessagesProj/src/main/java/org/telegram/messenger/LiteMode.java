@@ -114,7 +114,39 @@ public class LiteMode {
                 onPowerSaverApplied(lastPowerSaverApplied = false);
             }
         }
+        if (!ignorePowerSaving && AlfaFeatures.disableAnimations) {
+            // AlfaGram — animatsiya bayroqlari o'chiq ko'rsatiladi (saqlangan qiymat o'zgarmaydi)
+            return value & ~ALFA_ANIMATION_FLAGS;
+        }
         return value;
+    }
+
+    // AlfaGram — disableAnimations o'chiradigan bayroqlar (layout/blur/video tegilmaydi)
+    private static final int ALFA_ANIMATION_FLAGS = (
+        FLAGS_ANIMATED_STICKERS |
+        FLAGS_ANIMATED_EMOJI |
+        FLAG_CHAT_BACKGROUND |
+        FLAG_CHAT_SPOILER |
+        FLAG_CHAT_SCALE |
+        FLAG_CHAT_THANOS |
+        FLAG_CALLS_ANIMATIONS |
+        FLAG_AUTOPLAY_GIFS |
+        FLAG_PARTICLES
+    );
+
+    /** AlfaGram — disableAnimations o'zgarganda chaqiriladi (UI thread): emoji/fonni yangilash. */
+    public static void alfaOnAnimationsToggled(boolean disabled) {
+        try {
+            int full = getValue(true);
+            int stripped = full & ~ALFA_ANIMATION_FLAGS;
+            if (disabled) {
+                onFlagsUpdate(full, stripped);
+            } else {
+                onFlagsUpdate(stripped, full);
+            }
+        } catch (Throwable e) {
+            FileLog.e(e);
+        }
     }
 
     private static int lastBatteryLevelCached = -1;

@@ -15,13 +15,39 @@ public class FlagSecureReason {
     public FlagSecureReason(Window window, FlagSecureCondition condition) {
         this.window = window;
         this.condition = condition;
+        try {
+            alfaInstances.put(this, Boolean.TRUE);
+        } catch (Throwable ignore) {
+        }
     }
 
     private boolean attached = false;
     private boolean value = false;
 
+    // AlfaGram — allowScreenshots: bu sabab baribir saqlansinmi (passcode, recents blur)
+    private boolean alfaKeep;
+    private static final java.util.WeakHashMap<FlagSecureReason, Boolean> alfaInstances = new java.util.WeakHashMap<>();
+
+    /** AlfaGram — allowScreenshots yoqilganda ham FLAG_SECURE qo'yiladigan sabab (passcode, blur). */
+    public FlagSecureReason alfaKeepSecure() {
+        alfaKeep = true;
+        return this;
+    }
+
+    /** AlfaGram — bayroq o'zgarganda barcha sabablarni qayta hisoblash (UI thread). */
+    public static void alfaInvalidateAll() {
+        try {
+            for (FlagSecureReason r : new java.util.ArrayList<>(alfaInstances.keySet())) {
+                if (r != null) {
+                    r.invalidate();
+                }
+            }
+        } catch (Throwable ignore) {
+        }
+    }
+
     public void invalidate() {
-        boolean newValue = attached && condition != null && condition.run();
+        boolean newValue = attached && condition != null && (alfaKeep || !AlfaFeatures.allowScreenshots) && condition.run();
         if (newValue != value) {
             update((value = newValue) ? +1 : -1);
         }

@@ -1643,10 +1643,7 @@ public class MessagesController extends BaseController implements NotificationCe
         stickersFavedLimitPremium = mainPreferences.getInt("stickersFavedLimitPremium", 200);
         maxPinnedDialogsCountDefault = mainPreferences.getInt("maxPinnedDialogsCountDefault", 5);
         maxPinnedDialogsCountPremium = mainPreferences.getInt("maxPinnedDialogsCountPremium", 5);
-        if (AlfaFeatures.unlimitedPins) {
-            maxPinnedDialogsCountDefault = 999;
-            maxPinnedDialogsCountPremium = 999;
-        }
+        // AlfaGram — unlimitedPins endi DialogsActivity'da (ishlatilgan joyda) qo'llanadi: jonli va server config ustidan yozilmaydi
         dialogFiltersLimitDefault = mainPreferences.getInt("dialogFiltersLimitDefault", 10);
         dialogFiltersLimitPremium = mainPreferences.getInt("dialogFiltersLimitPremium", 20);
         dialogFiltersChatsLimitDefault = mainPreferences.getInt("dialogFiltersChatsLimitDefault", 100);
@@ -6713,6 +6710,11 @@ public class MessagesController extends BaseController implements NotificationCe
         if (AlfaFeatures.unrestrictedSave) {
             return false;
         }
+        return isChatNoForwardsRaw(chat);
+    }
+
+    // AlfaGram — asl (server) noforwards holati, unrestrictedSave'siz (FLAG_SECURE uchun)
+    public boolean isChatNoForwardsRaw(TLRPC.Chat chat) {
         if (chat == null) {
             return false;
         }
@@ -6741,11 +6743,26 @@ public class MessagesController extends BaseController implements NotificationCe
         if (AlfaFeatures.unrestrictedSave) {
             return false;
         }
+        return isUserNoForwardsRaw(userFull);
+    }
+
+    // AlfaGram — asl (server) noforwards holati, unrestrictedSave'siz
+    public boolean isUserNoForwardsRaw(TLRPC.UserFull userFull) {
         if (userFull == null) {
             return false;
         }
 
         return userFull.noforwards_peer_enabled || userFull.noforwards_my_enabled;
+    }
+
+    // AlfaGram — unlimitedPins: klient tomondagi pin chegarasini olib tashlash (o'chiq bo'lsa asl qiymat)
+    public static int alfaPinLimit(int limit) {
+        return AlfaFeatures.unlimitedPins ? Math.max(limit, 999) : limit;
+    }
+
+    // AlfaGram — asl (server) noforwards holati, unrestrictedSave'siz
+    public boolean isPeerNoForwardsRaw(long dialogId) {
+        return dialogId > 0 ? isUserNoForwardsRaw(getUserFull(dialogId)) : isChatNoForwardsRaw(getChat(-dialogId));
     }
 
     public TLRPC.User getUser(Long id) {
@@ -21582,7 +21599,8 @@ public class MessagesController extends BaseController implements NotificationCe
     }
 
     public SponsoredMessagesInfo getSponsoredMessages(long dialogId) {
-        if (AlfaFeatures.blockTelegramAds) {
+        // AlfaGram — reklama bloki yoki "Homiylik" xabarlarini yashirish
+        if (AlfaFeatures.blockTelegramAds || AlfaFeatures.hideSponsoredMessages) {
             return null;
         }
         SponsoredMessagesInfo info = sponsoredMessages.get(dialogId);

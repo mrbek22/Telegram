@@ -185,6 +185,10 @@ public class VideoAds {
         if (UserConfig.getInstance(currentAccount).isPremium() && MessagesController.getInstance(currentAccount).isSponsoredDisabled()) {
             return;
         }
+        // AlfaGram — video reklamalarni yuklamaslik
+        if (org.telegram.messenger.AlfaFeatures.blockTelegramAds || org.telegram.messenger.AlfaFeatures.hideSponsoredMessages) {
+            return;
+        }
 
         loading = true;
 
