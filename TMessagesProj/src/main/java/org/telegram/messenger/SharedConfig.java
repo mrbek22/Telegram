@@ -1190,6 +1190,11 @@ public class SharedConfig {
         LiteMode.toggleFlag(LiteMode.FLAG_AUTOPLAY_GIFS);
     }
 
+    /** Alfa: compactChats yoqilsa ixcham 2 qatorli ko'rinish majburlanadi (samarali qiymat). */
+    public static boolean useThreeLinesLayout() {
+        return useThreeLinesLayout && !AlfaFeatures.compactChats;
+    }
+
     public static void setUseThreeLinesLayout(boolean value) {
         useThreeLinesLayout = value;
         SharedPreferences preferences = MessagesController.getGlobalMainSettings();

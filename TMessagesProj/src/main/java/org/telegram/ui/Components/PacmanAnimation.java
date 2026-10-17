@@ -125,7 +125,7 @@ public class PacmanAnimation {
 
     public void draw(Canvas canvas, int cy) {
         int size = AndroidUtilities.dp(110);
-        int height = AndroidUtilities.dp(SharedConfig.useThreeLinesLayout ? 78 : 72);
+        int height = AndroidUtilities.dp(SharedConfig.useThreeLinesLayout() ? 78 : 72);
         int additionalSize = size + AndroidUtilities.dp(42 + 20) * 3;
         int width = parentView.getMeasuredWidth() + additionalSize;
         float translation = width * translationProgress - additionalSize;
