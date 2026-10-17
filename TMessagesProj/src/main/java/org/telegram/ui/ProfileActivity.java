@@ -627,6 +627,10 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
     private int filtersRow;
     private int liteModeRow;
     private int alfaSettingsRow;
+    // Alfa: profilda ID qatori
+    private int alfaIdRow = -1;
+    // Alfa: qatorlar qaysi flag qiymatlari bilan hisoblangani (onResume'da solishtirish uchun)
+    private boolean alfaRowsHidePhone, alfaRowsShowId;
     private int stickersRow;
     private int devicesRow;
     private int devicesSectionRow;
@@ -4634,6 +4638,8 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                 }
             } else if (position == noteRow) {
                 editNotes(view, position);
+            } else if (position == alfaIdRow) {
+                copyAlfaProfileId();
             } else {
                 processOnClickOrPress(position, view, x, y);
             }
@@ -5019,6 +5025,9 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     return true;
                 } else if (position == noteRow) {
                     editNotes(view, position);
+                    return true;
+                } else if (position == alfaIdRow) {
+                    copyAlfaProfileId();
                     return true;
                 } else {
                     if (editRow(view, position)) return true;
@@ -7267,6 +7276,42 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
             }
         });
         presentFragment(fragment);
+    }
+
+    // Alfa: profil ID (user/bot uchun user id, kanal/superguruh uchun -100..., oddiy guruh uchun -id)
+    private String getAlfaProfileId() {
+        try {
+            if (userId != 0) {
+                return String.valueOf(userId);
+            } else if (chatId != 0) {
+                TLRPC.Chat chat = getMessagesController().getChat(chatId);
+                if (chat == null) {
+                    chat = currentChat;
+                }
+                if (ChatObject.isChannel(chat)) {
+                    return String.valueOf(-1000000000000L - chatId);
+                }
+                return String.valueOf(-chatId);
+            }
+        } catch (Throwable e) {
+            FileLog.e(e);
+        }
+        return null;
+    }
+
+    // Alfa: ID ni nusxalash + "nusxalandi" bulletin
+    private void copyAlfaProfileId() {
+        try {
+            final String id = getAlfaProfileId();
+            if (id == null) {
+                return;
+            }
+            if (AndroidUtilities.addToClipboard(id)) {
+                BulletinFactory.of(this).createCopyBulletin("ID nusxalandi", resourcesProvider).show();
+            }
+        } catch (Throwable e) {
+            FileLog.e(e);
+        }
     }
 
     private boolean processOnClickOrPress(final int position, final View view, final float x, final float y) {
@@ -9534,6 +9579,10 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
         }
         invalidateIsInLandscapeMode();
         if (listAdapter != null) {
+            // Alfa: sozlamalarda flag o'zgargan bo'lsa qatorlarni qayta hisoblash
+            if (alfaRowsHidePhone != org.telegram.messenger.AlfaFeatures.hidePhoneInSettings || alfaRowsShowId != org.telegram.messenger.AlfaFeatures.showIdInProfile) {
+                updateRowsIds();
+            }
             // saveScrollPosition();
             firstLayout = true;
             listAdapter.notifyDataSetChanged();
@@ -10460,6 +10509,11 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
         filtersRow = -1;
         liteModeRow = -1;
         alfaSettingsRow = -1;
+        alfaIdRow = -1;
+        final boolean alfaHidePhone = org.telegram.messenger.AlfaFeatures.hidePhoneInSettings;
+        final boolean alfaShowId = org.telegram.messenger.AlfaFeatures.showIdInProfile;
+        alfaRowsHidePhone = alfaHidePhone;
+        alfaRowsShowId = alfaShowId;
         stickersRow = -1;
         devicesRow = -1;
         devicesSectionRow = -1;
@@ -10599,10 +10653,13 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     setAvatarSectionRow = rowCount++;
                 }
                 numberSectionRow = rowCount++;
-                if (!org.telegram.messenger.AlfaFeatures.hidePhoneInSettings) {
+                if (!alfaHidePhone) {
                     numberRow = rowCount++;
                 }
                 setUsernameRow = rowCount++;
+                if (alfaShowId) {
+                    alfaIdRow = rowCount++;
+                }
                 bioRow = rowCount++;
 
                 settingsSectionRow = rowCount++;
@@ -10695,6 +10752,9 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                 }
                 if (user != null && username != null) {
                     usernameRow = rowCount++;
+                }
+                if (alfaShowId) {
+                    alfaIdRow = rowCount++;
                 }
                 if (userInfo != null) {
                     if (userInfo.birthday != null) {
@@ -10820,6 +10880,9 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                 }
             }
             usernameRow = rowCount++;
+            if (alfaShowId) {
+                alfaIdRow = rowCount++;
+            }
             if (actionsView == null) {
                 notificationsSimpleRow = rowCount++;
             }
@@ -10831,7 +10894,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                 sharedMediaRow = rowCount++;
             }
         } else if (chatId != 0) {
-            if (chatInfo != null && (!TextUtils.isEmpty(chatInfo.about) || chatInfo.location instanceof TLRPC.TL_channelLocation) || ChatObject.isPublic(currentChat)) {
+            if (chatInfo != null && (!TextUtils.isEmpty(chatInfo.about) || chatInfo.location instanceof TLRPC.TL_channelLocation) || ChatObject.isPublic(currentChat) || alfaShowId) {
                 if (emptyRow < 0 && emptyRow2 < 0) {
                     if (hasMusic || peerColor != null || actionsView == null) {
                         emptyRow2 = rowCount++;
@@ -10853,6 +10916,9 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                 }
                 if (ChatObject.isPublic(currentChat)) {
                     usernameRow = rowCount++;
+                }
+                if (alfaShowId) {
+                    alfaIdRow = rowCount++;
                 }
             }
             if (emptyRow < 0 && emptyRow2 < 0) {
@@ -13603,6 +13669,11 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                         }
                         detailCell.setTextAndValue(text, value, true);
                         detailCell.setContentDescriptionValueFirst(true);
+                    } else if (position == alfaIdRow) {
+                        // Alfa: raqamli ID (bosilsa nusxalanadi)
+                        String alfaId = getAlfaProfileId();
+                        detailCell.setTextAndValue(alfaId != null ? alfaId : "—", "ID", setUsernameRow >= 0);
+                        detailCell.setContentDescriptionValueFirst(true);
                     }
                     if (containsGift) {
                         Drawable drawable = ContextCompat.getDrawable(detailCell.getContext(), R.drawable.msg_input_gift);
@@ -14268,7 +14339,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                         position == clearLogsRow || position == switchBackendRow || position == setAvatarRow ||
                         position == addToGroupButtonRow || position == premiumRow || position == premiumGiftingRow ||
                         position == businessRow || position == liteModeRow || position == birthdayRow || position == channelRow ||
-                        position == starsRow || position == tonRow || position == linkedCommunityRow || position == alfaSettingsRow;
+                        position == starsRow || position == tonRow || position == linkedCommunityRow || position == alfaSettingsRow || position == alfaIdRow;
             }
             if (holder.itemView instanceof UserCell) {
                 UserCell userCell = (UserCell) holder.itemView;
@@ -14296,7 +14367,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
             if (position == infoHeaderRow || position == membersHeaderRow || position == settingsSectionRow2 ||
                     position == numberSectionRow || position == helpHeaderRow || position == debugHeaderRow || position == botPermissionsHeader) {
                 return VIEW_TYPE_HEADER;
-            } else if (position == phoneRow || position == locationRow || position == numberRow || position == birthdayRow) {
+            } else if (position == phoneRow || position == locationRow || position == numberRow || position == birthdayRow || position == alfaIdRow) {
                 return VIEW_TYPE_TEXT_DETAIL;
             } else if (position == usernameRow || position == setUsernameRow) {
                 return VIEW_TYPE_TEXT_DETAIL_MULTILINE;
@@ -15750,6 +15821,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
             put(++pointer, unofficialSecurityRiskDividerRow, sparseIntArray);
             put(++pointer, linkedCommunityRow, sparseIntArray);
             put(++pointer, linkedCommunityDividerRow, sparseIntArray);
+            put(++pointer, alfaIdRow, sparseIntArray);
         }
 
         private void put(int id, int position, SparseIntArray sparseIntArray) {
