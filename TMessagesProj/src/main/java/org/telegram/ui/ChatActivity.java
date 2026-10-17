@@ -45523,7 +45523,8 @@ public class ChatActivity extends BaseFragment implements
                     }
                 }
                 // AlfaGram — o'chirilgan xabar haqida ma'lumot
-                if (message.alfaDeletedBySender) {
+                if (message.alfaDeletedBySender || org.telegram.messenger.AlfaFeatures.antiDelete && message.getId() > 0
+                        && org.telegram.messenger.AlfaDeleted.getInstance().isKept(currentAccount, dialog_id, message.getId())) {
                     items.add("O'chirilgan xabar (yuboruvchi o'chirgan)");
                     options.add(OPTION_ALFA_DELETED_INFO);
                     icons.add(R.drawable.msg_delete);

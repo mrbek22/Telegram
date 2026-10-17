@@ -85,8 +85,10 @@ public class AlfaTyping extends SQLiteOpenHelper {
     public void markSent(int account, long dialogId, long userId) {
         try {
             SQLiteDatabase db = getWritableDatabase();
-            db.execSQL("UPDATE typing SET sent=1, ended_at=? WHERE account=? AND dialog_id=? AND user_id=? AND sent=0",
-                    new Object[]{System.currentTimeMillis(), account, dialogId, userId});
+            long now = System.currentTimeMillis();
+            // Faqat ochiq yoki yaqinda (30 s) tugagan sessiyalar — eski "yubormadi" yozuvlari saqlanib qoladi
+            db.execSQL("UPDATE typing SET sent=1, ended_at=? WHERE account=? AND dialog_id=? AND user_id=? AND sent=0 AND (ended_at=0 OR ended_at>?)",
+                    new Object[]{now, account, dialogId, userId, now - 30000L});
         } catch (Throwable t) {
             FileLog.e(t);
         }

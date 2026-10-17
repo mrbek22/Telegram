@@ -930,6 +930,10 @@ public class LocationController extends BaseController implements NotificationCe
             }
             request = req;
         }
+        // AlfaGram — noReadReceipts/ghostMode: jonli joylashuv "ko'rildi" signali yuborilmaydi
+        if (MessagesController.alfaBlockReadReceipts()) {
+            return;
+        }
         getConnectionsManager().sendRequest(request, (response, error) -> {
             if (response instanceof TLRPC.TL_messages_affectedMessages) {
                 TLRPC.TL_messages_affectedMessages res = (TLRPC.TL_messages_affectedMessages) response;

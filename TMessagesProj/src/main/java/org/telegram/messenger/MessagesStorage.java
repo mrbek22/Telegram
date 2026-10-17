@@ -14849,24 +14849,85 @@ public class MessagesStorage extends BaseController {
         executeInStorageQueue(() -> updateDialogsWithDeletedMessagesInternal(dialogId, channelId, messages, additionalDialogsToUpdate));
     }
 
+    /**
+     * AlfaGram — antiDelete. Faqat storage oqimida chaqiriladi.
+     * Server o'chirgan xabarlardan kelayotganlarini (incoming) AlfaDeleted'ga arxivlaydi va `mids`dan
+     * olib tashlaydi — ular lokal bazada va chatda qoladi. key: 0 (shaxsiy/oddiy guruh) yoki kanal dialog id'si.
+     * keptOut'ga {dialogId, mid} juftlari yoziladi.
+     */
+    public void alfaKeepDeletedIncoming(long key, ArrayList<Integer> mids, ArrayList<long[]> keptOut) {
+        if (mids == null || mids.isEmpty()) {
+            return;
+        }
+        SQLiteCursor cursor = null;
+        try {
+            long currentUser = getUserConfig().getClientUserId();
+            String ids = TextUtils.join(",", mids);
+            if (key != 0) {
+                cursor = database.queryFinalized(String.format(Locale.US, "SELECT uid, data, out, mid FROM messages_v2 WHERE mid IN(%s) AND uid = %d", ids, key));
+            } else {
+                cursor = database.queryFinalized(String.format(Locale.US, "SELECT uid, data, out, mid FROM messages_v2 WHERE mid IN(%s) AND is_channel = 0", ids));
+            }
+            while (cursor.next()) {
+                long did = cursor.longValue(0);
+                int mid = cursor.intValue(3);
+                // chiquvchi, Saved Messages va maxfiy chatlarga tegilmaydi
+                if (cursor.intValue(2) != 0 || did == currentUser || DialogObject.isEncryptedDialog(did)) {
+                    continue;
+                }
+                NativeByteBuffer data = cursor.byteBufferValue(1);
+                if (data == null) {
+                    continue;
+                }
+                TLRPC.Message message = TLRPC.Message.TLdeserialize(data, data.readInt32(false), false);
+                data.reuse();
+                if (message == null || message instanceof TLRPC.TL_messageService) {
+                    continue;
+                }
+                message.dialog_id = did;
+                AlfaDeleted.getInstance().save(currentAccount, did, message);
+                mids.remove((Integer) mid);
+                if (keptOut != null) {
+                    keptOut.add(new long[]{did, mid});
+                }
+            }
+        } catch (Throwable e) {
+            FileLog.e(e);
+        } finally {
+            if (cursor != null) {
+                cursor.dispose();
+            }
+        }
+    }
+
+    /** AlfaGram — editHistory. Storage oqimida: tahrirdan oldingi matnni lokal bazadan olib saqlaydi. */
+    public void alfaSaveEditHistory(long dialogId, int mid, String newText) {
+        SQLiteCursor cursor = null;
+        try {
+            cursor = database.queryFinalized(String.format(Locale.US, "SELECT data FROM messages_v2 WHERE uid = %d AND mid = %d", dialogId, mid));
+            if (cursor.next()) {
+                NativeByteBuffer data = cursor.byteBufferValue(0);
+                if (data != null) {
+                    TLRPC.Message old = TLRPC.Message.TLdeserialize(data, data.readInt32(false), false);
+                    data.reuse();
+                    // faqat matn haqiqatan o'zgargan bo'lsa (reaksiya va h.k. emas)
+                    if (old != null && !TextUtils.isEmpty(old.message) && !old.message.equals(newText)) {
+                        AlfaEdits.getInstance().saveBeforeEdit(currentAccount, dialogId, old);
+                    }
+                }
+            }
+        } catch (Throwable e) {
+            FileLog.e(e);
+        } finally {
+            if (cursor != null) {
+                cursor.dispose();
+            }
+        }
+    }
+
     public ArrayList<Long> markMessagesAsDeleted(long dialogId, ArrayList<Integer> messages, boolean useQueue, boolean deleteFiles, int mode, int topicId) {
         if (messages.isEmpty()) {
             return null;
-        }
-        // AlfaGram — o'chirilgan xabarlarni arxivlash (asosiy oqim tegilmaydi)
-        if (AlfaFeatures.antiDelete && mode == 0) {
-            try {
-                MessagesController mc = MessagesController.getInstance(currentAccount);
-                for (int i = 0; i < messages.size(); i++) {
-                    Integer mid = messages.get(i);
-                    if (mid == null || mid == 0) continue;
-                    MessageObject obj = mc.dialogMessagesByIds.get(mid);
-                    if (obj != null && obj.messageOwner != null && !obj.isOut()) {
-                        AlfaDeleted.getInstance().save(currentAccount, dialogId, obj.messageOwner);
-                    }
-                }
-            } catch (Throwable ignore) {
-            }
         }
         if (useQueue) {
             storageQueue.postRunnable(() -> markMessagesAsDeletedInternal(dialogId, messages, deleteFiles, mode, topicId));
