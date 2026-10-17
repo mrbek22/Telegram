@@ -1785,6 +1785,10 @@ public class SharedConfig {
     }
 
     public static boolean animationsEnabled() {
+        // AlfaGram — barcha animatsiyalarni o'chirish (keshlanmaydi, jonli)
+        if (AlfaFeatures.disableAnimations) {
+            return false;
+        }
         if (animationsEnabled == null) {
             animationsEnabled = MessagesController.getGlobalMainSettings().getBoolean("view_animations", true);
         }

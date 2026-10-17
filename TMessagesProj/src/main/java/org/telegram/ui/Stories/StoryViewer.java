@@ -2886,6 +2886,10 @@ public class StoryViewer implements NotificationCenter.NotificationCenterDelegat
             return;
         }
         allowScreenshots = !isShowing || allowScreenshots;
+        // AlfaGram — screenshotga ruxsat (himoyalangan storylar ham)
+        if (org.telegram.messenger.AlfaFeatures.allowScreenshots) {
+            allowScreenshots = true;
+        }
         if (this.allowScreenshots != allowScreenshots) {
             this.allowScreenshots = allowScreenshots;
 

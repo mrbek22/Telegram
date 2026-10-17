@@ -1113,7 +1113,9 @@ public class DialogsSearchAdapter extends RecyclerListView.SelectionAdapter {
                 ConnectionsManager.getInstance(currentAccount).cancelRequest(sponsoredReqId, true);
                 sponsoredReqId = 0;
             }
-            if (query == null || query.length() < 4 || UserConfig.getInstance(currentAccount).isPremium() && MessagesController.getInstance(currentAccount).isSponsoredDisabled()) {
+            // AlfaGram — qidiruvdagi homiylik (sponsored) natijalarini yashirish
+            if (query == null || query.length() < 4 || UserConfig.getInstance(currentAccount).isPremium() && MessagesController.getInstance(currentAccount).isSponsoredDisabled()
+                    || org.telegram.messenger.AlfaFeatures.blockTelegramAds || org.telegram.messenger.AlfaFeatures.hideSponsoredMessages) {
                 sponsoredQuery = null;
             } else {
                 final TLRPC.TL_contacts_getSponsoredPeers req = new TLRPC.TL_contacts_getSponsoredPeers();

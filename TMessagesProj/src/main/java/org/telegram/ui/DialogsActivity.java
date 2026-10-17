@@ -8732,6 +8732,10 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                     maxPinnedCount = getMessagesController().maxPinnedDialogsCountDefault;
                 }
             }
+            // AlfaGram — cheksiz pin
+            if (!(containsFilter && filter != null)) {
+                maxPinnedCount = MessagesController.alfaPinLimit(maxPinnedCount);
+            }
             hasPinAction[0] = !(newPinnedSecretCount + pinnedSecretCount > maxPinnedCount || newPinnedCount + pinnedCount - alreadyAdded > maxPinnedCount);
         }
 
@@ -9319,6 +9323,10 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 }
             } else {
                 maxPinnedCount = getUserConfig().isPremium() ? getMessagesController().dialogFiltersPinnedLimitPremium : getMessagesController().dialogFiltersPinnedLimitDefault;
+            }
+            // AlfaGram — cheksiz pin
+            if (!containsFilter) {
+                maxPinnedCount = MessagesController.alfaPinLimit(maxPinnedCount);
             }
             if (newPinnedSecretCount + pinnedSecretCount > maxPinnedCount || newPinnedCount + pinnedCount - alreadyAdded > maxPinnedCount) {
                 if (folderId != 0 || filter != null) {

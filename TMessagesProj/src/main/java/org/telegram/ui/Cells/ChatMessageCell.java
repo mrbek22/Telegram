@@ -6925,7 +6925,7 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                 drawSideButton = checkNeedDrawShareButton(messageObject) ? 2 : 0;
             } else if (messageObject.searchType == ChatActivity.SEARCH_MY_MESSAGES) {
                 drawSideButton = 0;
-            } else if (MessagesController.getInstance(currentAccount).isPeerNoForwards(messageObject.getDialogId()) || (messageObject.messageOwner != null && messageObject.messageOwner.noforwards)) {
+            } else if (MessagesController.getInstance(currentAccount).isPeerNoForwards(messageObject.getDialogId()) || (messageObject.messageOwner != null && MessageObject.isNoforwards(messageObject.messageOwner))) {
                 drawSideButton = 0;
                 if (isPinnedChat && !isRepliesChat && !messageObject.isSponsored()) {
                     if (currentMessagesGroup != null && currentPosition != null) {
