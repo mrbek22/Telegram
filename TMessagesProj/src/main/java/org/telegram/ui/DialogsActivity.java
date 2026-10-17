@@ -13003,20 +13003,21 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             animated = false;
         }
         boolean onlySelfStories = !isArchive() && getStoriesController().hasOnlySelfStories();
-        boolean newVisibility;
+        boolean visibility;
         if (communityId != 0) {
-            newVisibility = false;
+            visibility = false;
         } else if (isArchive()) {
-            newVisibility = !getStoriesController().getHiddenList().isEmpty();
+            visibility = !getStoriesController().getHiddenList().isEmpty();
         } else {
-            newVisibility = !onlySelfStories && getStoriesController().hasStories();
+            visibility = !onlySelfStories && getStoriesController().hasStories();
             onlySelfStories = getStoriesController().hasOnlySelfStories();
         }
         if (org.telegram.messenger.AlfaFeatures.hideStories) {
             // Alfa: storieslar qatori butunlay yashiriladi (bo'sh joy va tortib ochish ham yo'q)
-            newVisibility = false;
+            visibility = false;
             onlySelfStories = false;
         }
+        final boolean newVisibility = visibility;
 
         hasOnlySlefStories = onlySelfStories;
 
