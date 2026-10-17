@@ -3910,7 +3910,12 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                         finishFragment();
                     }
                 } else if (id == ALFA_GHOST_ITEM_ID) {
-                    boolean on = !org.telegram.messenger.AlfaFeatures.ghostMode;
+                    if (!org.telegram.messenger.AlfaFeatures.isRemoteAllowed("ghostMode")) {
+                        BulletinFactory.of(DialogsActivity.this).createSimpleBulletin(R.raw.chats_infotip,
+                            "Bu funksiya vaqtincha o'chirilgan").show();
+                        return;
+                    }
+                    boolean on = !org.telegram.messenger.AlfaFeatures.getUserPref("ghostMode");
                     org.telegram.messenger.AlfaFeatures.setFlag("ghostMode", on);
                     updateAlfaGhostItem();
                     BulletinFactory.of(DialogsActivity.this).createSimpleBulletin(R.raw.chats_infotip,

@@ -115,13 +115,13 @@ public class AlfaSettingsActivity extends BaseFragment {
         rows.add(Row.toggle("allowScreenshots", "Screenshotga ruxsat"));
         rows.add(Row.toggle("unlimitedPins", "Cheksiz pin"));
         rows.add(Row.toggle("forwardWithoutAuthor", "Forward — muallifsiz"));
-        rows.add(Row.toggle("forwardWithoutReply", "Forward — javobsiz"));
+        rows.add(Row.toggle("forwardWithoutReply", "Forward — izohsiz (caption'siz)"));
         rows.add(Row.info("Telegram'ning standart cheklovlarini olib tashlash."));
 
         rows.add(Row.header("Chat ro'yxati"));
         rows.add(Row.toggle("hideStories", "Storieslar qatorini yashirish"));
         rows.add(Row.toggle("hideMuted", "Ovozsiz chatlarni yashirish"));
-        rows.add(Row.toggle("compactChats", "Kichik (compact) chat qatori"));
+        rows.add(Row.toggle("compactChats", "Ixcham (2 qatorli) chat ro'yxati"));
         rows.add(Row.info("Chatlar sahifasini xohlaganingizday sozlang."));
 
         rows.add(Row.header("Chat ichida"));
@@ -129,13 +129,14 @@ public class AlfaSettingsActivity extends BaseFragment {
         rows.add(Row.toggle("swipeToReply", "Chapga siljitib javob"));
         rows.add(Row.toggle("disableStickerSuggest", "Stiker taklifini o'chirish"));
         rows.add(Row.toggle("fastSendAnimation", "Tez yuborish animatsiyasi"));
+        rows.add(Row.info("Xabar ID vaqt yonida ko'rinadi — o'zgarish chat qayta ochilganda qo'llanadi."));
 
         rows.add(Row.header("Maxfiylik"));
-        rows.add(Row.toggle("ghostMode", "Ghost mode (o'qilgan/yozyapman signalisiz)"));
+        rows.add(Row.toggle("ghostMode", "Ghost mode (onlayn, o'qildi, yozyapti yashirin)"));
         rows.add(Row.toggle("stealthStories", "Anonim story ko'rish"));
         rows.add(Row.toggle("noReadReceipts", "O'qish tasdig'ini yubormaslik"));
         rows.add(Row.toggle("hidePhoneInSettings", "Sozlamalarda telefonni yashirish"));
-        rows.add(Row.toggle("blurAppInRecents", "Recent apps'da blur (xiralik)"));
+        rows.add(Row.toggle("blurAppInRecents", "Recent apps'da ilovani yashirish"));
         rows.add(Row.info("Sizdan hech qanday signal ketmaydi va hech kim sizni kuzatolmaydi."));
 
         rows.add(Row.header("Ko'rinish"));

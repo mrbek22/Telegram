@@ -251,6 +251,24 @@ public class AlfaFeatures {
     private static void onFlagChanged(String key, boolean value) {
         try {
             switch (key) {
+                case "allowScreenshots":
+                    AndroidUtilities.runOnUIThread(FlagSecureReason::alfaInvalidateAll);
+                    break;
+                case "blurAppInRecents":
+                    AndroidUtilities.runOnUIThread(() -> {
+                        if (org.telegram.ui.LaunchActivity.instance != null) {
+                            org.telegram.ui.LaunchActivity.instance.alfaUpdateRecentsBlur();
+                        }
+                    });
+                    break;
+                case "disableAnimations":
+                    AndroidUtilities.runOnUIThread(() -> LiteMode.alfaOnAnimationsToggled(value));
+                    break;
+                case "debugLogs":
+                    BuildVars.LOGS_ENABLED = value;
+                    ApplicationLoader.applicationContext.getSharedPreferences("systemConfig", android.content.Context.MODE_PRIVATE)
+                            .edit().putBoolean("logsEnabled", value).apply();
+                    break;
                 default:
                     break;
             }
