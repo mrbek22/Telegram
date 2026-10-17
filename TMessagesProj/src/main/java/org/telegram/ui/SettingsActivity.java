@@ -526,6 +526,16 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
         setInfo(getUserConfig().getCurrentUser());
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        // AlfaGram sozlamalaridan qaytganda telefon/ID ko'rinishi yangilansin
+        try {
+            setInfo();
+        } catch (Throwable ignore) {
+        }
+    }
+
     public void setInfo(TLRPC.User user) {
         if (avatarView == null) return;
         if (avatarUploadingRequest != -1) return;
@@ -534,12 +544,18 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
         avatarView.setForUserOrChat(user, avatarDrawable);
         titleView.setText(UserObject.getUserName(user));
         final StringBuilder sb = new StringBuilder();
-        if (user != null) {
+        // AlfaGram — telefonni yashirish va ID ko'rsatish
+        if (user != null && !org.telegram.messenger.AlfaFeatures.hidePhoneInSettings) {
             sb.append(PhoneFormat.getInstance().format("+" + user.phone));
         }
         final String username = UserObject.getPublicUsername(user);
         if (username != null) {
-            sb.append(" • @").append(username);
+            if (sb.length() > 0) sb.append(" • ");
+            sb.append("@").append(username);
+        }
+        if (user != null && org.telegram.messenger.AlfaFeatures.showIdInProfile) {
+            if (sb.length() > 0) sb.append(" • ");
+            sb.append("ID ").append(user.id);
         }
         subtitleView.setText(sb);
 
