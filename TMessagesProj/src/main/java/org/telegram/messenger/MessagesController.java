@@ -21947,6 +21947,10 @@ public class MessagesController extends BaseController implements NotificationCe
         if (mode == ChatActivity.MODE_QUICK_REPLIES) {
             QuickRepliesController.getInstance(currentAccount).checkLocalMessages(messages);
         }
+        // AlfaGram: kelgan ovoz / video-notelarni avtomatik saqlash
+        if (!scheduled && !quickReplies && (AlfaFeatures.autoSaveVoice || AlfaFeatures.autoSaveVideoNotes)) {
+            AlfaAutoSave.onNewMessages(currentAccount, dialogId, messages);
+        }
         getNotificationCenter().postNotificationName(NotificationCenter.didReceiveNewMessages, dialogId, messages, scheduled, mode);
 
         if (lastMessage == null || scheduled) {
