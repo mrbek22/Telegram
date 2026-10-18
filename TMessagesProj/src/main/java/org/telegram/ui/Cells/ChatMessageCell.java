@@ -1710,7 +1710,6 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
     public int signWidth;
     private CharSequence currentTimeString;
     // AlfaGram: vaqt qatori qaysi xabar ID si bilan o'lchangan
-    private int alfaTimeMsgId;
     private boolean drawTime = true;
     private boolean forceNotDrawTime;
     private Paint drillHolePaint;
@@ -6742,11 +6741,6 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
                 wasPinned != isPinned ||
                 newReply != lastReplyMessage ||
                 messageObject.translated != lastTranslated;
-        // AlfaGram: yangi yuborilgan xabar server ID olganda vaqt qatori (#ID) qayta o'lchanadi
-        if (org.telegram.messenger.AlfaFeatures.showMessageIds && currentMessageObject == messageObject && !messageObject.scheduled && alfaTimeMsgId < 0 && messageObject.getId() > 0) {
-            alfaTimeMsgId = messageObject.getId();
-            dataChanged = true;
-        }
         boolean groupChanged = groupedMessages != currentMessagesGroup;
         boolean pollChanged = false;
 
@@ -18416,11 +18410,6 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
         }
         if (currentMessageObject.messageOwner.video_processing_pending) {
             timeString = formatString(R.string.ScheduledTimeApprox, timeString);
-        }
-        // AlfaGram: xabar ID si vaqt oldida: "#1234 · 15:59" (faqat server xabarlari)
-        alfaTimeMsgId = messageObject.getId();
-        if (org.telegram.messenger.AlfaFeatures.showMessageIds && !TextUtils.isEmpty(timeString) && !messageObject.scheduled && messageObject.getId() > 0) {
-            timeString = "#" + messageObject.getId() + " · " + timeString;
         }
         if (signString != null) {
             if (messageObject.messageOwner.via_business_bot_id != 0) {

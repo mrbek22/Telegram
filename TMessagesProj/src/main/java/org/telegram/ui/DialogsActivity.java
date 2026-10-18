@@ -3529,8 +3529,10 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 logoDrawable = context.getResources().getDrawable(R.drawable.telegram_logo_2).mutate();
                 logoDrawable.setBounds(0, dp(2), logoDrawable.getIntrinsicWidth(), dp(2) + logoDrawable.getIntrinsicHeight());
                 logoDrawable.setColorFilter(getThemedColor(Theme.key_telegram_color_dialogsLogo), PorterDuff.Mode.MULTIPLY);
-                SpannableStringBuilder ssb = new SpannableStringBuilder(getString(R.string.AppName));
-                ssb.setSpan(new ImageSpan(logoDrawable), 0, ssb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                // AlfaGram: "Telegram" yozuvli rasm o'rniga brend nomi (langpack bosib keta olmaydi)
+                SpannableStringBuilder ssb = new SpannableStringBuilder("AlfaGram");
+                ssb.setSpan(new android.text.style.ForegroundColorSpan(getThemedColor(Theme.key_telegram_color_dialogsLogo)), 0, ssb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                ssb.setSpan(new android.text.style.StyleSpan(android.graphics.Typeface.BOLD), 0, ssb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
                 actionBar.setTitle(ssb, statusDrawable);
                 updateStatus(UserConfig.getInstance(currentAccount).getCurrentUser(), false);
             }
@@ -7048,6 +7050,15 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         if (!onlySelect && folderId == 0 && communityId == 0) {
             org.telegram.messenger.AlfaUpdate.onMainScreen(this);
             org.telegram.messenger.AlfaAds.onTransition(getParentActivity());
+            // AlfaGram — xabar menyusidagi "Tarjima" tugmasi sukut bo'yicha yoqiladi (har akkauntda bir marta)
+            try {
+                android.content.SharedPreferences alfaMain = getMessagesController().getMainSettings();
+                if (!alfaMain.getBoolean("alfa_translate_default_v1", false)) {
+                    alfaMain.edit().putBoolean("alfa_translate_default_v1", true).apply();
+                    getMessagesController().getTranslateController().setContextTranslateEnabled(true);
+                }
+            } catch (Throwable ignore) {
+            }
         }
         if (dialogStoriesCell != null) {
             dialogStoriesCell.onResume();

@@ -125,11 +125,12 @@ public class AlfaSettingsActivity extends BaseFragment {
         rows.add(Row.info("Chatlar sahifasini xohlaganingizday sozlang."));
 
         rows.add(Row.header("Chat ichida"));
-        rows.add(Row.toggle("showMessageIds", "Xabar ID sini ko'rsatish"));
+        rows.add(Row.action("Ikki marta bosish: " + AlfaFeatures.DOUBLE_TAP_NAMES[AlfaFeatures.getDoubleTapAction()], this::showDoubleTapPicker));
+        rows.add(Row.toggle("showMessageIds", "Xabar menyusida ID nusxalash"));
         rows.add(Row.toggle("swipeToReply", "Chapga siljitib javob"));
         rows.add(Row.toggle("disableStickerSuggest", "Stiker taklifini o'chirish"));
         rows.add(Row.toggle("fastSendAnimation", "Tez yuborish animatsiyasi"));
-        rows.add(Row.info("Xabar ID vaqt yonida ko'rinadi — o'zgarish chat qayta ochilganda qo'llanadi."));
+        rows.add(Row.info("Xabarni bosib ushlang — menyuda «ID nusxalash» chiqadi."));
 
         rows.add(Row.header("Maxfiylik"));
         rows.add(Row.toggle("ghostMode", "Ghost mode (onlayn, o'qildi, yozyapti yashirin)"));
@@ -168,6 +169,19 @@ public class AlfaSettingsActivity extends BaseFragment {
         } catch (Throwable ignore) {
         }
         rows.add(Row.info("AlfaGram " + version + " — Telegram API asosidagi norasmiy klient. Telegram bilan bog'liq emas."));
+    }
+
+    /** Ikki marta bosish amalini tanlash oynasi. */
+    private void showDoubleTapPicker() {
+        if (getParentActivity() == null) return;
+        org.telegram.ui.ActionBar.AlertDialog.Builder builder = new org.telegram.ui.ActionBar.AlertDialog.Builder(getParentActivity());
+        builder.setTitle("Xabarni ikki marta bosganda");
+        builder.setItems(AlfaFeatures.DOUBLE_TAP_NAMES, (dialog, which) -> {
+            AlfaFeatures.setDoubleTapAction(which);
+            buildRows();
+            if (listAdapter != null) listAdapter.notifyDataSetChanged();
+        });
+        showDialog(builder.create());
     }
 
     private void openLink(String url) {

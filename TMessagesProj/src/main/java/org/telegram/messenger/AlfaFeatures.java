@@ -137,6 +137,37 @@ public class AlfaFeatures {
         return ApplicationLoader.applicationContext.getSharedPreferences(PREFS, 0);
     }
 
+    // ── Ikki marta bosish amali ────────────────────
+    public static final int DOUBLE_TAP_REACTION = 0;
+    public static final int DOUBLE_TAP_REPLY = 1;
+    public static final int DOUBLE_TAP_COPY = 2;
+    public static final int DOUBLE_TAP_OFF = 3;
+    public static final String[] DOUBLE_TAP_NAMES = { "Reaksiya (standart)", "Javob berish", "Matnni nusxalash", "O'chiq" };
+    private static int doubleTapAction = -1;
+
+    public static int getDoubleTapAction() {
+        if (doubleTapAction < 0) {
+            try {
+                doubleTapAction = prefs().getInt("doubleTapAction", DOUBLE_TAP_REACTION);
+            } catch (Throwable ignore) {
+                doubleTapAction = DOUBLE_TAP_REACTION;
+            }
+            if (doubleTapAction < 0 || doubleTapAction >= DOUBLE_TAP_NAMES.length) {
+                doubleTapAction = DOUBLE_TAP_REACTION;
+            }
+        }
+        return doubleTapAction;
+    }
+
+    public static void setDoubleTapAction(int action) {
+        if (action < 0 || action >= DOUBLE_TAP_NAMES.length) return;
+        doubleTapAction = action;
+        try {
+            prefs().edit().putInt("doubleTapAction", action).apply();
+        } catch (Throwable ignore) {
+        }
+    }
+
     /** Sozlamalarni SharedPreferences'dan yuklash (bir marta). */
     public static void loadPrefs() {
         synchronized (AlfaFeatures.class) {

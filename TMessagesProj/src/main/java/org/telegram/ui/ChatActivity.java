@@ -1241,6 +1241,7 @@ public class ChatActivity extends BaseFragment implements
 
     public final static int OPTION_ALFA_EDIT_HISTORY = 900;
     public final static int OPTION_ALFA_DELETED_INFO = 901;
+    public final static int OPTION_ALFA_COPY_MSG_ID = 902;
 
     private final static int[] allowedNotificationsDuringChatListAnimations = new int[]{
             NotificationCenter.messagesRead,
@@ -1874,6 +1875,16 @@ public class ChatActivity extends BaseFragment implements
         @Override
         public boolean hasDoubleTap(View view, int position) {
             if (chatMode == MODE_QUICK_REPLIES) return false;
+            // AlfaGram — ikki marta bosish amali (reaksiya o'rniga javob/nusxa/o'chiq)
+            int alfaTap = org.telegram.messenger.AlfaFeatures.getDoubleTapAction();
+            if (alfaTap != org.telegram.messenger.AlfaFeatures.DOUBLE_TAP_REACTION) {
+                if (alfaTap == org.telegram.messenger.AlfaFeatures.DOUBLE_TAP_OFF || !(view instanceof ChatMessageCell)) {
+                    return false;
+                }
+                MessageObject alfaMsg = ((ChatMessageCell) view).getPrimaryMessageObject();
+                return alfaMsg != null && !alfaMsg.isDateObject && !alfaMsg.isSending() && !alfaMsg.isEditing() && alfaMsg.getId() > 0
+                        && !alfaMsg.isSponsored() && !actionBar.isActionModeShowed() && !isInScheduleMode();
+            }
             String reactionStringSetting = getMediaDataController().getDoubleTapReaction();
             TLRPC.TL_availableReaction reaction = getMediaDataController().getReactionsMap().get(reactionStringSetting);
             if (reaction == null && (reactionStringSetting == null || !reactionStringSetting.startsWith("animated_"))) {
@@ -1900,6 +1911,28 @@ public class ChatActivity extends BaseFragment implements
         @Override
         public void onDoubleTap(View view, int position, float x, float y) {
             if (getParentActivity() == null || isSecretChat() || isInScheduleMode() || isInPreviewMode() || chatMode == MODE_QUICK_REPLIES) {
+                return;
+            }
+            int alfaTap = org.telegram.messenger.AlfaFeatures.getDoubleTapAction();
+            if (alfaTap != org.telegram.messenger.AlfaFeatures.DOUBLE_TAP_REACTION) {
+                if (!(view instanceof ChatMessageCell)) {
+                    return;
+                }
+                MessageObject alfaMsg = ((ChatMessageCell) view).getPrimaryMessageObject();
+                if (alfaMsg == null || alfaMsg.isDateObject) {
+                    return;
+                }
+                if (alfaTap == org.telegram.messenger.AlfaFeatures.DOUBLE_TAP_REPLY) {
+                    if (chatActivityEnterView != null && chatActivityEnterView.getVisibility() == View.VISIBLE && (currentChat == null || !ChatObject.isNotInChat(currentChat))) {
+                        showFieldPanelForReply(alfaMsg);
+                    }
+                } else if (alfaTap == org.telegram.messenger.AlfaFeatures.DOUBLE_TAP_COPY) {
+                    CharSequence alfaText = alfaMsg.caption != null && alfaMsg.caption.length() > 0 ? alfaMsg.caption : alfaMsg.messageText;
+                    if (!TextUtils.isEmpty(alfaText)) {
+                        AndroidUtilities.addToClipboard(alfaText.toString());
+                        BulletinFactory.of(ChatActivity.this).createSimpleBulletin(R.raw.copy, "Matn nusxalandi").show();
+                    }
+                }
                 return;
             }
             MessageObject messageObject;
@@ -33131,6 +33164,13 @@ public class ChatActivity extends BaseFragment implements
             showAlfaDeletedInfo(selectedObject);
             return;
         }
+        if (option == OPTION_ALFA_COPY_MSG_ID) {
+            int alfaMsgId = selectedObject.getId();
+            AndroidUtilities.addToClipboard(String.valueOf(alfaMsgId));
+            BulletinFactory.of(this).createSimpleBulletin(R.raw.copy, "Xabar ID nusxalandi: " + alfaMsgId).show();
+            clearSelectionMode();
+            return;
+        }
         boolean preserveDim = false;
         switch (option) {
             case OPTION_RETRY: {
@@ -45521,6 +45561,12 @@ public class ChatActivity extends BaseFragment implements
                         options.add(OPTION_ALFA_EDIT_HISTORY);
                         icons.add(R.drawable.msg_edit);
                     }
+                }
+                // AlfaGram — xabar ID sini nusxalash
+                if (org.telegram.messenger.AlfaFeatures.showMessageIds && message.getId() > 0 && !message.scheduled) {
+                    items.add("ID nusxalash (#" + message.getId() + ")");
+                    options.add(OPTION_ALFA_COPY_MSG_ID);
+                    icons.add(R.drawable.msg_copy);
                 }
                 // AlfaGram — o'chirilgan xabar haqida ma'lumot
                 if (message.alfaDeletedBySender || org.telegram.messenger.AlfaFeatures.antiDelete && message.getId() > 0
