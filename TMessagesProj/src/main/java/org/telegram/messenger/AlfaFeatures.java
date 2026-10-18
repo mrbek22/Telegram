@@ -105,6 +105,10 @@ public class AlfaFeatures {
     /** Debug: Loglarni ko'rsatish. */
     public static boolean debugLogs = false;
 
+    // ── Til ────────────────────────────────────────
+    /** O'zbek tilidagi interfeysni kirill alifbosida ko'rsatish. */
+    public static boolean cyrillicUi = false;
+
     /** Barcha bayroq kalitlari (SharedPreferences kaliti = maydon nomi). */
     private static final String[] KEYS = {
             "antiDelete", "editHistory", "typingLog",
@@ -117,6 +121,7 @@ public class AlfaFeatures {
             "autoSaveVoice", "autoSaveVideoNotes",
             "blockTelegramAds", "hideSponsoredMessages",
             "openLastChat", "debugLogs",
+            "cyrillicUi",
     };
 
     /** Foydalanuvchi tanlovi (server ta'sirisiz) — sozlamalar switch'i shuni ko'rsatadi. */
@@ -295,6 +300,10 @@ public class AlfaFeatures {
                 case "disableAnimations":
                     AndroidUtilities.runOnUIThread(() -> LiteMode.alfaOnAnimationsToggled(value));
                     break;
+                case "cyrillicUi":
+                    // til satrlari qayta yuklanadi va ekranlar qayta chiziladi (reloadInterface)
+                    AndroidUtilities.runOnUIThread(() -> LocaleController.getInstance().alfaReloadCurrentLanguage(UserConfig.selectedAccount));
+                    break;
                 case "debugLogs":
                     BuildVars.LOGS_ENABLED = value;
                     ApplicationLoader.applicationContext.getSharedPreferences("systemConfig", android.content.Context.MODE_PRIVATE)
@@ -350,6 +359,7 @@ public class AlfaFeatures {
 
             case "openLastChat": return openLastChat;
             case "debugLogs": return debugLogs;
+            case "cyrillicUi": return cyrillicUi;
             default: return false;
         }
     }
@@ -397,6 +407,7 @@ public class AlfaFeatures {
 
             case "openLastChat": openLastChat = value; break;
             case "debugLogs": debugLogs = value; break;
+            case "cyrillicUi": cyrillicUi = value; break;
         }
     }
 }

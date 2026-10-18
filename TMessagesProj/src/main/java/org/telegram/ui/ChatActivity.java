@@ -1242,6 +1242,7 @@ public class ChatActivity extends BaseFragment implements
     public final static int OPTION_ALFA_EDIT_HISTORY = 900;
     public final static int OPTION_ALFA_DELETED_INFO = 901;
     public final static int OPTION_ALFA_COPY_MSG_ID = 902;
+    public final static int OPTION_ALFA_TRANSLIT = 903;
 
     private final static int[] allowedNotificationsDuringChatListAnimations = new int[]{
             NotificationCenter.messagesRead,
@@ -33151,6 +33152,25 @@ public class ChatActivity extends BaseFragment implements
         }
     }
 
+    /** AlfaGram — xabar matnini kirill ↔ lotinga o'girib ko'rsatish (nusxalash bilan). */
+    private void showAlfaTranslit(MessageObject msg) {
+        if (msg == null || getParentActivity() == null) return;
+        CharSequence src = msg.caption != null && msg.caption.length() > 0 ? msg.caption : msg.messageText;
+        if (TextUtils.isEmpty(src)) return;
+        String text = src.toString();
+        boolean toLatin = org.telegram.messenger.AlfaCyrillic.hasCyrillic(text);
+        final String result = toLatin ? org.telegram.messenger.AlfaCyrillic.toLatin(text) : org.telegram.messenger.AlfaCyrillic.toCyrillic(text);
+        AlertDialog.Builder builder = new AlertDialog.Builder(getParentActivity(), themeDelegate);
+        builder.setTitle(org.telegram.messenger.AlfaCyrillic.ui(toLatin ? "Lotin alifbosida" : "Kirill alifbosida"));
+        builder.setMessage(result);
+        builder.setPositiveButton(org.telegram.messenger.AlfaCyrillic.ui("Nusxalash"), (d, w) -> {
+            AndroidUtilities.addToClipboard(result);
+            BulletinFactory.of(ChatActivity.this).createSimpleBulletin(R.raw.copy, org.telegram.messenger.AlfaCyrillic.ui("Matn nusxalandi")).show();
+        });
+        builder.setNegativeButton(LocaleController.getString(R.string.Close), null);
+        showDialog(builder.create());
+    }
+
     private void processSelectedOption(int option) {
         if (selectedObject == null || getParentActivity() == null) {
             return;
@@ -33162,6 +33182,11 @@ public class ChatActivity extends BaseFragment implements
         }
         if (option == OPTION_ALFA_DELETED_INFO) {
             showAlfaDeletedInfo(selectedObject);
+            return;
+        }
+        if (option == OPTION_ALFA_TRANSLIT) {
+            showAlfaTranslit(selectedObject);
+            clearSelectionMode();
             return;
         }
         if (option == OPTION_ALFA_COPY_MSG_ID) {
@@ -45560,6 +45585,16 @@ public class ChatActivity extends BaseFragment implements
                         items.add("Tahrir tarixi (" + hist.size() + ")");
                         options.add(OPTION_ALFA_EDIT_HISTORY);
                         icons.add(R.drawable.msg_edit);
+                    }
+                }
+                // AlfaGram — matnni kirill ↔ lotinga o'girish
+                {
+                    CharSequence alfaTr = message.caption != null && message.caption.length() > 0 ? message.caption : message.messageText;
+                    if (!TextUtils.isEmpty(alfaTr)
+                            && (org.telegram.messenger.AlfaCyrillic.hasCyrillic(alfaTr) || org.telegram.messenger.AlfaCyrillic.hasLatinLetters(alfaTr))) {
+                        items.add(org.telegram.messenger.AlfaCyrillic.ui(org.telegram.messenger.AlfaCyrillic.hasCyrillic(alfaTr) ? "Lotinga o'girish" : "Kirillga o'girish"));
+                        options.add(OPTION_ALFA_TRANSLIT);
+                        icons.add(R.drawable.msg_translate);
                     }
                 }
                 // AlfaGram — xabar ID sini nusxalash

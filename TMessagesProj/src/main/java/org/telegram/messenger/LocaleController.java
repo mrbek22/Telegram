@@ -1358,6 +1358,7 @@ public class LocaleController {
             }
             currentLocale = newLocale;
             currentLocaleInfo = localeInfo;
+            alfaApplyCyrillic();
             FileLog.d("applyLanguage: currentLocaleInfo is set");
 
             if (!TextUtils.isEmpty(currentLocaleInfo.pluralLangCode)) {
@@ -1424,6 +1425,27 @@ public class LocaleController {
     public static String getCurrentLanguageName() {
         LocaleInfo localeInfo = getInstance().currentLocaleInfo;
         return localeInfo == null || TextUtils.isEmpty(localeInfo.name) ? getString("LanguageName", R.string.LanguageName) : localeInfo.name;
+    }
+
+    /** AlfaGram — o'zbek tili tanlangan va "Kirill alifbosi" yoqilgan bo'lsa satrlarni kirillga o'giradi. */
+    private void alfaApplyCyrillic() {
+        try {
+            if (currentLocaleInfo != null && currentLocaleInfo.shortName != null
+                    && currentLocaleInfo.shortName.toLowerCase().startsWith("uz") && AlfaCyrillic.isUiEnabled()) {
+                AlfaCyrillic.convertLocaleValues(localeValues);
+            }
+        } catch (Throwable ignore) {
+        }
+    }
+
+    /** AlfaGram — joriy tilni qayta yuklash (kirill/lotin almashganda). */
+    public void alfaReloadCurrentLanguage(int account) {
+        try {
+            if (currentLocaleInfo != null) {
+                applyLanguage(currentLocaleInfo, true, false, account);
+            }
+        } catch (Throwable ignore) {
+        }
     }
 
     private String getStringInternal(String key, int res) {
@@ -3166,6 +3188,7 @@ public class LocaleController {
                         localeValues = valuesToSet;
                         currentLocale = newLocale;
                         currentLocaleInfo = localeInfo;
+                        alfaApplyCyrillic();
                         if (!TextUtils.isEmpty(currentLocaleInfo.pluralLangCode)) {
                             currentPluralRules = allRules.get(currentLocaleInfo.pluralLangCode);
                         }

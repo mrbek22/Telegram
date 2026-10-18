@@ -64,8 +64,8 @@ public class AlfaSettingsActivity extends BaseFragment {
         private Row(int type, String key, String title, String info, Runnable action) {
             this.type = type;
             this.key = key;
-            this.title = title;
-            this.info = info;
+            this.title = org.telegram.messenger.AlfaCyrillic.ui(title);
+            this.info = org.telegram.messenger.AlfaCyrillic.ui(info);
             this.action = action;
         }
     }
@@ -79,6 +79,10 @@ public class AlfaSettingsActivity extends BaseFragment {
         rows.add(Row.header("Tezkor"));
         rows.add(new Row(TYPE_QUICK, null, null, null, null));
         rows.add(Row.info("Ghost — onlayn/yozyapman signali ketmaydi. Story — anonim ko'rish. O'qildi — o'qish tasdig'i yuborilmaydi."));
+
+        rows.add(Row.header("Til"));
+        rows.add(Row.toggle("cyrillicUi", "Kirill alifbosi (Ўзбекча)"));
+        rows.add(Row.info("O'zbek tili tanlangan bo'lsa, butun ilova kirillda ko'rinadi. Xabarni bosib ushlab, matnni kirill ↔ lotinga o'girish ham mumkin."));
 
         rows.add(Row.header("Ilova qulfi"));
         rows.add(Row.action("PIN kod sozlash", () -> {
@@ -197,7 +201,7 @@ public class AlfaSettingsActivity extends BaseFragment {
 
         actionBar.setBackButtonImage(R.drawable.ic_ab_back);
         actionBar.setAllowOverlayTitle(true);
-        actionBar.setTitle("AlfaGram sozlamalari");
+        actionBar.setTitle(org.telegram.messenger.AlfaCyrillic.ui("AlfaGram sozlamalari"));
         actionBar.setActionBarMenuOnItemClick(new ActionBar.ActionBarMenuOnItemClick() {
             @Override
             public void onItemClick(int id) {
@@ -382,10 +386,10 @@ public class AlfaSettingsActivity extends BaseFragment {
             icon.setImageResource(QUICK_ICONS[i]);
             icon.setColorFilter(on ? 0xFFFFFFFF : Theme.getColor(Theme.key_windowBackgroundWhiteGrayText), PorterDuff.Mode.SRC_IN);
             TextView name = (TextView) tile.getChildAt(1);
-            name.setText(QUICK_TITLES[i]);
+            name.setText(org.telegram.messenger.AlfaCyrillic.ui(QUICK_TITLES[i]));
             name.setTextColor(on ? 0xFFFFFFFF : Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
             TextView state = (TextView) tile.getChildAt(2);
-            state.setText(!allowed ? "Vaqtincha o'chiq" : on ? "Yoqilgan" : "O'chiq");
+            state.setText(org.telegram.messenger.AlfaCyrillic.ui(!allowed ? "Vaqtincha o'chiq" : on ? "Yoqilgan" : "O'chiq"));
             state.setTextColor(on ? 0xFFEFF6FF : Theme.getColor(Theme.key_windowBackgroundWhiteGrayText));
         }
     }
