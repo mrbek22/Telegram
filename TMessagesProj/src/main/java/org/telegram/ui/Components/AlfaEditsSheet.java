@@ -63,14 +63,14 @@ public class AlfaEditsSheet extends BottomSheet {
         title.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 18);
         title.setTypeface(AndroidUtilities.bold());
         title.setTextColor(getThemedColor(Theme.key_dialogTextBlack));
-        title.setText("Tahrir tarixi");
+        title.setText(org.telegram.messenger.AlfaCyrillic.ui("Tahrir tarixi"));
         header.addView(title, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.LEFT | Gravity.CENTER_VERTICAL));
 
         clearButton = new TextView(context);
         clearButton.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
         clearButton.setTypeface(AndroidUtilities.bold());
         clearButton.setTextColor(getThemedColor(Theme.key_text_RedRegular));
-        clearButton.setText("Tozalash");
+        clearButton.setText(org.telegram.messenger.AlfaCyrillic.ui("Tozalash"));
         clearButton.setPadding(dp(10), dp(6), dp(10), dp(6));
         clearButton.setBackground(Theme.createRadSelectorDrawable(getThemedColor(Theme.key_listSelector), 6, 6));
         clearButton.setOnClickListener(v -> showClearConfirm());
@@ -93,7 +93,7 @@ public class AlfaEditsSheet extends BottomSheet {
         emptyView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
         emptyView.setTextColor(getThemedColor(Theme.key_dialogTextGray3));
         emptyView.setPadding(dp(24), dp(40), dp(24), dp(40));
-        emptyView.setText("Bu chatda hali tahrirlangan xabar yo'q.\nKimdir xabarni tahrir qilsa, avvalgi matn shu yerda saqlanadi.");
+        emptyView.setText(org.telegram.messenger.AlfaCyrillic.ui("Bu chatda hali tahrirlangan xabar yo'q.\nKimdir xabarni tahrir qilsa, avvalgi matn shu yerda saqlanadi."));
         content.addView(emptyView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER));
 
         root.addView(content, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 0, 1f));
@@ -116,8 +116,8 @@ public class AlfaEditsSheet extends BottomSheet {
 
     private void showClearConfirm() {
         AlertDialog.Builder b = new AlertDialog.Builder(getContext(), resourcesProvider);
-        b.setTitle("Tozalash");
-        b.setMessage("Ushbu chatning tahrir tarixi butunlay o'chirilsinmi?");
+        b.setTitle(org.telegram.messenger.AlfaCyrillic.ui("Tozalash"));
+        b.setMessage(org.telegram.messenger.AlfaCyrillic.ui("Ushbu chatning tahrir tarixi butunlay o'chirilsinmi?"));
         b.setPositiveButton(LocaleController.getString(R.string.Delete), (d, w) -> {
             AlfaEdits.getInstance().clear(currentAccount, dialogId);
             reload();
@@ -132,7 +132,7 @@ public class AlfaEditsSheet extends BottomSheet {
 
     private String senderName(long fromId) {
         if (fromId == 0) {
-            return "Noma'lum";
+            return org.telegram.messenger.AlfaCyrillic.ui("Noma'lum");
         }
         if (fromId > 0) {
             TLRPC.User user = MessagesController.getInstance(currentAccount).getUser(fromId);
@@ -145,7 +145,7 @@ public class AlfaEditsSheet extends BottomSheet {
                     return "@" + user.username;
                 }
             }
-            return "Foydalanuvchi " + fromId;
+            return org.telegram.messenger.AlfaCyrillic.ui("Foydalanuvchi ") + fromId;
         }
         TLRPC.Chat chat = MessagesController.getInstance(currentAccount).getChat(-fromId);
         if (chat != null && !TextUtils.isEmpty(chat.title)) {

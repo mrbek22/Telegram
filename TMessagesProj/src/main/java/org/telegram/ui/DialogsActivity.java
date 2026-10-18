@@ -3914,14 +3914,14 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 } else if (id == ALFA_GHOST_ITEM_ID) {
                     if (!org.telegram.messenger.AlfaFeatures.isRemoteAllowed("ghostMode")) {
                         BulletinFactory.of(DialogsActivity.this).createSimpleBulletin(R.raw.chats_infotip,
-                            "Bu funksiya vaqtincha o'chirilgan").show();
+                            org.telegram.messenger.AlfaCyrillic.ui("Bu funksiya vaqtincha o'chirilgan")).show();
                         return;
                     }
                     boolean on = !org.telegram.messenger.AlfaFeatures.getUserPref("ghostMode");
                     org.telegram.messenger.AlfaFeatures.setFlag("ghostMode", on);
                     updateAlfaGhostItem();
                     BulletinFactory.of(DialogsActivity.this).createSimpleBulletin(R.raw.chats_infotip,
-                        on ? "Ghost yoqildi — onlayn va «yozyapti» ko'rinmaydi" : "Ghost o'chirildi").show();
+                        org.telegram.messenger.AlfaCyrillic.ui(on ? "Ghost yoqildi — onlayn va «yozyapti» ko'rinmaydi" : "Ghost o'chirildi")).show();
                 } else if (id == 1) {
                     if (getParentActivity() == null) {
                         return;
@@ -7059,6 +7059,12 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 }
             } catch (Throwable ignore) {
             }
+            // AlfaGram — yangilanishdan keyin "Yangi nimalar?" (bir marta)
+            AndroidUtilities.runOnUIThread(() -> {
+                if (!isPaused && getParentActivity() != null && getVisibleDialog() == null) {
+                    org.telegram.messenger.AlfaWhatsNew.show(DialogsActivity.this, false);
+                }
+            }, 1500);
         }
         if (dialogStoriesCell != null) {
             dialogStoriesCell.onResume();

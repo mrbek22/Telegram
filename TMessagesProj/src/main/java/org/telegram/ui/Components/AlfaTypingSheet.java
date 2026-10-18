@@ -62,14 +62,14 @@ public class AlfaTypingSheet extends BottomSheet {
         title.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 18);
         title.setTypeface(AndroidUtilities.bold());
         title.setTextColor(getThemedColor(Theme.key_dialogTextBlack));
-        title.setText("Yozdi, yubormadi");
+        title.setText(org.telegram.messenger.AlfaCyrillic.ui("Yozdi, yubormadi"));
         header.addView(title, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.LEFT | Gravity.CENTER_VERTICAL));
 
         clearButton = new TextView(context);
         clearButton.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
         clearButton.setTypeface(AndroidUtilities.bold());
         clearButton.setTextColor(getThemedColor(Theme.key_text_RedRegular));
-        clearButton.setText("Tozalash");
+        clearButton.setText(org.telegram.messenger.AlfaCyrillic.ui("Tozalash"));
         clearButton.setPadding(dp(10), dp(6), dp(10), dp(6));
         clearButton.setBackground(Theme.createRadSelectorDrawable(getThemedColor(Theme.key_listSelector), 6, 6));
         clearButton.setOnClickListener(v -> showClearConfirm());
@@ -92,7 +92,7 @@ public class AlfaTypingSheet extends BottomSheet {
         emptyView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
         emptyView.setTextColor(getThemedColor(Theme.key_dialogTextGray3));
         emptyView.setPadding(dp(24), dp(40), dp(24), dp(40));
-        emptyView.setText("Hozircha hech kim yozib turib to'xtatmagan.\nKimdir yozib, xabar yubormasdan to'xtatsa, shu yerda ko'rinadi.");
+        emptyView.setText(org.telegram.messenger.AlfaCyrillic.ui("Hozircha hech kim yozib turib to'xtatmagan.\nKimdir yozib, xabar yubormasdan to'xtatsa, shu yerda ko'rinadi."));
         content.addView(emptyView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER));
 
         root.addView(content, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 0, 1f));
@@ -115,8 +115,8 @@ public class AlfaTypingSheet extends BottomSheet {
 
     private void showClearConfirm() {
         AlertDialog.Builder b = new AlertDialog.Builder(getContext(), resourcesProvider);
-        b.setTitle("Tozalash");
-        b.setMessage("Ushbu chatning \"yozdi, yubormadi\" jurnali o'chirilsinmi?");
+        b.setTitle(org.telegram.messenger.AlfaCyrillic.ui("Tozalash"));
+        b.setMessage(org.telegram.messenger.AlfaCyrillic.ui("Ushbu chatning \"yozdi, yubormadi\" jurnali o'chirilsinmi?"));
         b.setPositiveButton(LocaleController.getString(R.string.Delete), (d, w) -> {
             AlfaTyping.getInstance().clear(currentAccount, dialogId);
             reload();
@@ -131,7 +131,7 @@ public class AlfaTypingSheet extends BottomSheet {
 
     private String senderName(long userId) {
         if (userId == 0) {
-            return "Noma'lum";
+            return org.telegram.messenger.AlfaCyrillic.ui("Noma'lum");
         }
         if (userId > 0) {
             TLRPC.User user = MessagesController.getInstance(currentAccount).getUser(userId);
@@ -144,7 +144,7 @@ public class AlfaTypingSheet extends BottomSheet {
                     return "@" + user.username;
                 }
             }
-            return "Foydalanuvchi " + userId;
+            return org.telegram.messenger.AlfaCyrillic.ui("Foydalanuvchi ") + userId;
         }
         TLRPC.Chat chat = MessagesController.getInstance(currentAccount).getChat(-userId);
         if (chat != null && !TextUtils.isEmpty(chat.title)) {
@@ -217,7 +217,7 @@ public class AlfaTypingSheet extends BottomSheet {
             nameView.setText(senderName(r.userId));
             timeView.setText(LocaleController.formatDateChat(r.startedAt / 1000L));
             long durSec = Math.max(1, (r.endedAt - r.startedAt) / 1000L);
-            infoView.setText("~" + durSec + " sekund yozdi, lekin xabar yubormadi");
+            infoView.setText("~" + durSec + org.telegram.messenger.AlfaCyrillic.ui(" sekund yozdi, lekin xabar yubormadi"));
         }
     }
 }

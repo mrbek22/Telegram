@@ -82,7 +82,12 @@ public class AlfaSettingsActivity extends BaseFragment {
 
         rows.add(Row.header("Til"));
         rows.add(Row.toggle("cyrillicUi", "Kirill alifbosi (Ўзбекча)"));
+        rows.add(Row.toggle("sendCyrillic", "Lotincha yozsam, kirillda yuborilsin"));
         rows.add(Row.info("O'zbek tili tanlangan bo'lsa, butun ilova kirillda ko'rinadi. Xabarni bosib ushlab, matnni kirill ↔ lotinga o'girish ham mumkin."));
+
+        rows.add(Row.header("Kuzatuv"));
+        rows.add(Row.toggle("onlineTracker", "Kontaktlar onlayn tarixini yozish"));
+        rows.add(Row.info("Profil → ⋮ → «Onlayn tarixi»: kontakt qachon va qancha vaqt onlayn bo'lgani. Ilova internetga ulangan paytdagi holatlar yoziladi."));
 
         rows.add(Row.header("Ilova qulfi"));
         rows.add(Row.action("PIN kod sozlash", () -> {
@@ -163,6 +168,8 @@ public class AlfaSettingsActivity extends BaseFragment {
         rows.add(Row.toggle("debugLogs", "Debug loglar"));
 
         rows.add(Row.header("Ilova haqida"));
+        rows.add(Row.action("Do'stlarga ulashish", this::shareAlfaGram));
+        rows.add(Row.action("Yangi nimalar?", () -> org.telegram.messenger.AlfaWhatsNew.show(this, true)));
         rows.add(Row.action("Maxfiylik siyosati", () -> openLink("https://alfagram.uz/privacy")));
         rows.add(Row.action("Hisob va ma'lumotlarni o'chirish", () -> openLink("https://alfagram.uz/delete-account")));
         rows.add(Row.action("Sayt: alfagram.uz", () -> openLink("https://alfagram.uz")));
@@ -175,17 +182,35 @@ public class AlfaSettingsActivity extends BaseFragment {
         rows.add(Row.info("AlfaGram " + version + " — Telegram API asosidagi norasmiy klient. Telegram bilan bog'liq emas."));
     }
 
+    private static CharSequence[] alfaUiArray(String[] src) {
+        CharSequence[] out = new CharSequence[src.length];
+        for (int i = 0; i < src.length; i++) out[i] = org.telegram.messenger.AlfaCyrillic.ui(src[i]);
+        return out;
+    }
+
     /** Ikki marta bosish amalini tanlash oynasi. */
     private void showDoubleTapPicker() {
         if (getParentActivity() == null) return;
         org.telegram.ui.ActionBar.AlertDialog.Builder builder = new org.telegram.ui.ActionBar.AlertDialog.Builder(getParentActivity());
-        builder.setTitle("Xabarni ikki marta bosganda");
-        builder.setItems(AlfaFeatures.DOUBLE_TAP_NAMES, (dialog, which) -> {
+        builder.setTitle(org.telegram.messenger.AlfaCyrillic.ui("Xabarni ikki marta bosganda"));
+        builder.setItems(alfaUiArray(AlfaFeatures.DOUBLE_TAP_NAMES), (dialog, which) -> {
             AlfaFeatures.setDoubleTapAction(which);
             buildRows();
             if (listAdapter != null) listAdapter.notifyDataSetChanged();
         });
         showDialog(builder.create());
+    }
+
+    /** AlfaGram havolasini do'stlarga yuborish. */
+    private void shareAlfaGram() {
+        try {
+            android.content.Intent intent = new android.content.Intent(android.content.Intent.ACTION_SEND);
+            intent.setType("text/plain");
+            intent.putExtra(android.content.Intent.EXTRA_TEXT, org.telegram.messenger.AlfaCyrillic.ui(
+                    "Men AlfaGram'dan foydalanaman — Ghost rejim, o'chirilgan xabarlarni ko'rish, onlayn tarix, kirill alifbosi va boshqa ko'plab qulayliklar. Yuklab oling: ") + "https://alfagram.uz");
+            getParentActivity().startActivity(android.content.Intent.createChooser(intent, org.telegram.messenger.AlfaCyrillic.ui("Do'stlarga ulashish")));
+        } catch (Throwable ignore) {
+        }
     }
 
     private void openLink(String url) {
@@ -236,6 +261,14 @@ public class AlfaSettingsActivity extends BaseFragment {
             if (view instanceof TextCheckCell) {
                 ((TextCheckCell) view).setChecked(currentValue(row.key));
             }
+            if ("cyrillicUi".equals(row.key)) {
+                // alifbo almashdi — shu ekran matnlari ham darhol yangilansin
+                AndroidUtilities.runOnUIThread(() -> {
+                    buildRows();
+                    if (actionBar != null) actionBar.setTitle(org.telegram.messenger.AlfaCyrillic.ui("AlfaGram sozlamalari"));
+                    if (listAdapter != null) listAdapter.notifyDataSetChanged();
+                }, 250);
+            }
             if (isQuickKey(row.key)) {
                 // tezkor kafellar ham yangilansin
                 int quickPos = indexOfType(TYPE_QUICK);
@@ -263,7 +296,7 @@ public class AlfaSettingsActivity extends BaseFragment {
     private void showRemoteDisabled() {
         try {
             org.telegram.ui.Components.BulletinFactory.of(this).createSimpleBulletin(R.raw.chats_infotip,
-                "Bu funksiya vaqtincha o'chirilgan").show();
+                org.telegram.messenger.AlfaCyrillic.ui("Bu funksiya vaqtincha o'chirilgan")).show();
         } catch (Throwable ignore) {
         }
     }
@@ -324,7 +357,7 @@ public class AlfaSettingsActivity extends BaseFragment {
         texts.addView(title);
 
         TextView subtitle = new TextView(context);
-        subtitle.setText("Yashirin funksiyalar · bepul");
+        subtitle.setText(org.telegram.messenger.AlfaCyrillic.ui("Yashirin funksiyalar · bepul"));
         subtitle.setTextColor(0xFFEFF6FF);
         subtitle.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13);
         texts.addView(subtitle, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, 0, 3, 0, 0));

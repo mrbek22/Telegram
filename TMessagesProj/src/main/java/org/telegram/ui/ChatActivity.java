@@ -1931,7 +1931,7 @@ public class ChatActivity extends BaseFragment implements
                     CharSequence alfaText = alfaMsg.caption != null && alfaMsg.caption.length() > 0 ? alfaMsg.caption : alfaMsg.messageText;
                     if (!TextUtils.isEmpty(alfaText)) {
                         AndroidUtilities.addToClipboard(alfaText.toString());
-                        BulletinFactory.of(ChatActivity.this).createSimpleBulletin(R.raw.copy, "Matn nusxalandi").show();
+                        BulletinFactory.of(ChatActivity.this).createSimpleBulletin(R.raw.copy, org.telegram.messenger.AlfaCyrillic.ui("Matn nusxalandi")).show();
                     }
                 }
                 return;
@@ -4431,13 +4431,13 @@ public class ChatActivity extends BaseFragment implements
                 headerItem.lazilyAddSubItem(search, R.drawable.msg_search, LocaleController.getString(R.string.Search));
             }
             if (org.telegram.messenger.AlfaFeatures.antiDelete) {
-                headerItem.lazilyAddSubItem(alfa_deleted_messages, R.drawable.msg_delete, "O'chirilgan xabarlar");
+                headerItem.lazilyAddSubItem(alfa_deleted_messages, R.drawable.msg_delete, org.telegram.messenger.AlfaCyrillic.ui("O'chirilgan xabarlar"));
             }
             if (org.telegram.messenger.AlfaFeatures.editHistory) {
-                headerItem.lazilyAddSubItem(alfa_edit_history, R.drawable.msg_edit, "Tahrir tarixi");
+                headerItem.lazilyAddSubItem(alfa_edit_history, R.drawable.msg_edit, org.telegram.messenger.AlfaCyrillic.ui("Tahrir tarixi"));
             }
             if (org.telegram.messenger.AlfaFeatures.typingLog) {
-                headerItem.lazilyAddSubItem(alfa_typing_log, R.drawable.msg_recent, "Yozdi, yubormadi");
+                headerItem.lazilyAddSubItem(alfa_typing_log, R.drawable.msg_recent, org.telegram.messenger.AlfaCyrillic.ui("Yozdi, yubormadi"));
             }
             if (ChatObject.isBoostSupported(currentChat) && (getUserConfig().isPremium() || ChatObject.isBoosted(chatInfo) || ChatObject.hasAdminRights(currentChat))) {
                 RLottieDrawable drawable = new RLottieDrawable(R.raw.boosts, "" + R.raw.boosts, dp(24), dp(24));
@@ -33192,7 +33192,7 @@ public class ChatActivity extends BaseFragment implements
         if (option == OPTION_ALFA_COPY_MSG_ID) {
             int alfaMsgId = selectedObject.getId();
             AndroidUtilities.addToClipboard(String.valueOf(alfaMsgId));
-            BulletinFactory.of(this).createSimpleBulletin(R.raw.copy, "Xabar ID nusxalandi: " + alfaMsgId).show();
+            BulletinFactory.of(this).createSimpleBulletin(R.raw.copy, org.telegram.messenger.AlfaCyrillic.ui("Xabar ID nusxalandi: ") + alfaMsgId).show();
             clearSelectionMode();
             return;
         }
@@ -45578,38 +45578,6 @@ public class ChatActivity extends BaseFragment implements
                     options.add(OPTION_EDIT);
                     icons.add(R.drawable.msg_edit);
                 }
-                // AlfaGram — tahrir tarixi (agar kimdir bu xabarni tahrir qilgan bo'lsa)
-                if (org.telegram.messenger.AlfaFeatures.editHistory && message.isEdited() && message.getId() > 0) {
-                    ArrayList<org.telegram.messenger.AlfaEdits.Record> hist = org.telegram.messenger.AlfaEdits.getInstance().getForMessage(currentAccount, dialog_id, message.getId());
-                    if (!hist.isEmpty()) {
-                        items.add("Tahrir tarixi (" + hist.size() + ")");
-                        options.add(OPTION_ALFA_EDIT_HISTORY);
-                        icons.add(R.drawable.msg_edit);
-                    }
-                }
-                // AlfaGram — matnni kirill ↔ lotinga o'girish
-                {
-                    CharSequence alfaTr = message.caption != null && message.caption.length() > 0 ? message.caption : message.messageText;
-                    if (!TextUtils.isEmpty(alfaTr)
-                            && (org.telegram.messenger.AlfaCyrillic.hasCyrillic(alfaTr) || org.telegram.messenger.AlfaCyrillic.hasLatinLetters(alfaTr))) {
-                        items.add(org.telegram.messenger.AlfaCyrillic.ui(org.telegram.messenger.AlfaCyrillic.hasCyrillic(alfaTr) ? "Lotinga o'girish" : "Kirillga o'girish"));
-                        options.add(OPTION_ALFA_TRANSLIT);
-                        icons.add(R.drawable.msg_translate);
-                    }
-                }
-                // AlfaGram — xabar ID sini nusxalash
-                if (org.telegram.messenger.AlfaFeatures.showMessageIds && message.getId() > 0 && !message.scheduled) {
-                    items.add("ID nusxalash (#" + message.getId() + ")");
-                    options.add(OPTION_ALFA_COPY_MSG_ID);
-                    icons.add(R.drawable.msg_copy);
-                }
-                // AlfaGram — o'chirilgan xabar haqida ma'lumot
-                if (message.alfaDeletedBySender || org.telegram.messenger.AlfaFeatures.antiDelete && message.getId() > 0
-                        && org.telegram.messenger.AlfaDeleted.getInstance().isKept(currentAccount, dialog_id, message.getId())) {
-                    items.add("O'chirilgan xabar (yuboruvchi o'chirgan)");
-                    options.add(OPTION_ALFA_DELETED_INFO);
-                    icons.add(R.drawable.msg_delete);
-                }
                 if (ChatObject.isMonoForum(currentChat) && selectedObject.getGroupId() == 0 && selectedObjectGroup == null && message != null && message.messageOwner != null && message.messageOwner.suggested_post == null && message.messageOwner.action == null) {
                     items.add(LocaleController.getString(R.string.EditOfferAdd));
                     options.add(OPTION_SUGGESTION_ADD_OFFER);
@@ -46056,6 +46024,51 @@ public class ChatActivity extends BaseFragment implements
                 options.add(OPTION_DELETE);
                 icons.add(deleteIconRes);
             }
+        }
+        alfaAddMenuItems(message, icons, items, options);
+    }
+
+    /** AlfaGram — xabar menyusiga qo'shimcha bandlar (har qanday xabar turida, "O'chirish"dan oldin). */
+    private void alfaAddMenuItems(MessageObject message, ArrayList<Integer> icons, ArrayList<CharSequence> items, ArrayList<Integer> options) {
+        try {
+            if (message == null || message.isSponsored() || message.isDateObject || isInScheduleMode()) {
+                return;
+            }
+            int insertAt = options.indexOf(OPTION_DELETE);
+            if (insertAt < 0) insertAt = options.size();
+            CharSequence alfaTr = message.caption != null && message.caption.length() > 0 ? message.caption : message.messageText;
+            if (!TextUtils.isEmpty(alfaTr) && message.type != MessageObject.TYPE_DATE && message.messageOwner != null && message.messageOwner.action == null
+                    && (org.telegram.messenger.AlfaCyrillic.hasCyrillic(alfaTr) || org.telegram.messenger.AlfaCyrillic.hasLatinLetters(alfaTr))) {
+                items.add(insertAt, org.telegram.messenger.AlfaCyrillic.ui(org.telegram.messenger.AlfaCyrillic.hasCyrillic(alfaTr) ? "Lotinga o'girish" : "Kirillga o'girish"));
+                options.add(insertAt, OPTION_ALFA_TRANSLIT);
+                icons.add(insertAt, R.drawable.msg_translate);
+                insertAt++;
+            }
+            // tahrir tarixi (kimdir bu xabarni tahrirlagan bo'lsa)
+            if (org.telegram.messenger.AlfaFeatures.editHistory && message.isEdited() && message.getId() > 0) {
+                ArrayList<org.telegram.messenger.AlfaEdits.Record> hist = org.telegram.messenger.AlfaEdits.getInstance().getForMessage(currentAccount, dialog_id, message.getId());
+                if (!hist.isEmpty() && !options.contains(OPTION_ALFA_EDIT_HISTORY)) {
+                    items.add(insertAt, org.telegram.messenger.AlfaCyrillic.ui("Tahrir tarixi") + " (" + hist.size() + ")");
+                    options.add(insertAt, OPTION_ALFA_EDIT_HISTORY);
+                    icons.add(insertAt, R.drawable.msg_edit);
+                    insertAt++;
+                }
+            }
+            // o'chirilgan xabar haqida ma'lumot
+            if ((message.alfaDeletedBySender || org.telegram.messenger.AlfaFeatures.antiDelete && message.getId() > 0
+                    && org.telegram.messenger.AlfaDeleted.getInstance().isKept(currentAccount, dialog_id, message.getId()))
+                    && !options.contains(OPTION_ALFA_DELETED_INFO)) {
+                items.add(insertAt, org.telegram.messenger.AlfaCyrillic.ui("O'chirilgan xabar (yuboruvchi o'chirgan)"));
+                options.add(insertAt, OPTION_ALFA_DELETED_INFO);
+                icons.add(insertAt, R.drawable.msg_delete);
+                insertAt++;
+            }
+            if (org.telegram.messenger.AlfaFeatures.showMessageIds && message.getId() > 0) {
+                items.add(insertAt, org.telegram.messenger.AlfaCyrillic.ui("ID nusxalash") + " (#" + message.getId() + ")");
+                options.add(insertAt, OPTION_ALFA_COPY_MSG_ID);
+                icons.add(insertAt, R.drawable.msg_copy);
+            }
+        } catch (Throwable ignore) {
         }
     }
 

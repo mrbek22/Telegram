@@ -1430,6 +1430,11 @@ public class LocaleController {
     /** AlfaGram — o'zbek tili tanlangan va "Kirill alifbosi" yoqilgan bo'lsa satrlarni kirillga o'giradi. */
     private void alfaApplyCyrillic() {
         try {
+            // brend nomi: cloud langpack "Telegram" qo'ysa ham ilova nomi AlfaGram
+            if (localeValues != null) {
+                if (localeValues.containsKey("AppName")) localeValues.put("AppName", "AlfaGram");
+                if (localeValues.containsKey("AppNameBeta")) localeValues.put("AppNameBeta", "AlfaGram");
+            }
             if (currentLocaleInfo != null && currentLocaleInfo.shortName != null
                     && currentLocaleInfo.shortName.toLowerCase().startsWith("uz") && AlfaCyrillic.isUiEnabled()) {
                 AlfaCyrillic.convertLocaleValues(localeValues);

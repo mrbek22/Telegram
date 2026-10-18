@@ -108,6 +108,12 @@ public class AlfaFeatures {
     // ── Til ────────────────────────────────────────
     /** O'zbek tilidagi interfeysni kirill alifbosida ko'rsatish. */
     public static boolean cyrillicUi = false;
+    /** Lotincha yozilgan xabarni kirillda yuborish. */
+    public static boolean sendCyrillic = false;
+
+    // ── Kuzatuv ────────────────────────────────────
+    /** Kontaktlar onlayn tarixini yozib borish. */
+    public static boolean onlineTracker = true;
 
     /** Barcha bayroq kalitlari (SharedPreferences kaliti = maydon nomi). */
     private static final String[] KEYS = {
@@ -121,7 +127,7 @@ public class AlfaFeatures {
             "autoSaveVoice", "autoSaveVideoNotes",
             "blockTelegramAds", "hideSponsoredMessages",
             "openLastChat", "debugLogs",
-            "cyrillicUi",
+            "cyrillicUi", "sendCyrillic", "onlineTracker",
     };
 
     /** Foydalanuvchi tanlovi (server ta'sirisiz) — sozlamalar switch'i shuni ko'rsatadi. */
@@ -360,6 +366,8 @@ public class AlfaFeatures {
             case "openLastChat": return openLastChat;
             case "debugLogs": return debugLogs;
             case "cyrillicUi": return cyrillicUi;
+            case "sendCyrillic": return sendCyrillic;
+            case "onlineTracker": return onlineTracker;
             default: return false;
         }
     }
@@ -408,6 +416,8 @@ public class AlfaFeatures {
             case "openLastChat": openLastChat = value; break;
             case "debugLogs": debugLogs = value; break;
             case "cyrillicUi": cyrillicUi = value; break;
+            case "sendCyrillic": sendCyrillic = value; break;
+            case "onlineTracker": onlineTracker = value; break;
         }
     }
 }

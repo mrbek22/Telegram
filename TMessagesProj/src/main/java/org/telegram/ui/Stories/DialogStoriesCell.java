@@ -159,6 +159,23 @@ public class DialogStoriesCell extends FrameLayout implements NotificationCenter
     AnimatedTextView titleView;
     ActionBarAnimatedSubtitleOverlayContainer subtitleOverlayContainer;
     ImageView telegramLogoView;
+
+    /** AlfaGram — sarlavha uchun oq "AlfaGram" yozuvi (rang filtri bilan bo'yaladi). */
+    private static android.graphics.drawable.Drawable alfaWordmark(Context context) {
+        android.text.TextPaint paint = new android.text.TextPaint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+        paint.setColor(0xFFFFFFFF);
+        paint.setTextSize(AndroidUtilities.dp(20));
+        paint.setTypeface(AndroidUtilities.bold());
+        String text = "AlfaGram";
+        int w = (int) Math.ceil(paint.measureText(text));
+        int h = AndroidUtilities.dp(22);
+        android.graphics.Bitmap bitmap = android.graphics.Bitmap.createBitmap(Math.max(1, w), h, android.graphics.Bitmap.Config.ARGB_8888);
+        android.graphics.Canvas canvas = new android.graphics.Canvas(bitmap);
+        android.graphics.Paint.FontMetrics fm = paint.getFontMetrics();
+        float y = (h - fm.bottom - fm.top) / 2f;
+        canvas.drawText(text, 0, y, paint);
+        return new android.graphics.drawable.BitmapDrawable(context.getResources(), bitmap);
+    }
     ImageView emojiStatusView;
     AnimatedEmojiDrawable.SwapAnimatedEmojiDrawable statusDrawable;
     boolean drawCircleForce;
@@ -338,7 +355,7 @@ public class DialogStoriesCell extends FrameLayout implements NotificationCenter
         telegramLogoView = new ImageView(context);
         telegramLogoView.setContentDescription(getString(R.string.AppName));
         telegramLogoView.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-        telegramLogoView.setImageResource(R.drawable.telegram_logo_2);
+        telegramLogoView.setImageDrawable(alfaWordmark(context)); // AlfaGram: "Telegram" logotipi o'rniga
         telegramLogoView.setColorFilter(getTextLogoColor(), PorterDuff.Mode.MULTIPLY);
         telegramLogoView.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_YES);
         telegramLogoView.setFocusableInTouchMode(true);

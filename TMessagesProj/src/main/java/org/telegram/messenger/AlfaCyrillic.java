@@ -14,7 +14,7 @@ public class AlfaCyrillic {
 
     /** O'girilmaydigan bo'laklar: format belgilari, teglar, {..}, havolalar, @nik, un1/un2, brend nomi. */
     private static final Pattern PROTECTED = Pattern.compile(
-            "%%|%(\\d+\\$)?[-#+ 0,(]*\\d*(\\.\\d+)?[a-zA-Z]|<[^>]*>|\\{[^}]*\\}|(https?|tg)://\\S+|@\\w+|\\bun\\d\\b|AlfaGram");
+            "%%|%(\\d+\\$)?[-#+ 0,(]*\\d*(\\.\\d+)?[a-zA-Z]|<[^>]*>|\\{[^}]*\\}|(https?|tg)://\\S+|@\\w+|\\bun\\d\\b|AlfaGram|\\b(Ghost|PIN|TTL|ID|Premium|Stars|Business|Android|iOS|Wi-?Fi|Enter)\\b");
 
     private static final String APOS = "'‘’ʻʼ`";
 
@@ -40,11 +40,42 @@ public class AlfaCyrillic {
             for (Map.Entry<String, String> e : values.entrySet()) {
                 String v = e.getValue();
                 if (v != null && !v.isEmpty()) {
-                    e.setValue(toCyrillic(v));
+                    e.setValue(isDatePatternKey(e.getKey()) ? convertDatePattern(v) : toCyrillic(v));
                 }
             }
         } catch (Throwable ignore) {
         }
+    }
+
+    /** SimpleDateFormat andozasi bo'lgan til kalitlari (HH:mm, EEE — harflari o'zgarmasligi shart). */
+    private static boolean isDatePatternKey(String key) {
+        if (key == null) return false;
+        return key.startsWith("formatter") || key.startsWith("chatDate") || key.startsWith("chatFullDate")
+                || key.startsWith("formatDateSchedule")
+                || key.matches("(Send|Remind|Start|StartShort|Starts|Publish)(Today|Day|DayYear)At");
+    }
+
+    /** Andozada faqat '...' ichidagi oddiy matn o'giriladi. */
+    private static String convertDatePattern(String v) {
+        StringBuilder b = new StringBuilder(v.length());
+        int i = 0;
+        int n = v.length();
+        while (i < n) {
+            char c = v.charAt(i);
+            if (c == '\'') {
+                int end = v.indexOf('\'', i + 1);
+                if (end < 0) {
+                    b.append(v.substring(i));
+                    break;
+                }
+                b.append('\'').append(toCyrillic(v.substring(i + 1, end))).append('\'');
+                i = end + 1;
+            } else {
+                b.append(c);
+                i++;
+            }
+        }
+        return b.toString();
     }
 
     public static boolean hasCyrillic(CharSequence s) {
@@ -67,8 +98,47 @@ public class AlfaCyrillic {
 
     // ── Lotin → Kirill ─────────────────────────────
 
+    /** Inglizcha so'zlarning o'zbekcha talaffuzi (o'girishdan oldin): Screenshot → Skrinshot → Скриншот. */
+    private static final String[][] LOANWORDS = {
+            {"Screenshot", "Skrinshot"}, {"screenshot", "skrinshot"},
+            {"Stories", "Storis"}, {"stories", "storis"}, {"Story", "Stori"}, {"story", "stori"},
+            {"caption", "izoh"}, {"Caption", "Izoh"}, {"Recent apps", "So'nggi ilovalar"},
+            {"Enter", "Enter"}, {"Debug", "Debag"}, {"compact", "kompakt"}, {"silent", "ovozsiz"},
+    };
+    private static final Pattern LOANWORD_PATTERN;
+
+    static {
+        StringBuilder p = new StringBuilder("\\b(");
+        for (int i = 0; i < LOANWORDS.length; i++) {
+            if (i > 0) p.append('|');
+            p.append(Pattern.quote(LOANWORDS[i][0]));
+        }
+        p.append(')');
+        LOANWORD_PATTERN = Pattern.compile(p.toString());
+    }
+
+    private static String replaceLoanwords(String s) {
+        Matcher m = LOANWORD_PATTERN.matcher(s);
+        if (!m.find()) return s;
+        StringBuffer sb = new StringBuffer();
+        do {
+            String w = m.group(1);
+            String r = w;
+            for (String[] pair : LOANWORDS) {
+                if (pair[0].equals(w)) {
+                    r = pair[1];
+                    break;
+                }
+            }
+            m.appendReplacement(sb, Matcher.quoteReplacement(r));
+        } while (m.find());
+        m.appendTail(sb);
+        return sb.toString();
+    }
+
     public static String toCyrillic(String s) {
         if (s == null || s.isEmpty()) return s;
+        s = replaceLoanwords(s);
         StringBuilder out = new StringBuilder(s.length());
         Matcher m = PROTECTED.matcher(s);
         int last = 0;
@@ -111,6 +181,16 @@ public class AlfaCyrillic {
                 i++;
                 continue;
             }
+            // chet so'zlar: animatsiya → анимация, funksiya → функция
+            if (lc == 't' && ln == 's' && s.regionMatches(true, i + 2, "iya", 0, 3)) {
+                b.append(cs("ц", up));
+                i++;
+                continue;
+            }
+            if (lc == 's' && Character.toLowerCase(prev) == 'k' && s.regionMatches(true, i + 1, "iya", 0, 3)) {
+                b.append(cs("ц", up));
+                continue;
+            }
             if (lc == 's' && ln == 'h') {
                 b.append(cs("ш", up));
                 i++;
@@ -132,7 +212,10 @@ public class AlfaCyrillic {
             if (isApos(c)) {
                 // tutuq belgisi: harflar orasida — ъ, aks holda o'zgarmaydi
                 if (isLatinLetter(prev) && isLatinLetter(next)) {
-                    b.append('ъ');
+                    if (isVowel(next) || isVowel(prev)) {
+                        b.append('ъ');
+                    }
+                    // undosh oldida (Telegram'ning) — egalik qo'shimchasi, belgi tushib qoladi
                 } else {
                     b.append(c);
                 }

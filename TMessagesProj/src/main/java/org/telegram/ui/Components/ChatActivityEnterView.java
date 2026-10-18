@@ -7748,6 +7748,27 @@ public class ChatActivityEnterView extends FrameLayout implements
         if (!hasOnlyEmoji) {
             text = AndroidUtilities.getTrimmedString(text);
         }
+        // AlfaGram — lotincha yozilganni kirillda yuborish (formatlash/mention bo'lmasa)
+        if (org.telegram.messenger.AlfaFeatures.sendCyrillic && !hasOnlyEmoji && org.telegram.messenger.AlfaCyrillic.hasLatinLetters(text)) {
+            boolean plain = true;
+            if (text instanceof android.text.Spanned) {
+                Object[] spans = ((android.text.Spanned) text).getSpans(0, text.length(), Object.class);
+                for (Object span : spans) {
+                    // klaviatura xizmat belgilari (imlo, yozilayotgan so'z) va oddiy emoji hisobga olinmaydi
+                    if (span instanceof Emoji.EmojiSpan || span instanceof android.text.style.SuggestionSpan
+                            || span instanceof android.text.style.UnderlineSpan) {
+                        continue;
+                    }
+                    if (span instanceof android.text.style.CharacterStyle || span instanceof android.text.style.ParagraphStyle) {
+                        plain = false;
+                        break;
+                    }
+                }
+            }
+            if (plain) {
+                text = org.telegram.messenger.AlfaCyrillic.toCyrillic(text.toString());
+            }
+        }
         boolean supportsNewEntities = supportsSendingNewEntities();
         int maxLength = accountInstance.getMessagesController().getMaxMessageLength();
         if (text.length() != 0) {

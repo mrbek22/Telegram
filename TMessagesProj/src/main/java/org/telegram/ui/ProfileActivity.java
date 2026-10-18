@@ -595,6 +595,8 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
     private final static int enable_no_forwards = 46;
     private final static int disable_no_forwards = 47;
     private final static int alfa_copy_id = 200;
+    private final static int alfa_online_history = 201;
+    private final static int alfa_share_link = 202;
 
     private Rect rect = new Rect();
 
@@ -2595,12 +2597,18 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     if (button != null) {
                         button.setTextColor(getThemedColor(Theme.key_text_RedBold));
                     }
+                } else if (id == alfa_share_link) {
+                    TLRPC.User alfaLinkUser = getMessagesController().getUser(userId);
+                    org.telegram.messenger.AlfaLink.show(ProfileActivity.this, org.telegram.messenger.AlfaCyrillic.ui("AlfaGram havolasi"),
+                            org.telegram.messenger.AlfaLink.linkFor(alfaLinkUser), UserObject.isUserSelf(alfaLinkUser));
+                } else if (id == alfa_online_history) {
+                    showAlfaOnlineHistory();
                 } else if (id == alfa_copy_id) {
                     try {
                         android.content.ClipboardManager cm = (android.content.ClipboardManager) getParentActivity().getSystemService(android.content.Context.CLIPBOARD_SERVICE);
                         long alfaId = alfaPeerIdForCopy();
                         cm.setPrimaryClip(android.content.ClipData.newPlainText("id", String.valueOf(alfaId)));
-                        BulletinFactory.of(ProfileActivity.this).createSimpleBulletin(R.raw.copy, "ID nusxa olindi: " + alfaId).show();
+                        BulletinFactory.of(ProfileActivity.this).createSimpleBulletin(R.raw.copy, org.telegram.messenger.AlfaCyrillic.ui("ID nusxa olindi: ") + alfaId).show();
                     } catch (Throwable ignore) {
                     }
                 } else if (id == leave_group) {
@@ -12121,6 +12129,50 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
         return color;
     }
 
+    /** AlfaGram — kontaktning yozib olingan onlayn sessiyalari. */
+    private void showAlfaOnlineHistory() {
+        final long uid = userId;
+        final int account = currentAccount;
+        Utilities.globalQueue.postRunnable(() -> {
+            final ArrayList<org.telegram.messenger.AlfaOnlineLog.Session> list = org.telegram.messenger.AlfaOnlineLog.getInstance().getSessions(account, uid, 60);
+            AndroidUtilities.runOnUIThread(() -> {
+                if (getParentActivity() == null) return;
+                StringBuilder sb = new StringBuilder();
+                if (list.isEmpty()) {
+                    sb.append(org.telegram.messenger.AlfaCyrillic.ui("Hali yozuv yo'q. AlfaGram bu kontakt qachon onlayn bo'lganini kuzatib boradi (ilova internetga ulangan paytlarda)."));
+                } else {
+                    java.text.SimpleDateFormat day = new java.text.SimpleDateFormat("dd.MM", java.util.Locale.US);
+                    java.text.SimpleDateFormat time = new java.text.SimpleDateFormat("HH:mm", java.util.Locale.US);
+                    String lastDay = null;
+                    for (org.telegram.messenger.AlfaOnlineLog.Session sess : list) {
+                        String d0 = day.format(new java.util.Date(sess.start));
+                        if (!d0.equals(lastDay)) {
+                            if (lastDay != null) sb.append('\n');
+                            sb.append("📅 ").append(d0).append('\n');
+                            lastDay = d0;
+                        }
+                        sb.append("   ").append(time.format(new java.util.Date(sess.start))).append(" – ");
+                        if (sess.end == 0) {
+                            sb.append(org.telegram.messenger.AlfaCyrillic.ui("hozir onlayn"));
+                        } else {
+                            long mins = Math.max(1, (sess.end - sess.start) / 60000L);
+                            sb.append(time.format(new java.util.Date(sess.end))).append("  (").append(mins).append(org.telegram.messenger.AlfaCyrillic.ui(" daq")).append(")");
+                        }
+                        sb.append('\n');
+                    }
+                }
+                AlertDialog.Builder builder = new AlertDialog.Builder(getParentActivity(), resourcesProvider);
+                builder.setTitle(org.telegram.messenger.AlfaCyrillic.ui("Onlayn tarixi"));
+                builder.setMessage(sb.toString());
+                builder.setPositiveButton(LocaleController.getString(R.string.OK), null);
+                if (!list.isEmpty()) {
+                    builder.setNegativeButton(org.telegram.messenger.AlfaCyrillic.ui("Tozalash"), (dlg, w) -> org.telegram.messenger.AlfaOnlineLog.getInstance().clear(account, uid));
+                }
+                showDialog(builder.create());
+            });
+        });
+    }
+
     /** AlfaGram — menyu uchun ID: foydalanuvchi id yoki Bot API ko'rinishidagi chat id (-100… / -…). */
     private long alfaPeerIdForCopy() {
         if (userId != 0) {
@@ -12391,6 +12443,20 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
         long alfaMenuId = alfaPeerIdForCopy();
         if (alfaMenuId != 0) {
             otherItem.addSubItem(alfa_copy_id, R.drawable.msg_copy, "ID: " + alfaMenuId);
+        }
+        // AlfaGram — alfagram.uz/<username> havolasi
+        if (userId != 0) {
+            TLRPC.User alfaLinkUser = getMessagesController().getUser(userId);
+            if (org.telegram.messenger.AlfaLink.linkFor(alfaLinkUser) != null) {
+                otherItem.addSubItem(alfa_share_link, R.drawable.msg_link2, org.telegram.messenger.AlfaCyrillic.ui("AlfaGram havolasi"));
+            }
+        }
+        // AlfaGram — kontakt onlayn tarixi (faqat odamlar uchun)
+        if (userId != 0 && org.telegram.messenger.AlfaFeatures.onlineTracker) {
+            TLRPC.User alfaUser = getMessagesController().getUser(userId);
+            if (alfaUser != null && !alfaUser.bot && !UserObject.isUserSelf(alfaUser)) {
+                otherItem.addSubItem(alfa_online_history, R.drawable.msg_recent, org.telegram.messenger.AlfaCyrillic.ui("Onlayn tarixi"));
+            }
         }
 
         if (imageUpdater != null) {

@@ -706,6 +706,7 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
         items.add(SettingCell.Factory.of(1, IconBackgroundColors.BLUE.top, IconBackgroundColors.BLUE.bottom, R.drawable.settings_account, getString(R.string.SettingsAccount), getString(R.string.SettingsAccountInfo)));
         items.add(SettingCell.Factory.of(2, IconBackgroundColors.PURPLE.top, IconBackgroundColors.PURPLE.bottom, R.drawable.settings_chat, getString(R.string.SettingsChat), getString(R.string.SettingsChatInfo)));
         items.add(SettingCell.Factory.of(100, org.telegram.messenger.AlfaFeatures.BRAND_START, org.telegram.messenger.AlfaFeatures.BRAND_END, R.drawable.alfa_settings_alfagram, org.telegram.messenger.AlfaCyrillic.ui("AlfaGram sozlamalari"), org.telegram.messenger.AlfaCyrillic.ui("Yashirin funksiyalar va sozlamalar")));
+        items.add(SettingCell.Factory.of(101, IconBackgroundColors.CYAN.top, IconBackgroundColors.BLUE.bottom, R.drawable.msg_link2, org.telegram.messenger.AlfaCyrillic.ui("Mening AlfaGram havolam"), org.telegram.messenger.AlfaCyrillic.ui("Nusxalash, ulashish va QR kod")));
         items.add(SettingCell.Factory.of(3, IconBackgroundColors.CYAN.top, IconBackgroundColors.CYAN.bottom, R.drawable.settings_privacy, getString(R.string.SettingsPrivacySecurity), getString(R.string.SettingsPrivacySecurityInfo)));
         items.add(SettingCell.Factory.of(5, IconBackgroundColors.ORANGE.top, IconBackgroundColors.ORANGE.bottom, R.drawable.settings_sounds, getString(R.string.SettingsNotifications), getString(R.string.SettingsNotificationsInfo)));
         items.add(SettingCell.Factory.of(6, IconBackgroundColors.GREEN.top, IconBackgroundColors.GREEN.bottom, R.drawable.settings_data, getString(R.string.SettingsData), getString(R.string.SettingsDataInfo)));
@@ -833,6 +834,9 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
                 break;
             case 100:
                 presentSettingFragment(new AlfaSettingsActivity());
+                break;
+            case 101:
+                org.telegram.messenger.AlfaLink.showMine(this);
                 break;
             case 3:
                 presentSettingFragment(new PrivacySettingsActivity());
