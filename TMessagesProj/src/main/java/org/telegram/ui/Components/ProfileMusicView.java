@@ -27,6 +27,8 @@ import androidx.core.graphics.ColorUtils;
 
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.FileLoader;
+import org.telegram.messenger.ImageLocation;
+import org.telegram.messenger.ImageReceiver;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.R;
@@ -49,6 +51,11 @@ public class ProfileMusicView extends View {
     private final Paint arrowPaint = new Paint();
     private final Path arrowPath = new Path();
     private final Drawable icon;
+    // AlfaGram — album rasmi (bo'lmasa musiqa ikonkasi chiziladi)
+    private final ImageReceiver coverReceiver = new ImageReceiver(this);
+    private boolean hasCover;
+    private static final float PILL_H = 22f;
+    private static final float COVER = 18f;
 
     private final RectF rect = new RectF();
     private final Paint backgroundPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -70,8 +77,21 @@ public class ProfileMusicView extends View {
         arrowPath.lineTo(dpf2(3.16f), 0);
         arrowPath.lineTo(0, dpf2(3.33f));
 
+        coverReceiver.setRoundRadius(dp(COVER) / 2);
         setColor(null);
         setText("Author", " - Title");
+    }
+
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        coverReceiver.onAttachedToWindow();
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        coverReceiver.onDetachedFromWindow();
     }
 
     @Override
@@ -148,6 +168,20 @@ public class ProfileMusicView extends View {
             title = "";
         }
         setText(author, title);
+        // AlfaGram — mp3 ichidagi cover (thumb) bo'lsa, dumaloq rasm sifatida
+        hasCover = false;
+        try {
+            if (document != null && document.thumbs != null && !document.thumbs.isEmpty()) {
+                TLRPC.PhotoSize thumb = FileLoader.getClosestPhotoSizeWithSize(document.thumbs, 90);
+                if (thumb != null) {
+                    coverReceiver.setImage(ImageLocation.getForDocument(thumb, document), "40_40", (Drawable) null, null, document, 0);
+                    hasCover = true;
+                }
+            }
+        } catch (Throwable ignore) {
+            hasCover = false;
+        }
+        invalidate();
     }
 
     public static CharSequence getTitle(TLRPC.Document document) {
@@ -188,8 +222,8 @@ public class ProfileMusicView extends View {
     }
 
     public void setText(CharSequence author, CharSequence title) {
-        this.author = new Text(author, 11, AndroidUtilities.bold());
-        this.title = new Text(title, 11);
+        this.author = new Text(author, 12, AndroidUtilities.bold());
+        this.title = new Text(title, 12);
 
         setContentDescription(getString(R.string.AccDescrProfileMusic) + " " + author + " — " + title);
     }
@@ -258,10 +292,11 @@ public class ProfileMusicView extends View {
         final int padding = dp(12);
         final int maxWidth = getWidth() - padding * 2;
 
-        this.author.ellipsize((maxWidth - dp(35)) / 2f);
-        this.title.ellipsize(maxWidth - this.author.getWidth() - dp(35));
+        final float leadW = hasCover ? dp(COVER + 6) : dp(16.6f);
+        this.author.ellipsize((maxWidth - dp(40)) / 2f);
+        this.title.ellipsize(maxWidth - this.author.getWidth() - dp(40));
 
-        final float width = dp(16.6f) + this.author.getWidth() + this.title.getWidth() + dp(8);
+        final float width = leadW + this.author.getWidth() + this.title.getWidth() + dp(8);
         final float containerWidth = dp(16) + width;
 
         canvas.save();
@@ -271,7 +306,7 @@ public class ProfileMusicView extends View {
             (getWidth() - containerWidth) / 2f,
             dp(10),
             (getWidth() + containerWidth) / 2f,
-            dp(10) + dp(17) * alpha
+            dp(10) + dp(PILL_H) * alpha
         );
         if (withShadows && SharedConfig.shadowsInSections) {
             backgroundPaint.setShadowLayer(dpf2(2), 0, dpf2(0.33f), multAlpha(0x0a000000, alpha));
@@ -304,13 +339,20 @@ public class ProfileMusicView extends View {
         canvas.translate((getWidth() - width) / 2f, 0);
 
 //        final long now = System.currentTimeMillis();
-        final float cy = getHeight() / 2f, hh = dp(6), w = dp(2);
+        final float cy = rect.centerY(), hh = dp(6), w = dp(2);
 
-        final int iconSz = dp(13);
-        icon.setBounds(0, (int) cy - iconSz / 2, iconSz, (int) cy + iconSz / 2);
-        icon.draw(canvas);
+        if (hasCover) {
+            final float cs = dp(COVER);
+            coverReceiver.setAlpha(alpha);
+            coverReceiver.setImageCoords(-dp(3), cy - cs / 2f, cs, cs);
+            coverReceiver.draw(canvas);
+        } else {
+            final int iconSz = dp(13);
+            icon.setBounds(0, (int) cy - iconSz / 2, iconSz, (int) cy + iconSz / 2);
+            icon.draw(canvas);
+        }
 
-        canvas.translate(dp(16.6f), 0);
+        canvas.translate(leadW, 0);
         this.author.draw(canvas, 0, cy, textColor, alpha);
         canvas.translate(this.author.getWidth(), 0);
         this.title.draw(canvas, 0, cy, textColor, 0.85f * alpha);

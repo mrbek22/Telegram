@@ -17,6 +17,41 @@ public class AlfaEdits extends SQLiteOpenHelper {
 
     private static volatile AlfaEdits instance;
 
+    /** Tarixi bor xabarlar kaliti: account_dialog_mid (UI oqimida tez tekshirish uchun). */
+    private final java.util.Set<String> keys = java.util.Collections.newSetFromMap(new java.util.concurrent.ConcurrentHashMap<>());
+    private volatile boolean keysLoaded;
+    private volatile boolean keysLoading;
+
+    private static String key(int account, long dialogId, int messageId) {
+        return account + "_" + dialogId + "_" + messageId;
+    }
+
+    /** Xabarning saqlangan eski versiyasi bormi (bazaga murojaatsiz). */
+    public boolean hasHistory(int account, long dialogId, int messageId) {
+        if (!keysLoaded) {
+            loadKeysAsync();
+            return false;
+        }
+        return keys.contains(key(account, dialogId, messageId));
+    }
+
+    private void loadKeysAsync() {
+        if (keysLoading) return;
+        keysLoading = true;
+        Utilities.globalQueue.postRunnable(() -> {
+            try {
+                Cursor c = getReadableDatabase().rawQuery("SELECT DISTINCT account, dialog_id, message_id FROM edits", null);
+                while (c.moveToNext()) {
+                    keys.add(key(c.getInt(0), c.getLong(1), c.getInt(2)));
+                }
+                c.close();
+            } catch (Throwable t) {
+                FileLog.e(t);
+            }
+            keysLoaded = true;
+        });
+    }
+
     public static AlfaEdits getInstance() {
         if (instance == null) {
             synchronized (AlfaEdits.class) {
@@ -72,6 +107,7 @@ public class AlfaEdits extends SQLiteOpenHelper {
             }
             db.execSQL("INSERT INTO edits(account, dialog_id, message_id, edited_at, from_id, text) VALUES(?,?,?,?,?,?)",
                     new Object[]{account, dialogId, oldMessage.id, editedAt, fromId, text});
+            keys.add(key(account, dialogId, oldMessage.id));
         } catch (Throwable t) {
             FileLog.e(t);
         }
@@ -133,6 +169,8 @@ public class AlfaEdits extends SQLiteOpenHelper {
             SQLiteDatabase db = getWritableDatabase();
             db.execSQL("DELETE FROM edits WHERE account=? AND dialog_id=?",
                     new Object[]{account, dialogId});
+            String prefix = account + "_" + dialogId + "_";
+            keys.removeIf(k -> k.startsWith(prefix));
         } catch (Throwable t) {
             FileLog.e(t);
         }

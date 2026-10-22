@@ -633,6 +633,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
     private int alfaIdRow = -1;
     private int alfaLinkRow = -1;
     private int alfaOnlineRow = -1;
+    private int alfaRegRow = -1;
     // Alfa: qatorlar qaysi flag qiymatlari bilan hisoblangani (onResume'da solishtirish uchun)
     private boolean alfaRowsHidePhone, alfaRowsShowId;
     private int stickersRow;
@@ -4654,6 +4655,8 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                 editNotes(view, position);
             } else if (position == alfaIdRow) {
                 copyAlfaProfileId();
+            } else if (position == alfaRegRow) {
+                showAlfaRegInfo();
             } else if (position == alfaLinkRow) {
                 TLRPC.User u = getMessagesController().getUser(userId);
                 org.telegram.messenger.AlfaLink.show(ProfileActivity.this, org.telegram.messenger.AlfaCyrillic.ui("AlfaGram havolasi"), org.telegram.messenger.AlfaLink.linkFor(u), UserObject.isUserSelf(u));
@@ -6053,7 +6056,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
     private int getActionsExtraHeight(boolean withMusic) {
         if (userId != 0 && imageUpdater != null && !myProfile)
             return 0;
-        return dp(74 + (withMusic && hasMusic ? 25 : 0));
+        return dp(74 + (withMusic && hasMusic ? 30 : 0));
     }
 
     private int getHeaderExtraHeight() {
@@ -10538,6 +10541,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
         alfaIdRow = -1;
         alfaLinkRow = -1;
         alfaOnlineRow = -1;
+        alfaRegRow = -1;
         final boolean alfaHidePhone = org.telegram.messenger.AlfaFeatures.hidePhoneInSettings;
         final boolean alfaShowId = org.telegram.messenger.AlfaFeatures.showIdInProfile;
         alfaRowsHidePhone = alfaHidePhone;
@@ -10688,6 +10692,9 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                 if (alfaShowId) {
                     alfaIdRow = rowCount++;
                 }
+                if (org.telegram.messenger.AlfaFeatures.showIdInProfile) {
+                    alfaRegRow = rowCount++;
+                }
                 // AlfaGram — mening shaxsiy havolam (username bo'lsa)
                 if (org.telegram.messenger.AlfaLink.linkFor(getMessagesController().getUser(userId)) != null) {
                     alfaLinkRow = rowCount++;
@@ -10788,7 +10795,10 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                 if (alfaShowId) {
                     alfaIdRow = rowCount++;
                 }
-                // AlfaGram — shaxsiy havola va onlayn tarixi (boshqa odam profili)
+                // AlfaGram — ro'yxatdan o'tgan sana (taxminan), shaxsiy havola va onlayn tarixi
+                if (user != null && !user.bot && org.telegram.messenger.AlfaFeatures.showIdInProfile) {
+                    alfaRegRow = rowCount++;
+                }
                 if (org.telegram.messenger.AlfaLink.linkFor(user) != null) {
                     alfaLinkRow = rowCount++;
                 }
@@ -12154,6 +12164,16 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
             return Theme.changeColorAccent(getThemedColor(Theme.key_windowBackgroundWhiteBlueIcon), accentColor, color, Theme.isCurrentThemeDark(), accentColor);
         }
         return color;
+    }
+
+    /** AlfaGram — "Ro'yxatdan o'tgan" sanasi qanday hisoblanishi. */
+    private void showAlfaRegInfo() {
+        if (getParentActivity() == null) return;
+        AlertDialog.Builder builder = new AlertDialog.Builder(getParentActivity(), resourcesProvider);
+        builder.setTitle(org.telegram.messenger.AlfaCyrillic.ui("Ro'yxatdan o'tgan sana"));
+        builder.setMessage(org.telegram.messenger.AlfaCyrillic.ui("Telegram bu ma'lumotni bermaydi. AlfaGram uni foydalanuvchi ID raqamiga qarab taxminan hisoblaydi: ID qancha katta bo'lsa, akkaunt shuncha yangi. Bir necha oy xato bo'lishi mumkin."));
+        builder.setPositiveButton(LocaleController.getString(R.string.OK), null);
+        showDialog(builder.create());
     }
 
     /** AlfaGram — kontaktning yozib olingan onlayn sessiyalari. */
@@ -13789,7 +13809,12 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     } else if (position == alfaIdRow) {
                         // Alfa: raqamli ID (bosilsa nusxalanadi)
                         String alfaId = getAlfaProfileId();
-                        detailCell.setTextAndValue(alfaId != null ? alfaId : "—", "ID", setUsernameRow >= 0 || alfaLinkRow >= 0 || alfaOnlineRow >= 0);
+                        detailCell.setTextAndValue(alfaId != null ? alfaId : "—", "ID", setUsernameRow >= 0 || alfaLinkRow >= 0 || alfaOnlineRow >= 0 || alfaRegRow >= 0);
+                        detailCell.setContentDescriptionValueFirst(true);
+                    } else if (position == alfaRegRow) {
+                        // Alfa: akkaunt ochilgan vaqti (ID bo'yicha taxmin)
+                        String reg = org.telegram.messenger.AlfaAccountAge.format(userId);
+                        detailCell.setTextAndValue(reg != null ? reg : "—", org.telegram.messenger.AlfaCyrillic.ui("Ro'yxatdan o'tgan (taxminan)"), alfaLinkRow >= 0 || alfaOnlineRow >= 0);
                         detailCell.setContentDescriptionValueFirst(true);
                     } else if (position == alfaLinkRow) {
                         // Alfa: shaxsiy havola alfagram.uz/username
@@ -14467,7 +14492,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                         position == clearLogsRow || position == switchBackendRow || position == setAvatarRow ||
                         position == addToGroupButtonRow || position == premiumRow || position == premiumGiftingRow ||
                         position == businessRow || position == liteModeRow || position == birthdayRow || position == channelRow ||
-                        position == starsRow || position == tonRow || position == linkedCommunityRow || position == alfaSettingsRow || position == alfaIdRow || position == alfaLinkRow || position == alfaOnlineRow;
+                        position == starsRow || position == tonRow || position == linkedCommunityRow || position == alfaSettingsRow || position == alfaIdRow || position == alfaLinkRow || position == alfaOnlineRow || position == alfaRegRow;
             }
             if (holder.itemView instanceof UserCell) {
                 UserCell userCell = (UserCell) holder.itemView;
@@ -14495,7 +14520,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
             if (position == infoHeaderRow || position == membersHeaderRow || position == settingsSectionRow2 ||
                     position == numberSectionRow || position == helpHeaderRow || position == debugHeaderRow || position == botPermissionsHeader) {
                 return VIEW_TYPE_HEADER;
-            } else if (position == phoneRow || position == locationRow || position == numberRow || position == birthdayRow || position == alfaIdRow || position == alfaLinkRow || position == alfaOnlineRow) {
+            } else if (position == phoneRow || position == locationRow || position == numberRow || position == birthdayRow || position == alfaIdRow || position == alfaLinkRow || position == alfaOnlineRow || position == alfaRegRow) {
                 return VIEW_TYPE_TEXT_DETAIL;
             } else if (position == usernameRow || position == setUsernameRow) {
                 return VIEW_TYPE_TEXT_DETAIL_MULTILINE;

@@ -104,6 +104,7 @@ public class AlfaCyrillic {
             {"Stories", "Storis"}, {"stories", "storis"}, {"Story", "Stori"}, {"story", "stori"},
             {"caption", "izoh"}, {"Caption", "Izoh"}, {"Recent apps", "So'nggi ilovalar"},
             {"Enter", "Enter"}, {"Debug", "Debag"}, {"compact", "kompakt"}, {"silent", "ovozsiz"},
+            {"sentabr", "sentyabr"}, {"oktabr", "oktyabr"},
     };
     private static final Pattern LOANWORD_PATTERN;
 
