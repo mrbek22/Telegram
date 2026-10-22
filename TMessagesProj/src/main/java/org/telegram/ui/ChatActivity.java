@@ -1673,6 +1673,7 @@ public class ChatActivity extends BaseFragment implements
     private final static int alfa_deleted_messages = 800;
     private final static int alfa_edit_history = 801;
     private final static int alfa_typing_log = 802;
+    private final static int alfa_select_all = 803;
 
     private final static int id_chat_compose_panel = 1000;
 
@@ -3775,6 +3776,8 @@ public class ChatActivity extends BaseFragment implements
                         undoView.showWithAction(0, UndoView.ACTION_TEXT_COPIED, null);
                     }
                     clearSelectionMode();
+                } else if (id == alfa_select_all) {
+                    alfaSelectAllMessages();
                 } else if (id == delete) {
                     if (getParentActivity() == null) {
                         return;
@@ -10271,6 +10274,8 @@ public class ChatActivity extends BaseFragment implements
         actionMode.addView(selectedMessagesCountTextView, LayoutHelper.createLinear(0, LayoutHelper.MATCH_PARENT, 1.0f, 85, 0, 5, 0));
         actionMode.setOnLayoutListener(actionBar::invalidate);
 
+        // AlfaGram — hammasini belgilash
+        actionModeViews.add(actionMode.addItemWithWidth(alfa_select_all, R.drawable.msg_select, dp(48), org.telegram.messenger.AlfaCyrillic.ui("Hammasini belgilash")));
         if (currentEncryptedChat == null) {
             final boolean isSavedMessages = getDialogId() == getUserConfig().getClientUserId() && (chatMode == 0 || chatMode == MODE_SAVED);
             actionModeViews.add(actionMode.addItemWithWidth(save_to, R.drawable.msg_download, dp(48), LocaleController.getString(R.string.SaveToMusic)));
@@ -19327,6 +19332,35 @@ public class ChatActivity extends BaseFragment implements
             return;
         }
         addToSelectedMessages(message, outside);
+        updateActionModeTitle();
+        updateVisibleRows();
+    }
+
+    /** AlfaGram — yuklangan barcha xabarlarni belgilash (100 tagacha). */
+    private void alfaSelectAllMessages() {
+        if (messages == null || messages.isEmpty()) {
+            return;
+        }
+        for (int i = 0; i < messages.size(); i++) {
+            MessageObject message = messages.get(i);
+            if (message == null) {
+                continue;
+            }
+            int index = message.getDialogId() == dialog_id ? 0 : 1;
+            if (selectedMessagesIds[index].get(message.getId()) != null) {
+                continue;
+            }
+            int type = getMessageType(message);
+            if (type < 2 || type == 20 || type == MessageObject.TYPE_SUGGEST_PHOTO
+                    || message.type == MessageObject.TYPE_JOINED_CHANNEL || message.type == MessageObject.TYPE_GIFT_STARS
+                    || message.isWallpaperAction() || message.isSponsored() || message.isEphemeral() || message.isAnyGift()) {
+                continue;
+            }
+            if (selectedMessagesIds[0].size() + selectedMessagesIds[1].size() >= 100) {
+                break;
+            }
+            addToSelectedMessages(message, false, false);
+        }
         updateActionModeTitle();
         updateVisibleRows();
     }

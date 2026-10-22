@@ -18411,6 +18411,16 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
         if (currentMessageObject.messageOwner.video_processing_pending) {
             timeString = formatString(R.string.ScheduledTimeApprox, timeString);
         }
+        // AlfaGram — o'chirilgan (lekin saqlab qolingan) xabar: vaqt oldida chiqindi belgisi
+        try {
+            boolean alfaDeleted = currentMessageObject.alfaDeletedBySender
+                    || (org.telegram.messenger.AlfaFeatures.antiDelete && currentMessageObject.getId() > 0
+                        && org.telegram.messenger.AlfaDeleted.getInstance().isKept(currentMessageObject.currentAccount, currentMessageObject.getDialogId(), currentMessageObject.getId()));
+            if (alfaDeleted && !TextUtils.isEmpty(timeString)) {
+                timeString = "🗑 " + timeString;
+            }
+        } catch (Throwable ignore) {
+        }
         if (signString != null) {
             if (messageObject.messageOwner.via_business_bot_id != 0) {
                 currentTimeString = timeString + ", ";

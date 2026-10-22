@@ -215,9 +215,16 @@ public class AlfaTypingSheet extends BottomSheet {
 
         void bind(AlfaTyping.Record r) {
             nameView.setText(senderName(r.userId));
-            timeView.setText(LocaleController.formatDateChat(r.startedAt / 1000L));
+            // sana + aniq vaqt oralig'i (boshlanish–tugash)
+            java.text.SimpleDateFormat HM = new java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.US);
+            String day = LocaleController.formatDateChat(r.startedAt / 1000L);
+            String range = HM.format(new java.util.Date(r.startedAt));
+            if (r.endedAt > r.startedAt) {
+                range += " – " + HM.format(new java.util.Date(r.endedAt));
+            }
+            timeView.setText(day + ", " + range);
             long durSec = Math.max(1, (r.endedAt - r.startedAt) / 1000L);
-            infoView.setText("~" + durSec + org.telegram.messenger.AlfaCyrillic.ui(" sekund yozdi, lekin xabar yubormadi"));
+            infoView.setText("~" + durSec + org.telegram.messenger.AlfaCyrillic.ui(" soniya yozdi, lekin xabar yubormadi"));
         }
     }
 }
