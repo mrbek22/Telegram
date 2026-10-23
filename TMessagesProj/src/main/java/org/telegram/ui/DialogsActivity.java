@@ -7510,6 +7510,9 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             return;
         }
         updateCounters(false);
+        if (selectedDialogsCountTextView != null) {
+            selectedDialogsCountTextView.setNumber(selectedDialogs.size(), true);
+        }
         for (int a = 0; a < viewPages.length; a++) {
             if (viewPages[a] != null && viewPages[a].dialogsAdapter != null) {
                 viewPages[a].dialogsAdapter.notifyDataSetChanged();

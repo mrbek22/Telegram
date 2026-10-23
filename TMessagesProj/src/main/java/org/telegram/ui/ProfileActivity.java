@@ -10549,9 +10549,10 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
         alfaRegRow = -1;
         alfaMusicRow = -1;
         final boolean alfaHidePhone = org.telegram.messenger.AlfaFeatures.hidePhoneInSettings;
-        final boolean alfaShowId = org.telegram.messenger.AlfaFeatures.showIdInProfile;
+        // AlfaGram: ID profilda qator bo'lib chiqmaydi — faqat ⋮ menyusida ("ID: ...", bosilsa nusxalanadi)
+        final boolean alfaShowId = false;
         alfaRowsHidePhone = alfaHidePhone;
-        alfaRowsShowId = alfaShowId;
+        alfaRowsShowId = org.telegram.messenger.AlfaFeatures.showIdInProfile;
         stickersRow = -1;
         devicesRow = -1;
         devicesSectionRow = -1;
