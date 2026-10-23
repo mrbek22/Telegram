@@ -712,6 +712,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
     private final static int add_to_folder = 109;
     private final static int remove_from_folder = 110;
     private final static int community_ungroup = 111;
+    private final static int alfa_select_all = 199;
 
     private final static int ARCHIVE_ITEM_STATE_PINNED = 0;
     private final static int ARCHIVE_ITEM_STATE_SHOWED = 1;
@@ -3938,6 +3939,8 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                     fragmentSearchFieldWatcher.toggleSearch(true);
                 } else if (id == 11) {
                     openAccountSelector(switchItem);
+                } else if (id == alfa_select_all) {
+                    alfaSelectAllDialogs();
                 } else if (id == add_to_folder) {
                     FiltersListBottomSheet sheet = new FiltersListBottomSheet(DialogsActivity.this, selectedDialogs);
                     sheet.setDelegate((filter, checked) -> {
@@ -6776,6 +6779,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         readItem = otherItem.addSubItem(read, R.drawable.msg_markread, LocaleController.getString(R.string.MarkAsRead));
         clearItem = otherItem.addSubItem(clear, R.drawable.msg_clear, LocaleController.getString(R.string.ClearHistory));
         blockItem = otherItem.addSubItem(block, R.drawable.msg_block, LocaleController.getString(R.string.BlockUser));
+        otherItem.addSubItem(alfa_select_all, R.drawable.msg_select, org.telegram.messenger.AlfaCyrillic.ui("Hammasini belgilash"));
 
         muteItem.setOnLongClickListener(e -> {
             performSelectedDialogsAction(selectedDialogs, mute, true, true);
@@ -7474,6 +7478,44 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
 
         updateFloatingButtonVisibility(true);
         updateDialogsHint();
+    }
+
+    /** AlfaGram — joriy ro'yxatdagi barcha chatlarni bir bosishda belgilash. */
+    private void alfaSelectAllDialogs() {
+        if (viewPages == null || viewPages.length == 0 || viewPages[0] == null) {
+            return;
+        }
+        int type = viewPages[0].dialogsType;
+        java.util.ArrayList<TLRPC.Dialog> all = getDialogsArray(currentAccount, type, folderId, false);
+        if (all == null || all.isEmpty()) {
+            return;
+        }
+        int added = 0;
+        for (int i = 0; i < all.size(); i++) {
+            TLRPC.Dialog d = all.get(i);
+            if (d == null || DialogObject.isFolderDialogId(d.id)) {
+                continue;
+            }
+            if (onlySelect && getMessagesController().isForum(d.id)) {
+                continue;
+            }
+            if (!selectedDialogs.contains(d.id)) {
+                selectedDialogs.add(d.id);
+                added++;
+            }
+        }
+        if (added == 0) {
+            return;
+        }
+        updateCounters(false);
+        for (int a = 0; a < viewPages.length; a++) {
+            if (viewPages[a] != null && viewPages[a].dialogsAdapter != null) {
+                viewPages[a].dialogsAdapter.notifyDataSetChanged();
+            }
+        }
+        if (BulletinFactory.canShowBulletin(DialogsActivity.this)) {
+            BulletinFactory.of(DialogsActivity.this).createSimpleBulletin(R.raw.contact_check, org.telegram.messenger.AlfaCyrillic.ui("Belgilandi: ") + selectedDialogs.size()).show();
+        }
     }
 
     public boolean addOrRemoveSelectedDialog(long did, View cell) {

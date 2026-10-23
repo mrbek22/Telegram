@@ -13296,7 +13296,8 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                 VIEW_TYPE_TEXT_DETAIL_MULTILINE_2 = 30,
                 VIEW_TYPE_EMPTY2 = 31,
                 VIEW_TYPE_TEXT2 = 32,
-                VIEW_TYPE_LINKED_COMMUNITY = 33
+                VIEW_TYPE_LINKED_COMMUNITY = 33,
+                VIEW_TYPE_ALFA_DETAIL = 60
                         ;
 
         private Context mContext;
@@ -13327,6 +13328,10 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     break;
                 case VIEW_TYPE_LINKED_COMMUNITY:
                     view = new CommunityLinkView(mContext, resourcesProvider);
+                    break;
+                case VIEW_TYPE_ALFA_DETAIL:
+                    view = new org.telegram.ui.Cells.AlfaDetailCell(mContext, resourcesProvider);
+                    view.setBackgroundColor(getThemedColor(Theme.key_windowBackgroundWhite));
                     break;
                 case VIEW_TYPE_TEXT2:
                     final TextView textView = new TextView2(mContext);
@@ -13633,6 +13638,36 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     }
                     headerCell.setTextColor(dontApplyPeerColor(getThemedColor(Theme.key_windowBackgroundWhiteBlueHeader), false));
                     break;
+                case VIEW_TYPE_ALFA_DETAIL: {
+                    org.telegram.ui.Cells.AlfaDetailCell ac = (org.telegram.ui.Cells.AlfaDetailCell) holder.itemView;
+                    boolean lastAlfa = position == alfaOnlineRow || (alfaOnlineRow < 0 && position == alfaRegRow && alfaLinkRow < 0 && alfaIdRow < 0)
+                            || (position == alfaRegRow && alfaLinkRow < 0 && alfaOnlineRow < 0)
+                            || (position == alfaLinkRow && alfaOnlineRow < 0)
+                            || (position == alfaIdRow && alfaRegRow < 0 && alfaLinkRow < 0 && alfaOnlineRow < 0);
+                    boolean div = !lastAlfa;
+                    if (position == phoneRow) {
+                        TLRPC.User pu = getMessagesController().getUser(userId);
+                        String ptext, pnum = null;
+                        if (pu != null && !TextUtils.isEmpty(vcardPhone)) { ptext = PhoneFormat.getInstance().format("+" + vcardPhone); pnum = vcardPhone; }
+                        else if (pu != null && !TextUtils.isEmpty(pu.phone)) { ptext = PhoneFormat.getInstance().format("+" + pu.phone); pnum = pu.phone; }
+                        else ptext = LocaleController.getString(R.string.PhoneHidden);
+                        isFragmentPhoneNumber = pnum != null && pnum.matches("888\\d{8}");
+                        ac.set(R.drawable.msg_calls, 0xFF4FB06B, ptext, LocaleController.getString(isFragmentPhoneNumber ? R.string.AnonymousNumber : R.string.PhoneMobile), null, true);
+                    } else if (position == alfaIdRow) {
+                        String alfaId = getAlfaProfileId();
+                        ac.set(R.drawable.msg_info, 0xFF8E6BE6, alfaId != null ? alfaId : "—", "ID", org.telegram.messenger.AlfaCyrillic.ui("NUSXALASH"), div);
+                    } else if (position == alfaRegRow) {
+                        String reg = org.telegram.messenger.AlfaAccountAge.format(userId);
+                        ac.set(R.drawable.msg_calendar2, 0xFFE64F93, reg != null ? reg : "—", org.telegram.messenger.AlfaCyrillic.ui("Ro'yxatdan o'tgan (taxminan)"), null, div);
+                    } else if (position == alfaLinkRow) {
+                        TLRPC.User lu = userId != 0 ? getMessagesController().getUser(userId) : null;
+                        String link = org.telegram.messenger.AlfaLink.linkFor(lu);
+                        ac.set(R.drawable.msg_link2, 0xFF4FB0C6, link != null ? link.replace("https://", "") : "—", org.telegram.messenger.AlfaCyrillic.ui("AlfaGram havolasi"), null, div);
+                    } else if (position == alfaOnlineRow) {
+                        ac.set(R.drawable.msg_recent, 0xFFE6894F, org.telegram.messenger.AlfaCyrillic.ui("Ko'rish"), org.telegram.messenger.AlfaCyrillic.ui("Onlayn tarixi"), null, div);
+                    }
+                    break;
+                }
                 case VIEW_TYPE_TEXT_DETAIL_MULTILINE:
                 case VIEW_TYPE_TEXT_DETAIL_MULTILINE_2:
                 case VIEW_TYPE_TEXT_DETAIL:
@@ -13805,27 +13840,6 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                             }
                         }
                         detailCell.setTextAndValue(text, value, true);
-                        detailCell.setContentDescriptionValueFirst(true);
-                    } else if (position == alfaIdRow) {
-                        // Alfa: raqamli ID (bosilsa nusxalanadi)
-                        String alfaId = getAlfaProfileId();
-                        detailCell.setTextAndValue(alfaId != null ? alfaId : "—", "ID", setUsernameRow >= 0 || alfaLinkRow >= 0 || alfaOnlineRow >= 0 || alfaRegRow >= 0);
-                        detailCell.setContentDescriptionValueFirst(true);
-                    } else if (position == alfaRegRow) {
-                        // Alfa: akkaunt ochilgan vaqti (ID bo'yicha taxmin)
-                        String reg = org.telegram.messenger.AlfaAccountAge.format(userId);
-                        detailCell.setTextAndValue(reg != null ? reg : "—", org.telegram.messenger.AlfaCyrillic.ui("Ro'yxatdan o'tgan (taxminan)"), alfaLinkRow >= 0 || alfaOnlineRow >= 0);
-                        detailCell.setContentDescriptionValueFirst(true);
-                    } else if (position == alfaLinkRow) {
-                        // Alfa: shaxsiy havola alfagram.uz/username
-                        TLRPC.User alfaLinkUser = userId != 0 ? getMessagesController().getUser(userId) : null;
-                        String link = org.telegram.messenger.AlfaLink.linkFor(alfaLinkUser);
-                        String shown = link != null ? link.replace("https://", "") : "—";
-                        detailCell.setTextAndValue(shown, org.telegram.messenger.AlfaCyrillic.ui("AlfaGram havolasi"), alfaOnlineRow >= 0);
-                        detailCell.setContentDescriptionValueFirst(true);
-                    } else if (position == alfaOnlineRow) {
-                        // Alfa: onlayn tarixi qisqacha
-                        detailCell.setTextAndValue(org.telegram.messenger.AlfaCyrillic.ui("Ko'rish"), org.telegram.messenger.AlfaCyrillic.ui("Onlayn tarixi"), false);
                         detailCell.setContentDescriptionValueFirst(true);
                     }
                     if (containsGift) {
@@ -14520,7 +14534,9 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
             if (position == infoHeaderRow || position == membersHeaderRow || position == settingsSectionRow2 ||
                     position == numberSectionRow || position == helpHeaderRow || position == debugHeaderRow || position == botPermissionsHeader) {
                 return VIEW_TYPE_HEADER;
-            } else if (position == phoneRow || position == locationRow || position == numberRow || position == birthdayRow || position == alfaIdRow || position == alfaLinkRow || position == alfaOnlineRow || position == alfaRegRow) {
+            } else if (position == alfaIdRow || position == alfaLinkRow || position == alfaOnlineRow || position == alfaRegRow || (position == phoneRow && userId != 0)) {
+                return VIEW_TYPE_ALFA_DETAIL;
+            } else if (position == phoneRow || position == locationRow || position == numberRow || position == birthdayRow) {
                 return VIEW_TYPE_TEXT_DETAIL;
             } else if (position == usernameRow || position == setUsernameRow) {
                 return VIEW_TYPE_TEXT_DETAIL_MULTILINE;

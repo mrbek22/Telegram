@@ -1674,6 +1674,7 @@ public class ChatActivity extends BaseFragment implements
     private final static int alfa_edit_history = 801;
     private final static int alfa_typing_log = 802;
     private final static int alfa_select_all = 803;
+    private final static int alfa_stats = 804;
 
     private final static int id_chat_compose_panel = 1000;
 
@@ -3747,6 +3748,10 @@ public class ChatActivity extends BaseFragment implements
                     if (getParentActivity() != null) {
                         new org.telegram.ui.Components.AlfaTypingSheet(getParentActivity(), currentAccount, dialog_id, themeDelegate).show();
                     }
+                } else if (id == alfa_stats) {
+                    if (getParentActivity() != null) {
+                        new org.telegram.ui.Components.AlfaStatsSheet(getParentActivity(), currentAccount, dialog_id, themeDelegate).show();
+                    }
                 } else if (id == copy) {
                     SpannableStringBuilder str = new SpannableStringBuilder();
                     long previousUid = 0;
@@ -4442,6 +4447,7 @@ public class ChatActivity extends BaseFragment implements
             if (org.telegram.messenger.AlfaFeatures.typingLog) {
                 headerItem.lazilyAddSubItem(alfa_typing_log, R.drawable.msg_recent, org.telegram.messenger.AlfaCyrillic.ui("Yozdi, yubormadi"));
             }
+            headerItem.lazilyAddSubItem(alfa_stats, R.drawable.msg_stats, org.telegram.messenger.AlfaCyrillic.ui("Chat statistikasi"));
             if (ChatObject.isBoostSupported(currentChat) && (getUserConfig().isPremium() || ChatObject.isBoosted(chatInfo) || ChatObject.hasAdminRights(currentChat))) {
                 RLottieDrawable drawable = new RLottieDrawable(R.raw.boosts, "" + R.raw.boosts, dp(24), dp(24));
                 headerItem.lazilyAddSubItem(boost_group, drawable, LocaleController.getString(ChatObject.isChannelAndNotMegaGroup(currentChat) ? R.string.BoostingBoostChannelMenu : R.string.BoostingBoostGroupMenu));
