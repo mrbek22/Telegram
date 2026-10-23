@@ -60,7 +60,7 @@ public class AlfaDetailCell extends FrameLayout {
         labelView.setMaxLines(1);
         labelView.setEllipsize(android.text.TextUtils.TruncateAt.END);
         texts.addView(labelView, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, 0, 2, 0, 0));
-        addView(texts, LayoutHelper.createFrame(0, LayoutHelper.WRAP_CONTENT, Gravity.LEFT | Gravity.CENTER_VERTICAL, 64, 0, 76, 0));
+        addView(texts, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.LEFT | Gravity.CENTER_VERTICAL, 64, 0, 76, 0));
 
         actionView = new TextView(context);
         actionView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13);

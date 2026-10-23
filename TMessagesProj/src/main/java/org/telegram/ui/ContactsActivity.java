@@ -194,6 +194,7 @@ public class ContactsActivity extends BaseFragment implements FactorAnimator.Tar
     private final static int sort_button = 1;
 
     private final static int delete = 100;
+    private final static int alfa_select_all = 101;
 
 
 
@@ -319,6 +320,7 @@ public class ContactsActivity extends BaseFragment implements FactorAnimator.Tar
         actionMode.addView(selectedContactsCountTextView, LayoutHelper.createLinear(0, LayoutHelper.MATCH_PARENT, 1.0f, hasMainTabs ? 18 : 72, 0, 0, 0));
         selectedContactsCountTextView.setOnTouchListener((v, event) -> true);
 
+        actionMode.addItemWithWidth(alfa_select_all, R.drawable.msg_select, dp(54), org.telegram.messenger.AlfaCyrillic.ui("Hammasini belgilash"));
         actionMode.addItemWithWidth(delete, R.drawable.msg_delete, dp(54), getString(R.string.Delete));
         actionBar.setActionBarMenuOnItemClick(new ActionBar.ActionBarMenuOnItemClick() {
             @Override
@@ -331,6 +333,8 @@ public class ContactsActivity extends BaseFragment implements FactorAnimator.Tar
                     }
                 } else if (id == delete) {
                     performSelectedContactsDelete();
+                } else if (id == alfa_select_all) {
+                    alfaSelectAllContacts();
                 } else if (id == sort_button) {
                     SharedConfig.toggleSortContactsByName();
                     sortByName = SharedConfig.sortContactsByName;
@@ -1052,6 +1056,30 @@ public class ContactsActivity extends BaseFragment implements FactorAnimator.Tar
         }
 
         selectedContactsCountTextView.setNumber(selectedContacts.size(), updateAnimated);
+    }
+
+    // AlfaGram: barcha kontaktlarni bitta bosishda belgilash
+    private void alfaSelectAllContacts() {
+        ArrayList<TLRPC.TL_contact> contacts = getContactsController().contacts;
+        for (int i = 0; i < contacts.size(); i++) {
+            TLRPC.User user = getMessagesController().getUser(contacts.get(i).user_id);
+            if (user == null || UserObject.isUserSelf(user)) {
+                continue;
+            }
+            selectedContacts.put(user.id, user);
+        }
+        int count = listView.getChildCount();
+        for (int i = 0; i < count; i++) {
+            View view = listView.getChildAt(i);
+            if (view instanceof UserCell) {
+                UserCell cell = (UserCell) view;
+                cell.setChecked(selectedContacts.indexOfKey(cell.getDialogId()) >= 0, true);
+            } else if (view instanceof ProfileSearchCell) {
+                ProfileSearchCell cell = (ProfileSearchCell) view;
+                cell.setChecked(selectedContacts.indexOfKey(cell.getDialogId()) >= 0, true);
+            }
+        }
+        selectedContactsCountTextView.setNumber(selectedContacts.size(), true);
     }
 
     private void hideActionMode() {

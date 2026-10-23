@@ -6765,6 +6765,8 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         actionMode.addView(selectedDialogsCountTextView, LayoutHelper.createLinear(0, LayoutHelper.MATCH_PARENT, 1.0f, hasMainTabs ? 18 : 72, 0, 0, 0));
         selectedDialogsCountTextView.setOnTouchListener((v, event) -> true);
 
+        // AlfaGram: "Hammasini belgilash" — ko'rinadigan tugma (⋮ ichida yashirin emas)
+        ActionBarMenuItem alfaSelectAllItem = actionMode.addItemWithWidth(alfa_select_all, R.drawable.msg_select, dp(48), org.telegram.messenger.AlfaCyrillic.ui("Hammasini belgilash"));
         pinItem = actionMode.addItemWithWidth(pin, R.drawable.msg_pin, dp(48));
         muteItem = actionMode.addItemWithWidth(mute, R.drawable.msg_mute, dp(48));
         archive2Item = actionMode.addItemWithWidth(archive2, R.drawable.msg_archive, dp(48));
@@ -6779,13 +6781,13 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         readItem = otherItem.addSubItem(read, R.drawable.msg_markread, LocaleController.getString(R.string.MarkAsRead));
         clearItem = otherItem.addSubItem(clear, R.drawable.msg_clear, LocaleController.getString(R.string.ClearHistory));
         blockItem = otherItem.addSubItem(block, R.drawable.msg_block, LocaleController.getString(R.string.BlockUser));
-        otherItem.addSubItem(alfa_select_all, R.drawable.msg_select, org.telegram.messenger.AlfaCyrillic.ui("Hammasini belgilash"));
 
         muteItem.setOnLongClickListener(e -> {
             performSelectedDialogsAction(selectedDialogs, mute, true, true);
             return true;
         });
 
+        actionModeViews.add(alfaSelectAllItem);
         actionModeViews.add(pinItem);
         actionModeViews.add(archive2Item);
         actionModeViews.add(muteItem);

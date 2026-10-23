@@ -634,6 +634,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
     private int alfaLinkRow = -1;
     private int alfaOnlineRow = -1;
     private int alfaRegRow = -1;
+    private int alfaMusicRow = -1;
     // Alfa: qatorlar qaysi flag qiymatlari bilan hisoblangani (onResume'da solishtirish uchun)
     private boolean alfaRowsHidePhone, alfaRowsShowId;
     private int stickersRow;
@@ -4655,6 +4656,10 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                 editNotes(view, position);
             } else if (position == alfaIdRow) {
                 copyAlfaProfileId();
+            } else if (position == alfaMusicRow) {
+                if (musicView != null) {
+                    musicView.performClick();
+                }
             } else if (position == alfaRegRow) {
                 showAlfaRegInfo();
             } else if (position == alfaLinkRow) {
@@ -6056,7 +6061,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
     private int getActionsExtraHeight(boolean withMusic) {
         if (userId != 0 && imageUpdater != null && !myProfile)
             return 0;
-        return dp(74 + (withMusic && hasMusic ? 30 : 0));
+        return dp(74); // AlfaGram: musiqa sarlavhada emas, alohida karta bo'lib chiqadi
     }
 
     private int getHeaderExtraHeight() {
@@ -10542,6 +10547,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
         alfaLinkRow = -1;
         alfaOnlineRow = -1;
         alfaRegRow = -1;
+        alfaMusicRow = -1;
         final boolean alfaHidePhone = org.telegram.messenger.AlfaFeatures.hidePhoneInSettings;
         final boolean alfaShowId = org.telegram.messenger.AlfaFeatures.showIdInProfile;
         alfaRowsHidePhone = alfaHidePhone;
@@ -10692,9 +10698,6 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                 if (alfaShowId) {
                     alfaIdRow = rowCount++;
                 }
-                if (org.telegram.messenger.AlfaFeatures.showIdInProfile) {
-                    alfaRegRow = rowCount++;
-                }
                 // AlfaGram — mening shaxsiy havolam (username bo'lsa)
                 if (org.telegram.messenger.AlfaLink.linkFor(getMessagesController().getUser(userId)) != null) {
                     alfaLinkRow = rowCount++;
@@ -10781,6 +10784,10 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                         channelRow = rowCount++;
                         channelDividerRow = rowCount++;
                     }
+                }
+                // AlfaGram — profilga qo'yilgan musiqa katta karta bo'lib
+                if (userInfo != null && userInfo.saved_music != null) {
+                    alfaMusicRow = rowCount++;
                 }
                 infoStartRow = rowCount;
                 if (!isBot && (hasPhone || !hasInfo)) {
@@ -11150,7 +11157,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
             if (userInfo != null) {
                 musicView.setMusicDocument(userInfo.saved_music);
             }
-            musicView.setVisibility(hasMusic ? View.VISIBLE : View.GONE);
+            musicView.setVisibility(View.GONE); // AlfaGram: karta ishlatiladi
         }
     }
 
@@ -13329,6 +13336,9 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                 case VIEW_TYPE_LINKED_COMMUNITY:
                     view = new CommunityLinkView(mContext, resourcesProvider);
                     break;
+                case VIEW_TYPE_MUSIC:
+                    view = new org.telegram.ui.Cells.AlfaMusicCardCell(mContext);
+                    break;
                 case VIEW_TYPE_ALFA_DETAIL:
                     view = new org.telegram.ui.Cells.AlfaDetailCell(mContext, resourcesProvider);
                     view.setBackgroundColor(getThemedColor(Theme.key_windowBackgroundWhite));
@@ -14390,6 +14400,9 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                 case VIEW_TYPE_BOT_APP:
                     break;
                 case VIEW_TYPE_MUSIC:
+                    if (userInfo != null && userInfo.saved_music != null) {
+                        ((org.telegram.ui.Cells.AlfaMusicCardCell) holder.itemView).setMusic(userInfo.saved_music);
+                    }
                     break;
             }
         }
@@ -14534,6 +14547,8 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
             if (position == infoHeaderRow || position == membersHeaderRow || position == settingsSectionRow2 ||
                     position == numberSectionRow || position == helpHeaderRow || position == debugHeaderRow || position == botPermissionsHeader) {
                 return VIEW_TYPE_HEADER;
+            } else if (position == alfaMusicRow) {
+                return VIEW_TYPE_MUSIC;
             } else if (position == alfaIdRow || position == alfaLinkRow || position == alfaOnlineRow || position == alfaRegRow || (position == phoneRow && userId != 0)) {
                 return VIEW_TYPE_ALFA_DETAIL;
             } else if (position == phoneRow || position == locationRow || position == numberRow || position == birthdayRow) {

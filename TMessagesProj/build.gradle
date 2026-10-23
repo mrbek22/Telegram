@@ -124,6 +124,13 @@ android {
                 arguments '-DANDROID_STL=c++_static', '-DANDROID_PLATFORM=android-21' //, '-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON'
             }
         }
+
+        // AlfaGram — tez build: -PalfaAbi=arm64-v8a bo'lsa C/C++ faqat shu ABI uchun kompilyatsiya qilinadi
+        if (project.hasProperty("alfaAbi")) {
+            ndk {
+                abiFilters(project.property("alfaAbi").split(","))
+            }
+        }
     }
 
     buildTypes {

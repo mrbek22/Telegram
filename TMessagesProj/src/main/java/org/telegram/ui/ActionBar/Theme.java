@@ -5011,6 +5011,18 @@ public class Theme {
             }
 
             selectedAutoNightType = preferences.getInt("selectedAutoNightType", Build.VERSION.SDK_INT >= 29 ? AUTO_NIGHT_TYPE_SYSTEM : AUTO_NIGHT_TYPE_NONE);
+            // AlfaGram: sukut bo'yicha qorong'i rejim (bir marta). Keyin foydalanuvchi yorug'ni tanlasa — tegilmaydi.
+            if (!preferences.getBoolean("alfa_dark_v1", false)) {
+                ThemeInfo dark = currentNightTheme != null ? currentNightTheme : themeDarkBlue;
+                SharedPreferences.Editor darkEditor = preferences.edit().putBoolean("alfa_dark_v1", true);
+                if (dark != null && (applyingTheme == null || !applyingTheme.isDark())) {
+                    applyingTheme = dark;
+                    selectedAutoNightType = AUTO_NIGHT_TYPE_NONE;
+                    darkEditor.putString("theme", dark.getKey())
+                            .putInt("selectedAutoNightType", AUTO_NIGHT_TYPE_NONE);
+                }
+                darkEditor.commit();
+            }
             autoNightScheduleByLocation = preferences.getBoolean("autoNightScheduleByLocation", false);
             autoNightBrighnessThreshold = preferences.getFloat("autoNightBrighnessThreshold", 0.25f);
             autoNightDayStartTime = preferences.getInt("autoNightDayStartTime", 22 * 60);

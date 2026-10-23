@@ -3,6 +3,11 @@ name: Build APK
 # Qo'lda ishga tushirish (Actions sahifasidan "Run workflow") yoki master'ga push bo'lganda
 on:
   workflow_dispatch:
+    inputs:
+      full_abi:
+        description: "To'liq build (4 ta ABI, production uchun). O'chiq = faqat arm64 (tez, test uchun)"
+        type: boolean
+        default: false
   push:
     branches:
       - master
@@ -85,14 +90,25 @@ jobs:
           RKA: ${{ secrets.KEY_ALIAS }}
           RKP: ${{ secrets.KEY_PASSWORD }}
         run: |
+          # Sukut bo'yicha faqat arm64-v8a (deyarli barcha zamonaviy telefonlar) — C/C++ kompilyatsiyasi ~4x tez.
+          # To'liq 4 ABI faqat "Run workflow" da full_abi yoqilsa (production uchun).
+          if [ "${{ inputs.full_abi }}" = "true" ]; then
+            ABI_ARG=""
+            echo "▶ To'liq build: 4 ta ABI"
+          else
+            ABI_ARG="-PalfaAbi=arm64-v8a"
+            echo "▶ Tez build: faqat arm64-v8a"
+          fi
           if [ "${{ steps.ks.outputs.custom }}" = "true" ]; then
             ./gradlew :TMessagesProj_AppStandalone:assembleAfatStandalone \
               :TMessagesProj_AppStandalone:bundleAfatStandalone \
+              $ABI_ARG \
               -PRELEASE_STORE_PASSWORD="$RSP" -PRELEASE_KEY_ALIAS="$RKA" -PRELEASE_KEY_PASSWORD="$RKP" \
               --stacktrace --no-daemon
           else
             ./gradlew :TMessagesProj_AppStandalone:assembleAfatStandalone \
               :TMessagesProj_AppStandalone:bundleAfatStandalone \
+              $ABI_ARG \
               --stacktrace --no-daemon
           fi
 
