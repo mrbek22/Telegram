@@ -62,8 +62,33 @@ public class TextDetailCell extends FrameLayout {
         this(context, 23, resourcesProvider, textMultiline, valueMultiline);
     }
 
+    // AlfaGram: chapda rangli ikonka (profil qatorlari AlfaDetailCell bilan bir xil ko'rinishi uchun)
+    private final int horizPadding;
+    private android.graphics.drawable.Drawable alfaIcon;
+    private final Paint alfaIconBg = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final android.graphics.RectF alfaIconRect = new android.graphics.RectF();
+
+    public void setAlfaIcon(int icon, int color) {
+        alfaIcon = null;
+        if (icon != 0) {
+            alfaIcon = getContext().getResources().getDrawable(icon).mutate();
+            alfaIcon.setColorFilter(new android.graphics.PorterDuffColorFilter(0xFFFFFFFF, android.graphics.PorterDuff.Mode.SRC_IN));
+            alfaIconBg.setColor(color);
+        }
+        final boolean on = alfaIcon != null && !LocaleController.isRTL;
+        final int left = on ? 64 : horizPadding;
+        ((MarginLayoutParams) textView.getLayoutParams()).leftMargin = dp(left - 6);
+        ((MarginLayoutParams) valueTextView.getLayoutParams()).leftMargin = dp(left);
+        ((MarginLayoutParams) rightValueTextView.getLayoutParams()).leftMargin = dp(left);
+        textView.setTypeface(on ? org.telegram.messenger.AndroidUtilities.bold() : null);
+        setWillNotDraw(!needDivider && alfaIcon == null);
+        requestLayout();
+        invalidate();
+    }
+
     public TextDetailCell(Context context, int horizPadding, Theme.ResourcesProvider resourcesProvider, boolean textMultiline, boolean valueMultiline) {
         super(context);
+        this.horizPadding = horizPadding;
         this.resourcesProvider = resourcesProvider;
         this.multiline = textMultiline || valueMultiline;
 
@@ -197,7 +222,7 @@ public class TextDetailCell extends FrameLayout {
         valueTextView.setText(value);
         rightValueTextView.setVisibility(View.GONE);
         needDivider = divider;
-        setWillNotDraw(!needDivider);
+        setWillNotDraw(!needDivider && alfaIcon == null);
     }
 
     public void setTextAndValue(CharSequence text, CharSequence value, CharSequence value2, boolean divider) {
@@ -206,7 +231,7 @@ public class TextDetailCell extends FrameLayout {
         rightValueTextView.setVisibility(View.VISIBLE);
         rightValueTextView.setText(value2);
         needDivider = divider;
-        setWillNotDraw(!needDivider);
+        setWillNotDraw(!needDivider && alfaIcon == null);
     }
 
     public void setImage(Drawable drawable) {
@@ -253,7 +278,7 @@ public class TextDetailCell extends FrameLayout {
         textView.setText(Emoji.replaceEmoji(text, textView.getPaint().getFontMetricsInt(), false));
         valueTextView.setText(value);
         needDivider = divider;
-        setWillNotDraw(!divider);
+        setWillNotDraw(!divider && alfaIcon == null);
     }
 
     public void setContentDescriptionValueFirst(boolean contentDescriptionValueFirst) {
@@ -268,11 +293,21 @@ public class TextDetailCell extends FrameLayout {
 
     @Override
     protected void onDraw(Canvas canvas) {
+        final boolean alfaOn = alfaIcon != null && !LocaleController.isRTL;
+        if (alfaOn) {
+            final float top = (getMeasuredHeight() - (needDivider ? 1 : 0) - dp(34)) / 2f;
+            alfaIconRect.set(dp(16), top, dp(16 + 34), top + dp(34));
+            canvas.drawRoundRect(alfaIconRect, dp(10), dp(10), alfaIconBg);
+            final int s = dp(20);
+            final int ix = (int) (alfaIconRect.centerX() - s / 2f), iy = (int) (alfaIconRect.centerY() - s / 2f);
+            alfaIcon.setBounds(ix, iy, ix + s, iy + s);
+            alfaIcon.draw(canvas);
+        }
         if (needDivider) {
             Paint paint = resourcesProvider != null ? resourcesProvider.getPaint(Theme.key_paint_divider) : Theme.dividerPaint;
             if (paint == null) paint = Theme.dividerPaint;
             canvas.drawLine(
-                LocaleController.isRTL ? 0 : dp(20),
+                LocaleController.isRTL ? 0 : dp(alfaOn ? 64 : 20),
                 getMeasuredHeight() - 1,
                 getMeasuredWidth() - (LocaleController.isRTL ? dp(20) : 0),
                 getMeasuredHeight() - 1,

@@ -10674,9 +10674,8 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
 
         if (userId != 0) {
             TLRPC.User user = getMessagesController().getUser(userId);
-            if (userInfo != null && userInfo.saved_music != null && (imageUpdater == null || myProfile)) {
-                hasMusic = true;
-            }
+            // AlfaGram: musiqa sarlavhada emas, alohida karta (alfaMusicRow) — sarlavhada joy ajratilmaydi
+            hasMusic = false;
 
             if (emptyRow < 0 && emptyRow2 < 0) {
                 if (hasMusic || peerColor != null || actionsView == null) {
@@ -10810,7 +10809,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                 if (org.telegram.messenger.AlfaLink.linkFor(user) != null) {
                     alfaLinkRow = rowCount++;
                 }
-                if (user != null && !user.bot && org.telegram.messenger.AlfaFeatures.onlineTracker) {
+                if (user != null && !user.bot && !UserObject.isUserSelf(user) && org.telegram.messenger.AlfaFeatures.onlineTracker) {
                     alfaOnlineRow = rowCount++;
                 }
                 if (userInfo != null) {
@@ -13685,7 +13684,9 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     TextDetailCell detailCell = (TextDetailCell) holder.itemView;
                     boolean containsQr = false;
                     boolean containsGift = false;
+                    detailCell.setAlfaIcon(0, 0);
                     if (position == birthdayRow) {
+                        detailCell.setAlfaIcon(R.drawable.menu_birthday, 0xFFE0605A);
                         TLRPC.UserFull userFull = getMessagesController().getUserFull(userId);
                         if (userFull != null && userFull.birthday != null) {
                             final boolean today = BirthdayController.isToday(userFull);
@@ -13785,6 +13786,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                                 text = "—";
                             }
                             containsQr = !myProfile;
+                            detailCell.setAlfaIcon(R.drawable.msg_mention, 0xFF4F8FE6);
                         } else if (currentChat != null) {
                             TLRPC.Chat chat = getMessagesController().getChat(chatId);
                             username = ChatObject.getPublicUsername(chat);
