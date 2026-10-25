@@ -7483,7 +7483,45 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
     }
 
     /** AlfaGram — joriy ro'yxatdagi barcha chatlarni bir bosishda belgilash. */
+    // AlfaGram: Telegram chatlarni 100 tadan yuklaydi — avval ro'yxatning oxirigacha yuklab, keyin belgilaymiz
+    private boolean alfaSelectAllLoading;
+
     private void alfaSelectAllDialogs() {
+        if (alfaSelectAllLoading) {
+            return;
+        }
+        final MessagesController mc = getMessagesController();
+        final int folder = folderId;
+        if (mc.isDialogsEndReached(folder) && mc.isServerDialogsEndReached(folder)) {
+            alfaDoSelectAllDialogs();
+            return;
+        }
+        alfaSelectAllLoading = true;
+        if (BulletinFactory.canShowBulletin(DialogsActivity.this)) {
+            BulletinFactory.of(DialogsActivity.this).createSimpleBulletin(R.raw.contact_check, org.telegram.messenger.AlfaCyrillic.ui("Barcha chatlar yuklanmoqda...")).show();
+        }
+        final long start = System.currentTimeMillis();
+        final Runnable[] step = new Runnable[1];
+        step[0] = () -> {
+            if (isFinishing() || fragmentView == null || actionBar == null || !actionBar.isActionModeShowed()) {
+                alfaSelectAllLoading = false;
+                return;
+            }
+            final boolean done = mc.isDialogsEndReached(folder) && mc.isServerDialogsEndReached(folder);
+            if (done || System.currentTimeMillis() - start > 60_000) {
+                alfaSelectAllLoading = false;
+                alfaDoSelectAllDialogs();
+                return;
+            }
+            if (!mc.isLoadingDialogs(folder)) {
+                mc.loadDialogs(folder, -1, 100, !mc.isDialogsEndReached(folder));
+            }
+            AndroidUtilities.runOnUIThread(step[0], 300);
+        };
+        step[0].run();
+    }
+
+    private void alfaDoSelectAllDialogs() {
         if (viewPages == null || viewPages.length == 0 || viewPages[0] == null) {
             return;
         }
