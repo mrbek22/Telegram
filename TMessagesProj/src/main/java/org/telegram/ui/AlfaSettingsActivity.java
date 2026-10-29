@@ -80,6 +80,16 @@ public class AlfaSettingsActivity extends BaseFragment {
         rows.add(new Row(TYPE_QUICK, null, null, null, null));
         rows.add(Row.info("Ghost — onlayn/yozyapman signali ketmaydi. Story — anonim ko'rish. O'qildi — o'qish tasdig'i yuborilmaydi."));
 
+        rows.add(Row.header("Yangi"));
+        rows.add(Row.action("Oy yakuni (AlfaGram Wrapped)", () -> {
+            if (getParentActivity() != null) {
+                showDialog(new org.telegram.ui.Components.AlfaWrappedSheet(getParentActivity(), currentAccount));
+            }
+        }));
+        rows.add(Row.action("Ilova ikonkasini tanlash", () -> presentFragment(new ThemeActivity(ThemeActivity.THEME_TYPE_BASIC))));
+        rows.add(Row.action("Avto papkalar yaratish", () -> AlfaAutoFolders.ask(this)));
+        rows.add(Row.info("Wrapped — oy davomida kim bilan ko'p yozishganingiz, faol soatingiz va sevimli emojilaringiz. Ikonkalar: Oq, Qora, Oltin, Binafsha, Neon — hammasi bepul."));
+
         rows.add(Row.header("Til"));
         rows.add(Row.toggle("cyrillicUi", "Kirill alifbosi (Ўзбекча)"));
         rows.add(Row.toggle("sendCyrillic", "Lotincha yozsam, kirillda yuborilsin"));
@@ -96,7 +106,7 @@ public class AlfaSettingsActivity extends BaseFragment {
             } catch (Throwable ignore) {
             }
         }));
-        rows.add(Row.info("Ilova ochilganda PIN so'raladi. Kimдир ilovangizni ochsa, xabarlaringizni ko'ra olmaydi."));
+        rows.add(Row.info("Ilova ochilganda PIN so'raladi. Kimdir ilovangizni ochsa, xabarlaringizni ko'ra olmaydi."));
 
         rows.add(Row.header("Akkaunt boshqaruvi"));
         rows.add(Row.action("Maxfiylik va akkauntni o'chirish", () -> {

@@ -11159,4 +11159,10 @@
     <string name="ArticleAIPrompt">Write a prompt...</string>
     <string name="ArticleAIGenerate">Generate</string>
     <string name="ArticleAIAddToPage">Add to Page</string>
+    <string name="AlfaIconDefault">AlfaGram</string>
+    <string name="AlfaIconWhite">Oq</string>
+    <string name="AlfaIconBlack">Qora</string>
+    <string name="AlfaIconGold">Oltin</string>
+    <string name="AlfaIconPurple">Binafsha</string>
+    <string name="AlfaIconNeon">Neon</string>
 </resources>

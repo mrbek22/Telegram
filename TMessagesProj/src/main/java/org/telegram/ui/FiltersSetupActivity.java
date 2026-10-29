@@ -594,6 +594,8 @@ public class FiltersSetupActivity extends BaseFragment implements NotificationCe
         }
         if (dialogFilters.size() < getMessagesController().dialogFiltersLimitPremium) {
             items.add(ItemInner.asButton(LocaleController.getString(R.string.CreateNewFilter)));
+            // AlfaGram: bir bosishda tayyor papkalar
+            items.add(ItemInner.asButton(org.telegram.messenger.AlfaCyrillic.ui(AlfaAutoFolders.BUTTON_TEXT)));
         }
         items.add(ItemInner.asShadow(null));
         folderTagsPosition = items.size();
@@ -714,6 +716,9 @@ public class FiltersSetupActivity extends BaseFragment implements NotificationCe
                 } else {
                     presentFragment(new FilterCreateActivity(filter));
                 }
+            } else if (item.viewType == VIEW_TYPE_BUTTON && item.text != null
+                    && item.text.toString().equals(org.telegram.messenger.AlfaCyrillic.ui(AlfaAutoFolders.BUTTON_TEXT))) {
+                AlfaAutoFolders.ask(this);
             } else if (item.viewType == VIEW_TYPE_BUTTON) {
                 createFolder(getParentLayout());
             }

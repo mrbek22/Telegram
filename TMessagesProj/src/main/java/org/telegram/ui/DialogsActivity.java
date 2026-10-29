@@ -6111,38 +6111,52 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 MessagesController.getInstance(currentAccount).removeSuggestion(0, "STARS_SUBSCRIPTION_LOW_BALANCE");
                 updateDialogsHint();
             });
-        } else if (folderId == 0 && communityId == 0 && !getMessagesController().premiumPurchaseBlocked() && BirthdayController.getInstance(currentAccount).contains() && !getMessagesController().dismissedSuggestions.contains("BIRTHDAY_CONTACTS_TODAY")) {
+        } else if (folderId == 0 && communityId == 0 && BirthdayController.getInstance(currentAccount).contains()) {
+            // AlfaGram: tug'ilgan kun paneli — bosilsa tayyor tabrik yozilgan chat ochiladi (pullik sovg'a emas)
             BirthdayController.BirthdayState state = BirthdayController.getInstance(currentAccount).getState();
             ArrayList<TLRPC.User> users = state.today;
             dialogsHintCellVisible = true;
             dialogsHintCell.setOnClickListener(v -> {
-                if (state != null && state.today.size() == 1) {
-                    showDialog(new GiftSheet(getContext(), currentAccount, state.today.get(0).id, null, null).setBirthday());
+                if (users.size() == 1) {
+                    alfaOpenBirthdayChat(users.get(0));
                     return;
                 }
-                UserSelectorBottomSheet.open(0, state);
+                CharSequence[] names = new CharSequence[users.size()];
+                for (int i = 0; i < users.size(); i++) {
+                    names[i] = UserObject.getUserName(users.get(i));
+                }
+                AlertDialog.Builder b = new AlertDialog.Builder(getParentActivity(), getResourceProvider());
+                b.setTitle(org.telegram.messenger.AlfaCyrillic.ui("Kimni tabriklaysiz?"));
+                b.setItems(names, (d, which) -> alfaOpenBirthdayChat(users.get(which)));
+                showDialog(b.create());
             });
             dialogsHintCell.setAvatars(currentAccount, users);
-            dialogsHintCell.setText(Emoji.replaceWithRestrictedEmoji(AndroidUtilities.replaceSingleTag(
-                users.size() == 1 ?
-                    LocaleController.formatString(R.string.BirthdayTodaySingleTitle, UserObject.getForcedFirstName(users.get(0))) :
-                    LocaleController.formatPluralString("BirthdayTodayMultipleTitle", users.size()),
-                Theme.key_windowBackgroundWhiteValueText,
-                AndroidUtilities.REPLACING_TAG_TYPE_LINKBOLD,
-                null
-            ), dialogsHintCell.titleView, this::updateDialogsHint),
-                LocaleController.formatString(users.size() == 1 ? R.string.BirthdayTodaySingleMessage2 : R.string.BirthdayTodayMultipleMessage2)
-            );
+            String bdTitle = users.size() == 1
+                    ? "\uD83C\uDF82 Bugun " + UserObject.getForcedFirstName(users.get(0)) + "ning tug'ilgan kuni"
+                    : "\uD83C\uDF82 Bugun " + users.size() + " kishining tug'ilgan kuni";
+            dialogsHintCell.setText(Emoji.replaceEmoji(org.telegram.messenger.AlfaCyrillic.ui(bdTitle), dialogsHintCell.titleView.getPaint().getFontMetricsInt(), false),
+                    org.telegram.messenger.AlfaCyrillic.ui("Bosing \u2014 tayyor tabrik bilan chat ochiladi"));
             dialogsHintCell.setOnCloseListener(v -> {
                 BirthdayController.getInstance(currentAccount).hide();
-                MessagesController.getInstance(currentAccount).removeSuggestion(0, "BIRTHDAY_CONTACTS_TODAY");
                 updateDialogsHint();
-                BulletinFactory.of(this)
-                        .createSimpleBulletin(R.raw.gift, LocaleController.getString(R.string.BoostingPremiumChristmasToast), 4)
-                        .setDuration(Bulletin.DURATION_PROLONG)
-                        .show();
             });
-            StarsController.getInstance(currentAccount).loadStarGifts();
+        } else if (folderId == 0 && communityId == 0 && alfaWrappedHintVisible()) {
+            // AlfaGram: oyning 1–5 kunlari "Oy yakuni" eslatmasi (oyiga bir marta yopiladi)
+            dialogsHintCellVisible = true;
+            dialogsHintCell.setAvatars(currentAccount, new ArrayList<>());
+            dialogsHintCell.setOnClickListener(v -> {
+                alfaHideWrappedHint();
+                if (getParentActivity() != null) {
+                    showDialog(new org.telegram.ui.Components.AlfaWrappedSheet(getParentActivity(), currentAccount));
+                }
+                updateDialogsHint();
+            });
+            dialogsHintCell.setText(Emoji.replaceEmoji(org.telegram.messenger.AlfaCyrillic.ui("\uD83D\uDCCA O'tgan oy yakuni tayyor"), dialogsHintCell.titleView.getPaint().getFontMetricsInt(), false),
+                    org.telegram.messenger.AlfaCyrillic.ui("Kim bilan ko'p yozishdingiz, faol soatingiz va sevimli emojilaringiz"));
+            dialogsHintCell.setOnCloseListener(v -> {
+                alfaHideWrappedHint();
+                updateDialogsHint();
+            });
         } else if (
             folderId == 0 && communityId == 0 &&
             MessagesController.getInstance(currentAccount).pendingSuggestions.contains("BIRTHDAY_SETUP") &&
@@ -7484,6 +7498,34 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
 
     /** AlfaGram — joriy ro'yxatdagi barcha chatlarni bir bosishda belgilash. */
     // AlfaGram: Telegram chatlarni 100 tadan yuklaydi — avval ro'yxatning oxirigacha yuklab, keyin belgilaymiz
+    // AlfaGram: tug'ilgan kun egasiga tayyor tabrik bilan chat ochish
+    private void alfaOpenBirthdayChat(TLRPC.User user) {
+        if (user == null) {
+            return;
+        }
+        Bundle args = new Bundle();
+        args.putLong("user_id", user.id);
+        args.putString("start_text", org.telegram.messenger.AlfaCyrillic.ui("\uD83C\uDF89 Tug'ilgan kuningiz muborak, " + UserObject.getForcedFirstName(user) + "! Sizga sog'lik, baxt va omad tilayman! \uD83C\uDF82"));
+        presentFragment(new ChatActivity(args));
+    }
+
+    // AlfaGram Wrapped eslatmasi: oyning 1–5 kunlari, oyiga bir marta
+    private static String alfaWrappedKey() {
+        java.util.Calendar c = java.util.Calendar.getInstance();
+        return c.get(java.util.Calendar.YEAR) + "_" + c.get(java.util.Calendar.MONTH);
+    }
+
+    private boolean alfaWrappedHintVisible() {
+        if (java.util.Calendar.getInstance().get(java.util.Calendar.DAY_OF_MONTH) > 5) {
+            return false;
+        }
+        return !alfaWrappedKey().equals(MessagesController.getGlobalMainSettings().getString("alfa_wrapped_hint", ""));
+    }
+
+    private void alfaHideWrappedHint() {
+        MessagesController.getGlobalMainSettings().edit().putString("alfa_wrapped_hint", alfaWrappedKey()).apply();
+    }
+
     private boolean alfaSelectAllLoading;
 
     private void alfaSelectAllDialogs() {

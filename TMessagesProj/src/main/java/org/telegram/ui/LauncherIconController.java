@@ -34,12 +34,13 @@ public class LauncherIconController {
     }
 
     public enum LauncherIcon {
-        DEFAULT("DefaultIcon", R.drawable.icon_background_sa, R.mipmap.icon_foreground_sa, R.string.AppIconDefault),
-        VINTAGE("VintageIcon", R.drawable.icon_6_background_sa, R.mipmap.icon_6_foreground_sa, R.string.AppIconVintage),
-        AQUA("AquaIcon", R.drawable.icon_4_background_sa, R.mipmap.icon_foreground_sa, R.string.AppIconAqua),
-        PREMIUM("PremiumIcon", R.drawable.icon_3_background_sa, R.mipmap.icon_3_foreground_sa, R.string.AppIconPremium, true),
-        TURBO("TurboIcon", R.drawable.icon_5_background_sa, R.mipmap.icon_5_foreground_sa, R.string.AppIconTurbo, true),
-        NOX("NoxIcon", R.mipmap.icon_2_background_sa, R.mipmap.icon_foreground_sa, R.string.AppIconNox, true);
+        // AlfaGram: o'z ikonkalari, hammasi bepul (alias nomlari o'zgarmaydi — manifest bilan bog'liq)
+        DEFAULT("DefaultIcon", R.mipmap.alfa_icon_bg, R.mipmap.alfa_icon_fg, R.string.AlfaIconDefault),
+        VINTAGE("VintageIcon", R.mipmap.alfa_icon_white_bg, R.mipmap.alfa_icon_white_fg, R.string.AlfaIconWhite),
+        AQUA("AquaIcon", R.mipmap.alfa_icon_black_bg, R.mipmap.alfa_icon_black_fg, R.string.AlfaIconBlack),
+        PREMIUM("PremiumIcon", R.mipmap.alfa_icon_gold_bg, R.mipmap.alfa_icon_gold_fg, R.string.AlfaIconGold),
+        TURBO("TurboIcon", R.mipmap.alfa_icon_purple_bg, R.mipmap.alfa_icon_purple_fg, R.string.AlfaIconPurple),
+        NOX("NoxIcon", R.mipmap.alfa_icon_neon_bg, R.mipmap.alfa_icon_neon_fg, R.string.AlfaIconNeon);
 
         public final String key;
         public final int background;
