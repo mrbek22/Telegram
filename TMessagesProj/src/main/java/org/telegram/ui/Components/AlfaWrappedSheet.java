@@ -30,6 +30,7 @@ import org.telegram.messenger.AlfaCyrillic;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.FileLog;
+import org.telegram.messenger.ImageReceiver;
 import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.MessagesStorage;
 import org.telegram.messenger.UserConfig;
@@ -70,6 +71,7 @@ public class AlfaWrappedSheet extends BottomSheet {
     private final int account;
     private final LinearLayout content;
     private Data data;
+    private PodiumView podium;
 
     public AlfaWrappedSheet(Context context, int account) {
         super(context, false);
@@ -252,25 +254,9 @@ public class AlfaWrappedSheet extends BottomSheet {
         if (!d.top.isEmpty()) {
             LinearLayout c = card(ctx);
             c.addView(text(ctx, AlfaCyrillic.ui("Eng ko'p yozishganlar"), 15, true, 0xFFFFFFFF),
-                    LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, 0, 0, 0, 10));
-            MessagesController mc = MessagesController.getInstance(account);
-            for (int i = 0; i < d.top.size(); i++) {
-                TLRPC.User u = mc.getUser(d.top.get(i)[0]);
-                FrameLayout row = new FrameLayout(ctx);
-                BackupImageView av = new BackupImageView(ctx);
-                av.setRoundRadius(dp(22));
-                if (u != null) {
-                    av.setForUserOrChat(u, new AvatarDrawable(u));
-                }
-                row.addView(av, LayoutHelper.createFrame(44, 44, Gravity.LEFT | Gravity.CENTER_VERTICAL));
-                TextView name = text(ctx, (i + 1) + ". " + (u != null ? UserObject.getUserName(u) : "—"), 15, true, 0xFFFFFFFF);
-                name.setSingleLine(true);
-                name.setEllipsize(TextUtils.TruncateAt.END);
-                row.addView(name, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.LEFT | Gravity.CENTER_VERTICAL, 56, 0, 90, 0));
-                TextView cnt = text(ctx, AlfaCyrillic.ui(d.top.get(i)[1] + " ta"), 14, false, ACCENT);
-                row.addView(cnt, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.RIGHT | Gravity.CENTER_VERTICAL));
-                c.addView(row, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 54));
-            }
+                    LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, 0, 0, 0, 6));
+            podium = new PodiumView(ctx, account, d.top, true);
+            c.addView(podium, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, PodiumView.HEIGHT_DP));
         }
 
         if (d.activeHour >= 0) {
@@ -296,6 +282,111 @@ public class AlfaWrappedSheet extends BottomSheet {
         share.setBackground(sb);
         share.setOnClickListener(v -> shareImage());
         content.addView(share, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 52, 0, 6, 0, 0));
+    }
+
+    /**
+     * Shohsupa: o'rtada 1-o'rin (oltin, toj), chapda 2-o'rin (kumush), o'ngda 3-o'rin (bronza).
+     * Ilova ichida ham, ulashiladigan rasmda ham shu View chiziladi.
+     */
+    private static class PodiumView extends View {
+        static final int HEIGHT_DP = 262;
+        private static final int[] RING = {0xFFFACC15, 0xFFCBD5E1, 0xFFD97706};
+        private static final int[][] STEP = {{0xFFFDE68A, 0xFFEAB308}, {0xFFCBD5E1, 0xFF94A3B8}, {0xFFFBBF77, 0xFFC2410C}};
+        private static final int[] STEP_TEXT = {0xFF713F12, 0xFF334155, 0xFF431407};
+        private static final int[] STEP_H = {100, 70, 50};
+        private static final int[] AVATAR = {80, 62, 56};
+
+        private final int n;
+        private final String[] names = new String[3];
+        private final long[] counts = new long[3];
+        private final ImageReceiver[] avatars = new ImageReceiver[3];
+        private final boolean showCounts;
+        private final Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private final android.text.TextPaint tp = new android.text.TextPaint(Paint.ANTI_ALIAS_FLAG);
+        private final RectF r = new RectF();
+
+        PodiumView(Context ctx, int account, ArrayList<long[]> top, boolean showCounts) {
+            super(ctx);
+            this.showCounts = showCounts;
+            n = Math.min(3, top.size());
+            MessagesController mc = MessagesController.getInstance(account);
+            for (int i = 0; i < n; i++) {
+                TLRPC.User u = mc.getUser(top.get(i)[0]);
+                names[i] = u != null ? UserObject.getForcedFirstName(u) : "—";
+                counts[i] = top.get(i)[1];
+                avatars[i] = new ImageReceiver(this);
+                avatars[i].setRoundRadius(dp(AVATAR[i]) / 2);
+                if (u != null) {
+                    avatars[i].setForUserOrChat(u, new AvatarDrawable(u));
+                }
+            }
+        }
+
+        @Override
+        protected void onAttachedToWindow() {
+            super.onAttachedToWindow();
+            for (int i = 0; i < n; i++) avatars[i].onAttachedToWindow();
+        }
+
+        @Override
+        protected void onDetachedFromWindow() {
+            super.onDetachedFromWindow();
+            for (int i = 0; i < n; i++) avatars[i].onDetachedFromWindow();
+        }
+
+        @Override
+        protected void onDraw(Canvas canvas) {
+            final float colW = Math.min(dp(112), (getWidth() - dp(20)) / 3f);
+            final float gap = dp(10);
+            final float left = (getWidth() - colW * 3 - gap * 2) / 2f;
+            final float bottom = getHeight();
+            // joylashuv: 2-o'rin chapda, 1-o'rin o'rtada, 3-o'rin o'ngda
+            final int[] slotOf = {1, 0, 2};
+            for (int rank = 0; rank < n; rank++) {
+                float x = left + slotOf[rank] * (colW + gap);
+                float cx = x + colW / 2f;
+                // pog'ona
+                float stepTop = bottom - dp(STEP_H[rank]);
+                r.set(x, stepTop, x + colW, bottom);
+                p.setShader(new LinearGradient(0, stepTop, 0, bottom, STEP[rank][0], STEP[rank][1], Shader.TileMode.CLAMP));
+                canvas.drawRoundRect(r, dp(12), dp(12), p);
+                p.setShader(null);
+                tp.setTypeface(AndroidUtilities.bold());
+                tp.setTextAlign(Paint.Align.CENTER);
+                tp.setTextSize(dp(22));
+                tp.setColor(STEP_TEXT[rank]);
+                canvas.drawText(String.valueOf(rank + 1), cx, stepTop + dp(28), tp);
+                // son va ism
+                float y = stepTop - dp(8);
+                if (showCounts) {
+                    tp.setTypeface(Typeface.DEFAULT);
+                    tp.setTextSize(dp(11.5f));
+                    tp.setColor(ACCENT);
+                    canvas.drawText(AlfaCyrillic.ui(counts[rank] + " ta"), cx, y, tp);
+                    y -= dp(16);
+                }
+                tp.setTypeface(AndroidUtilities.bold());
+                tp.setTextSize(dp(13));
+                tp.setColor(0xFFFFFFFF);
+                CharSequence nm = TextUtils.ellipsize(names[rank], tp, colW - dp(4), TextUtils.TruncateAt.END);
+                canvas.drawText(nm, 0, nm.length(), cx, y, tp);
+                // avatar + halqa
+                float size = dp(AVATAR[rank]);
+                float acy = y - dp(16) - size / 2f;
+                p.setColor(RING[rank]);
+                if (rank == 0) {
+                    p.setShadowLayer(dp(12), 0, 0, 0x88FACC15);
+                }
+                canvas.drawCircle(cx, acy, size / 2f + dp(rank == 0 ? 4 : 3), p);
+                p.clearShadowLayer();
+                avatars[rank].setImageCoords(cx - size / 2f, acy - size / 2f, size, size);
+                avatars[rank].draw(canvas);
+                if (rank == 0) {
+                    tp.setTextSize(dp(24));
+                    canvas.drawText("👑", cx, acy - size / 2f - dp(4), tp);
+                }
+            }
+        }
     }
 
     private static class HoursView extends View {
@@ -386,38 +477,41 @@ public class AlfaWrappedSheet extends BottomSheet {
         t.setColor(0xFFFFFFFF);
         c.drawText(AlfaCyrillic.ui("ta xabar yubordim"), 90, y, t);
 
-        if (!d.top.isEmpty()) {
-            y += 150;
-            t.setTextSize(46);
-            c.drawText(AlfaCyrillic.ui("Eng ko'p yozishganlarim"), 90, y, t);
-            MessagesController mc = MessagesController.getInstance(account);
-            t.setTypeface(Typeface.DEFAULT);
-            for (int i = 0; i < d.top.size(); i++) {
-                TLRPC.User u = mc.getUser(d.top.get(i)[0]);
-                String name = u != null ? UserObject.getForcedFirstName(u) : "—";
-                y += 80;
-                t.setTextSize(44);
-                t.setColor(0xFFFFFFFF);
-                c.drawText((i + 1) + ".  " + name, 110, y, t);
-            }
-        }
-        if (d.activeHour >= 0) {
+        if (podium != null && podium.getWidth() > 0 && podium.getHeight() > 0) {
             y += 140;
+            t.setTextSize(48);
+            c.drawText(AlfaCyrillic.ui("Eng ko'p yozishganlarim"), 90, y, t);
+            // ilovadagi shohsupani o'z avatarlari bilan kattalashtirib chizamiz
+            float s = 820f / podium.getWidth();
+            y += 40;
+            c.save();
+            c.translate((W - 820) / 2f, y);
+            c.scale(s, s);
+            podium.draw(c);
+            c.restore();
+            y += podium.getHeight() * s;
+        }
+        y += 120;
+        if (d.activeHour >= 0) {
+            t.setTypeface(Typeface.DEFAULT);
+            t.setTextSize(40);
+            t.setColor(0xB3FFFFFF);
+            c.drawText(AlfaCyrillic.ui("Faol soatim"), 90, y, t);
             t.setTypeface(bold);
-            t.setTextSize(46);
-            t.setColor(0xFFFFFFFF);
-            c.drawText(AlfaCyrillic.ui("Eng faol soatim"), 90, y, t);
-            y += 90;
-            t.setTextSize(80);
+            t.setTextSize(90);
             t.setColor(ACCENT);
-            c.drawText(String.format("%02d:00", d.activeHour), 90, y, t);
+            c.drawText(String.format("%02d:00", d.activeHour), 90, y + 100, t);
         }
         if (!d.emojis.isEmpty()) {
-            y += 150;
+            t.setTextAlign(Paint.Align.RIGHT);
             t.setTypeface(Typeface.DEFAULT);
-            t.setTextSize(100);
+            t.setTextSize(40);
+            t.setColor(0xB3FFFFFF);
+            c.drawText(AlfaCyrillic.ui("Sevimli emojilarim"), W - 90, y, t);
+            t.setTextSize(80);
             t.setColor(0xFFFFFFFF);
-            c.drawText(TextUtils.join(" ", d.emojis), 90, y, t);
+            c.drawText(TextUtils.join(" ", d.emojis.subList(0, Math.min(3, d.emojis.size()))), W - 90, y + 100, t);
+            t.setTextAlign(Paint.Align.LEFT);
         }
         t.setTypeface(bold);
         t.setTextSize(42);
