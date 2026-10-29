@@ -38,6 +38,9 @@ public class AlfaConfig {
     public static String announcementUrl = "";
     public static boolean maintenanceEnabled;
     public static String maintenanceMessage = "";
+    /** "Nima yangi" oynasi paneldan: versiya oshirilsa matn har kimga bir marta chiqadi. */
+    public static int whatsNewVersion = 0;
+    public static String whatsNewText = "";
 
     private static boolean cacheLoaded;
     private static boolean fetching;
@@ -68,7 +71,9 @@ public class AlfaConfig {
         Utilities.globalQueue.postRunnable(() -> {
             String json = null;
             try {
-                URL url = new URL(CONFIG_URL);
+                // Statistika uchun: versiya, anonim o'rnatish ID'si (akkauntga bog'liq emas), Android SDK
+                URL url = new URL(CONFIG_URL + "?v=" + currentVersionCode() + "&i=" + installId()
+                        + "&s=" + (AlfaFeatures.PLAY_BUILD ? "play" : "apk") + "&sdk=" + android.os.Build.VERSION.SDK_INT);
                 HttpURLConnection c = (HttpURLConnection) url.openConnection();
                 c.setConnectTimeout(10000);
                 c.setReadTimeout(10000);
@@ -136,6 +141,11 @@ public class AlfaConfig {
                 announcementText = ann.optString("text", "");
                 announcementUrl = ann.optString("url", "");
             }
+            JSONObject wn = o.optJSONObject("whats_new");
+            if (wn != null) {
+                whatsNewVersion = wn.optInt("version", 0);
+                whatsNewText = wn.optString("text", "");
+            }
             JSONObject maint = o.optJSONObject("maintenance");
             if (maint != null) {
                 maintenanceEnabled = maint.optBoolean("enabled", false);
@@ -177,6 +187,21 @@ public class AlfaConfig {
             upper = false;
         }
         return sb.toString();
+    }
+
+    /** Anonim o'rnatish ID'si: birinchi ishga tushishda tasodifiy yaratiladi, faqat statistika uchun. */
+    public static String installId() {
+        try {
+            android.content.SharedPreferences p = ApplicationLoader.applicationContext.getSharedPreferences(PREFS, 0);
+            String id = p.getString("install_id", null);
+            if (id == null) {
+                id = java.util.UUID.randomUUID().toString().replace("-", "").substring(0, 16);
+                p.edit().putString("install_id", id).apply();
+            }
+            return id;
+        } catch (Exception e) {
+            return "0";
+        }
     }
 
     /** Hozirgi o'rnatilgan APK versiya kodi (runtime, PackageManager orqali). */

@@ -31,14 +31,22 @@ public class AlfaWhatsNew {
         try {
             if (fragment == null || fragment.getParentActivity() == null) return;
             SharedPreferences prefs = ApplicationLoader.applicationContext.getSharedPreferences("alfa_features", 0);
+            // Paneldan kelgan matn (whats_new) bo'lsa — o'sha, aks holda ilovadagi matn
+            final boolean remote = AlfaConfig.whatsNewVersion > 0 && AlfaConfig.whatsNewText != null && AlfaConfig.whatsNewText.length() > 0;
             if (!force) {
-                if (shownThisSession || prefs.getInt("whatsNewSeen", 0) >= NEWS_VERSION) return;
+                if (shownThisSession) return;
+                if (remote ? prefs.getInt("whatsNewRemoteSeen", 0) >= AlfaConfig.whatsNewVersion
+                        : prefs.getInt("whatsNewSeen", 0) >= NEWS_VERSION) return;
                 shownThisSession = true;
             }
-            prefs.edit().putInt("whatsNewSeen", NEWS_VERSION).apply();
+            SharedPreferences.Editor ed = prefs.edit().putInt("whatsNewSeen", NEWS_VERSION);
+            if (remote) {
+                ed.putInt("whatsNewRemoteSeen", AlfaConfig.whatsNewVersion);
+            }
+            ed.apply();
             AlertDialog.Builder builder = new AlertDialog.Builder(fragment.getParentActivity(), fragment.getResourceProvider());
             builder.setTitle(AlfaCyrillic.ui("AlfaGram'da yangi"));
-            builder.setMessage(AlfaCyrillic.ui(NEWS));
+            builder.setMessage(AlfaCyrillic.ui(remote ? AlfaConfig.whatsNewText : NEWS));
             builder.setPositiveButton(AlfaCyrillic.ui("Sozlamalarni ochish"), (d, w) -> {
                 try {
                     fragment.presentFragment(new org.telegram.ui.AlfaSettingsActivity());
