@@ -401,6 +401,10 @@ public class MessagePreviewParams {
                     }
                 }
             }
+            // AlfaGram — himoyalangan chatdan xabar nusxa sifatida yuboriladi: oldindan ko'rishda ham muallifsiz
+            if (!forwardMessages.isEmpty() && AlfaCopySend.hasProtected(forwardMessages.get(0).currentAccount, forwardMessages)) {
+                hideForwardSendersName = true;
+            }
             this.forwardMessages = new Messages(true, 0, forwardMessages, dialogId, this.forwardMessages != null ? this.forwardMessages.selectedIds : null);
             if (this.forwardMessages.messages.isEmpty()) {
                 this.forwardMessages = null;

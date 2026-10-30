@@ -2099,6 +2099,12 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
                 });
                 return 0;
             }
+            // AlfaGram — uzatish taqiqlangan chatdan forward'ni server rad etadi:
+            // bunday xabarlar yuklab olinib, yangi xabar sifatida yuboriladi, qolganlari odatdagidek forward.
+            if (AlfaCopySend.hasProtected(currentAccount, messages)) {
+                ArrayList<MessageObject> normal = AlfaCopySend.sendProtected(currentAccount, messages, peer, hideCaption, notify, scheduleDate, scheduleRepeatPeriod, replyToTopMsg, payStars, monoForumPeerId);
+                return normal.isEmpty() ? 0 : sendMessage(normal, peer, forwardFromMyName, hideCaption, notify, scheduleDate, scheduleRepeatPeriod, replyToTopMsg, video_timestamp, payStars, monoForumPeerId, suggestionParams);
+            }
             // AlfaGram — forward: izohsiz (caption'siz) va/yoki muallifsiz.
             // Izohni olib tashlash stock'dagi kabi muallifni ham yashiradi.
             final boolean alfaHideCaption = hideCaption || AlfaFeatures.forwardWithoutReply;
