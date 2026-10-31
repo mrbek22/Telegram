@@ -431,7 +431,8 @@ public class UserInfoActivity extends UniversalFragment implements NotificationC
             for (int i = 0; i < accountNumbers.size(); ++i) {
                 items.add(SettingsActivity.AccountCell.Factory.of(i, accountNumbers.get(i)));
             }
-            if (!UserConfig.hasPremiumOnAccounts()) {
+            // AlfaGram — akkaunt chegarasi Premium'ga bog'liq emas, Premium taklifi ko'rsatilmaydi
+            if (false && !UserConfig.hasPremiumOnAccounts()) {
                 final int moreAccounts = Math.max(0, UserConfig.getMaxAccountCount() - UserConfig.getActivatedAccountsCount());
                 items.add(UItem.asShadow(
                     TextUtils.concat(

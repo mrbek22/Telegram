@@ -534,6 +534,10 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
             setInfo();
         } catch (Throwable ignore) {
         }
+        // yangi akkaunt qo'shilgan/chiqilgan bo'lsa "Hisoblar" yangilansin
+        if (listView != null && listView.adapter != null) {
+            listView.adapter.update(false);
+        }
     }
 
     public void setInfo(TLRPC.User user) {
@@ -695,13 +699,18 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
             items.add(UItem.asShadow(null));
         }
 
-        if (accountNumbers.size() > 0) {
-            items.add(UItem.asHeader(getString(R.string.SettingsAccounts)));
-            for (int i = 0; i < accountNumbers.size(); ++i) {
-                items.add(AccountCell.Factory.of(i, accountNumbers.get(i)));
-            }
-            items.add(UItem.asShadow(null));
+        // AlfaGram — "Hisoblar": 3 tagacha akkaunt shu yerda, ko'p bo'lsa "Akkauntlarni boshqarish"
+        items.add(UItem.asHeader(getString(R.string.SettingsAccounts)));
+        final int shownAccounts = Math.min(accountNumbers.size(), AlfaAccountsActivity.SETTINGS_LIMIT);
+        for (int i = 0; i < shownAccounts; ++i) {
+            items.add(AccountCell.Factory.of(i, accountNumbers.get(i)));
         }
+        if (accountNumbers.size() > AlfaAccountsActivity.SETTINGS_LIMIT) {
+            items.add(SettingCell.Factory.of(103, IconBackgroundColors.BLUE.top, IconBackgroundColors.BLUE.bottom, R.drawable.settings_group, org.telegram.messenger.AlfaCyrillic.ui("Akkauntlarni boshqarish"), null, LocaleController.formatNumber(accountNumbers.size() + 1, ',')));
+        } else if (UserConfig.getActivatedAccountsCount() < UserConfig.MAX_ACCOUNT_COUNT) {
+            items.add(SettingCell.Factory.of(102, IconBackgroundColors.GREEN.top, IconBackgroundColors.GREEN.bottom, R.drawable.settings_invite, org.telegram.messenger.AlfaCyrillic.ui("Akkaunt qo'shish")));
+        }
+        items.add(UItem.asShadow(null));
 
         items.add(SettingCell.Factory.of(1, IconBackgroundColors.BLUE.top, IconBackgroundColors.BLUE.bottom, R.drawable.settings_account, getString(R.string.SettingsAccount), getString(R.string.SettingsAccountInfo)));
         items.add(SettingCell.Factory.of(2, IconBackgroundColors.PURPLE.top, IconBackgroundColors.PURPLE.bottom, R.drawable.settings_chat, getString(R.string.SettingsChat), getString(R.string.SettingsChatInfo)));
@@ -837,6 +846,12 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
                 break;
             case 101:
                 org.telegram.messenger.AlfaLink.showMine(this);
+                break;
+            case 102:
+                AlfaAccountsActivity.addAccount(this);
+                break;
+            case 103:
+                presentSettingFragment(new AlfaAccountsActivity());
                 break;
             case 3:
                 presentSettingFragment(new PrivacySettingsActivity());
