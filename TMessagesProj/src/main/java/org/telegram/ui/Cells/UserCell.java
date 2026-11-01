@@ -326,13 +326,15 @@ public class UserCell extends FrameLayout implements NotificationCenter.Notifica
             lp.gravity = (LocaleController.isRTL ? Gravity.LEFT : Gravity.RIGHT) | Gravity.CENTER_VERTICAL;
             lp.leftMargin = LocaleController.isRTL ? dp(16) : 0;
             lp.rightMargin = LocaleController.isRTL ? 0 : dp(16);
-            // gradient plitka o'z ranglarida ko'rinsin
-            imageView.setColorFilter(null);
+            // ingichka kulrang belgi — ro'yxatdan ajralib qolmasin
+            imageView.setColorFilter(new PorterDuffColorFilter(Theme.getColor(Theme.key_windowBackgroundWhiteGrayIcon, resourcesProvider), PorterDuff.Mode.SRC_IN));
+            imageView.setAlpha(0.7f);
         } else {
             lp.gravity = (LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT) | Gravity.CENTER_VERTICAL;
             lp.leftMargin = LocaleController.isRTL ? 0 : dp(16);
             lp.rightMargin = LocaleController.isRTL ? dp(16) : 0;
             imageView.setColorFilter(new PorterDuffColorFilter(Theme.getColor(Theme.key_windowBackgroundWhiteGrayIcon, resourcesProvider), PorterDuff.Mode.MULTIPLY));
+            imageView.setAlpha(1f);
         }
         imageView.setLayoutParams(lp);
     }

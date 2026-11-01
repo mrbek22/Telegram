@@ -29,6 +29,58 @@ public class AlfaAutoFolders {
             MessagesController.DIALOG_FILTER_FLAG_ALL_CHATS | MessagesController.DIALOG_FILTER_FLAG_EXCLUDE_READ | NO_ARCHIVE,
     };
 
+    // tur bo'yicha papkalarning odatiy nomlari (foydalanuvchi nomini o'zgartirgan bo'lsa — nom ko'rsatiladi)
+    private static final String[] DEFAULT_NAMES = {
+            "shaxsiy", "guruhlar", "kanallar", "botlar", "o'qilmagan", "o'qilmaganlar",
+            "personal", "groups", "channels", "bots", "unread", "contacts", "non-contacts",
+            "личные", "группы", "каналы", "боты", "непрочитанные", "контакты",
+    };
+
+    /**
+     * Papka tabida nom o'rniga ko'rsatiladigan ikonka (0 — nom ko'rsatiladi).
+     * Faqat "Hammasi" va tur bo'yicha (shaxsiy/guruh/kanal/bot/o'qilmagan) odatiy nomli papkalar uchun;
+     * foydalanuvchi o'zi chat qo'shgan yoki nomlagan papkalarda nom qoladi.
+     */
+    public static int tabIcon(MessagesController.DialogFilter filter) {
+        if (filter == null) {
+            return 0;
+        }
+        if (filter.isDefault()) {
+            return R.drawable.msg_msgbubble3;
+        }
+        if (filter.isChatlist() || !filter.alwaysShow.isEmpty() || !filter.neverShow.isEmpty() || !isDefaultName(filter.name)) {
+            return 0;
+        }
+        final int all = MessagesController.DIALOG_FILTER_FLAG_ALL_CHATS;
+        final int type = filter.flags & (all | MessagesController.DIALOG_FILTER_FLAG_EXCLUDE_READ);
+        if (type == (all | MessagesController.DIALOG_FILTER_FLAG_EXCLUDE_READ)) {
+            return R.drawable.msg_markunread;
+        } else if (type == (MessagesController.DIALOG_FILTER_FLAG_CONTACTS | MessagesController.DIALOG_FILTER_FLAG_NON_CONTACTS)
+                || type == MessagesController.DIALOG_FILTER_FLAG_CONTACTS || type == MessagesController.DIALOG_FILTER_FLAG_NON_CONTACTS) {
+            return R.drawable.msg_folders_private;
+        } else if (type == MessagesController.DIALOG_FILTER_FLAG_GROUPS) {
+            return R.drawable.msg_folders_groups;
+        } else if (type == MessagesController.DIALOG_FILTER_FLAG_CHANNELS) {
+            return R.drawable.msg_folders_channels;
+        } else if (type == MessagesController.DIALOG_FILTER_FLAG_BOTS) {
+            return R.drawable.msg_folders_bots;
+        }
+        return 0;
+    }
+
+    private static boolean isDefaultName(String name) {
+        if (name == null) {
+            return false;
+        }
+        String n = name.trim().toLowerCase().replace('ʻ', '\'').replace('‘', '\'').replace('’', '\'');
+        for (String d : DEFAULT_NAMES) {
+            if (d.equals(n) || AlfaCyrillic.toCyrillic(d).toLowerCase().equals(n)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public static void ask(BaseFragment fragment) {
         if (fragment == null || fragment.getParentActivity() == null) {
             return;

@@ -2727,6 +2727,15 @@ public class MessagesStorage extends BaseController {
     private LongSparseArray<Integer> dialogsWithMentions = new LongSparseArray<>();
     private LongSparseArray<Integer> dialogsWithUnread = new LongSparseArray<>();
 
+    // AlfaGram — hisoblagichda o'qilmagan chatlar emas, xabarlar soni (Bildirishnomalar > "Xabarlar sonini sanash")
+    private int alfaUnreadWeight(long did) {
+        if (!getNotificationsController().showBadgeMessages) {
+            return 1;
+        }
+        Integer unread = dialogsWithUnread.get(did);
+        return unread != null && unread > 1 ? unread : 1;
+    }
+
     private void calcUnreadCounters(boolean apply) {
         SQLiteCursor cursor = null;
         try {
@@ -2827,13 +2836,13 @@ public class MessagesStorage extends BaseController {
                         archivedDialogs.put(user.id, true);
                     }
                     if (isUserCollapsedInCommunity(chatsDict, user)) {
-                        communities[idx1][idx2]++;
+                        communities[idx1][idx2] += alfaUnreadWeight(user.id);
                     } else if (user.bot) {
-                        bots[idx1][idx2]++;
+                        bots[idx1][idx2] += alfaUnreadWeight(user.id);
                     } else if (user.self || user.contact) {
-                        contacts[idx1][idx2]++;
+                        contacts[idx1][idx2] += alfaUnreadWeight(user.id);
                     } else {
-                        nonContacts[idx1][idx2]++;
+                        nonContacts[idx1][idx2] += alfaUnreadWeight(user.id);
                     }
                     usersDict.put(user.id, user);
                 }
@@ -2899,11 +2908,11 @@ public class MessagesStorage extends BaseController {
                     if (ChatObject.isCommunity(chat)) {
 
                     } else if (isChatCollapsedInCommunity(chatsDict, chat)) {
-                        communities[idx1][idx2]++;
+                        communities[idx1][idx2] += alfaUnreadWeight(-chat.id);
                     } else if (ChatObject.isChannel(chat) && !chat.megagroup) {
-                        channels[idx1][idx2]++;
+                        channels[idx1][idx2] += alfaUnreadWeight(-chat.id);
                     } else {
-                        groups[idx1][idx2]++;
+                        groups[idx1][idx2] += alfaUnreadWeight(-chat.id);
                     }
                     chatsDict.put(chat.id, chat);
                 }
@@ -3033,7 +3042,7 @@ public class MessagesStorage extends BaseController {
                                 if (user != null) {
                                     int count;
                                     if (i == 0) {
-                                        count = 1;
+                                        count = alfaUnreadWeight(did);
                                     } else {
                                         count = encryptedChatsByUsersCount.get(did, 0);
                                         if (count == 0) {
@@ -3067,11 +3076,11 @@ public class MessagesStorage extends BaseController {
                                     flag = MessagesController.DIALOG_FILTER_FLAG_GROUPS;
                                 }
                                 if ((flags & flag) == 0) {
-                                    unreadCount++;
+                                    unreadCount += alfaUnreadWeight(-chat.id);
                                 } else if ((flags & MessagesController.DIALOG_FILTER_FLAG_EXCLUDE_MUTED) != 0 && mutedDialogs.indexOfKey(-chat.id) >= 0 && dialogsWithMentions.indexOfKey(-chat.id) < 0) {
-                                    unreadCount++;
+                                    unreadCount += alfaUnreadWeight(-chat.id);
                                 } else if ((flags & MessagesController.DIALOG_FILTER_FLAG_EXCLUDE_ARCHIVED) != 0 && archivedDialogs.indexOfKey(-chat.id) >= 0) {
-                                    unreadCount++;
+                                    unreadCount += alfaUnreadWeight(-chat.id);
                                 }
                             }
                         }
@@ -3085,7 +3094,7 @@ public class MessagesStorage extends BaseController {
                                 if (user != null) {
                                     int count;
                                     if (i == 0) {
-                                        count = 1;
+                                        count = alfaUnreadWeight(did);
                                     } else {
                                         count = encryptedChatsByUsersCount.get(did, 0);
                                         if (count == 0) {
@@ -3120,7 +3129,7 @@ public class MessagesStorage extends BaseController {
                                 if ((flags & flag) != 0) {
                                     if (((flags & MessagesController.DIALOG_FILTER_FLAG_EXCLUDE_ARCHIVED) == 0 || archivedDialogs.indexOfKey(-chat.id) < 0) &&
                                             ((flags & MessagesController.DIALOG_FILTER_FLAG_EXCLUDE_MUTED) == 0 || mutedDialogs.indexOfKey(-chat.id) < 0 || dialogsWithMentions.indexOfKey(-chat.id) >= 0)) {
-                                        unreadCount--;
+                                        unreadCount -= alfaUnreadWeight(-chat.id);
                                     }
                                 }
                             }
@@ -6029,8 +6038,32 @@ public class MessagesStorage extends BaseController {
         });
     }
 
+    // faqat storageQueue oqimida o'qiladi/yoziladi
+    private boolean alfaRecalcPending;
+
     private void updateFiltersReadCounter(LongSparseIntArray dialogsToUpdate, LongSparseIntArray dialogsToUpdateMentions, boolean read) throws Exception {
         if ((dialogsToUpdate == null || dialogsToUpdate.size() == 0) && (dialogsToUpdateMentions == null || dialogsToUpdateMentions.size() == 0)) {
+            return;
+        }
+        // AlfaGram — xabarlar soni sanalganda qisman (+1/-1 chat) yangilash noto'g'ri: joriy vazifa
+        // (DB yozuvlari) tugagach to'liq qayta hisoblaymiz, ketma-ket chaqiruvlar bittaga birlashadi
+        if (getNotificationsController().showBadgeMessages) {
+            if (!alfaRecalcPending) {
+                alfaRecalcPending = true;
+                storageQueue.postRunnable(() -> {
+                    alfaRecalcPending = false;
+                    calcUnreadCounters(false);
+                    AndroidUtilities.runOnUIThread(() -> {
+                        ArrayList<MessagesController.DialogFilter> filters = getMessagesController().dialogFilters;
+                        for (int a = 0, N = filters.size(); a < N; a++) {
+                            filters.get(a).unreadCount = filters.get(a).pendingUnreadCount;
+                        }
+                        mainUnreadCount = pendingMainUnreadCount;
+                        archiveUnreadCount = pendingArchiveUnreadCount;
+                        getNotificationCenter().postNotificationName(NotificationCenter.updateInterfaces, MessagesController.UPDATE_MASK_READ_DIALOG_MESSAGE);
+                    });
+                });
+            }
             return;
         }
         for (int a = 0; a < 2; a++) {

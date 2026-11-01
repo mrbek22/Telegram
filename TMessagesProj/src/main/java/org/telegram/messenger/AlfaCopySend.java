@@ -44,7 +44,11 @@ public class AlfaCopySend implements NotificationCenter.NotificationCenterDelega
         String fileName;
         String path;
         boolean failed;
+        int retries;
     }
+
+    // chatdan chiqilganda ChatMessageCell/DownloadController yuklashni bekor qiladi — qayta boshlaymiz
+    private static final int MAX_RETRIES = 5;
 
     private static class Job {
         int account;
@@ -186,27 +190,31 @@ public class AlfaCopySend implements NotificationCenter.NotificationCenterDelega
         // FileLoader fayl diskda bo'lsa darhol fileLoaded yuborishi mumkin — avval hammasini ro'yxatga olamiz
         job.waiting = toLoad.size() + 1;
         for (int a = 0; a < toLoad.size(); a++) {
-            Item item = toLoad.get(a);
-            ArrayList<Object[]> arr = pending.get(item.fileName);
-            if (arr == null) {
-                arr = new ArrayList<>();
-                pending.put(item.fileName, arr);
-            }
-            arr.add(new Object[]{job, item});
+            addPending(job, toLoad.get(a));
         }
         for (int a = 0; a < toLoad.size(); a++) {
-            Item item = toLoad.get(a);
-            if (loader.isLoadingFile(item.fileName)) {
-                continue;
-            }
-            if (item.kind == KIND_PHOTO) {
-                TLRPC.PhotoSize size = FileLoader.getClosestPhotoSizeWithSize(MessageObject.getMedia(item.obj.messageOwner).photo.sizes, AndroidUtilities.getPhotoSize());
-                loader.loadFile(ImageLocation.getForObject(size, item.obj.photoThumbsObject), item.obj, null, FileLoader.PRIORITY_HIGH, 0);
-            } else {
-                loader.loadFile(item.obj.getDocument(), item.obj, FileLoader.PRIORITY_HIGH, 0);
-            }
+            // allaqachon yuklanayotgan bo'lsa ham chaqiramiz — FileLoader faqat ustuvorlikni oshiradi
+            startLoad(loader, toLoad.get(a));
         }
         release(job);
+    }
+
+    private void addPending(Job job, Item item) {
+        ArrayList<Object[]> arr = pending.get(item.fileName);
+        if (arr == null) {
+            arr = new ArrayList<>();
+            pending.put(item.fileName, arr);
+        }
+        arr.add(new Object[]{job, item});
+    }
+
+    private static void startLoad(FileLoader loader, Item item) {
+        if (item.kind == KIND_PHOTO) {
+            TLRPC.PhotoSize size = FileLoader.getClosestPhotoSizeWithSize(MessageObject.getMedia(item.obj.messageOwner).photo.sizes, AndroidUtilities.getPhotoSize());
+            loader.loadFile(ImageLocation.getForObject(size, item.obj.photoThumbsObject), item.obj, null, FileLoader.PRIORITY_HIGH, 0);
+        } else {
+            loader.loadFile(item.obj.getDocument(), item.obj, FileLoader.PRIORITY_HIGH, 0);
+        }
     }
 
     private static String findLocalFile(int account, MessageObject obj) {
@@ -267,6 +275,18 @@ public class AlfaCopySend implements NotificationCenter.NotificationCenterDelega
                 Item item = (Item) mine.get(a)[1];
                 if (path != null) {
                     item.path = path;
+                } else if (item.retries < MAX_RETRIES) {
+                    // bekor qilindi (chatdan chiqildi) yoki tarmoq xatosi — biroz kutib qayta yuklaymiz
+                    item.retries++;
+                    addPending(job, item);
+                    AndroidUtilities.runOnUIThread(() -> {
+                        try {
+                            startLoad(FileLoader.getInstance(job.account), item);
+                        } catch (Throwable e) {
+                            FileLog.e(e);
+                        }
+                    }, 1000L * item.retries);
+                    continue;
                 } else {
                     item.failed = true;
                 }

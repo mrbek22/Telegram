@@ -6922,7 +6922,11 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 }
                 filterTabsView.removeTabs();
                 for (int a = 0, N = filters.size(); a < N; a++) {
-                    if (filters.get(a).isDefault()) {
+                    // AlfaGram — tizim papkalari nomsiz, ikonka bilan
+                    final int alfaIcon = AlfaAutoFolders.tabIcon(filters.get(a));
+                    if (alfaIcon != 0) {
+                        filterTabsView.addIconTab(a, filters.get(a).isDefault() ? 0 : filters.get(a).localId, alfaIcon, filters.get(a).isDefault(), filters.get(a).locked);
+                    } else if (filters.get(a).isDefault()) {
                         filterTabsView.addTab(a, 0, LocaleController.getString(R.string.FilterAllChats), null, false, true, filters.get(a).locked);
                     } else {
                         final MessagesController.DialogFilter filter = filters.get(a);

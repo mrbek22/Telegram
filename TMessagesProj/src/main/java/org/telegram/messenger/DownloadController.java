@@ -265,6 +265,8 @@ public class DownloadController extends BaseController implements NotificationCe
         lowPreset.preloadStories = false;
         mediumPreset = new Preset(preferences.getString("preset1", defaultMedium), defaultMedium);
         highPreset = new Preset(preferences.getString("preset2", defaultHigh), defaultHigh);
+        // AlfaGram — yangi o'rnatish/akkaunt (DownloadController hali ishga tushmagan)
+        final boolean alfaFreshInstall = !preferences.contains("newConfig");
         boolean newConfig;
         if ((newConfig = preferences.contains("newConfig")) || !getUserConfig().isClientActivated()) {
             mobilePreset = new Preset(preferences.getString("mobilePreset", defaultMedium), defaultMedium);
@@ -318,6 +320,25 @@ public class DownloadController extends BaseController implements NotificationCe
             editor.putInt("currentWifiPreset", currentWifiPreset = 3);
             editor.putInt("currentRoamingPreset", currentRoamingPreset = 3);
             editor.commit();
+        }
+
+        // AlfaGram — yangi o'rnatishda rasm va video avtomatik yuklanmaydi (foydalanuvchi keyin yoqishi mumkin).
+        // Niqob o'rta/yuqori preset'dan farq qiladi, shuning uchun server autodownload sozlamasi uni qayta yozmaydi.
+        if (alfaFreshInstall) {
+            Preset[] presets = new Preset[]{mobilePreset, wifiPreset, roamingPreset};
+            for (Preset preset : presets) {
+                for (int a = 0; a < preset.mask.length; a++) {
+                    preset.mask[a] &= ~(AUTODOWNLOAD_TYPE_PHOTO | AUTODOWNLOAD_TYPE_VIDEO);
+                }
+            }
+            preferences.edit()
+                .putString("mobilePreset", mobilePreset.toString())
+                .putString("wifiPreset", wifiPreset.toString())
+                .putString("roamingPreset", roamingPreset.toString())
+                .putInt("currentMobilePreset", currentMobilePreset = 3)
+                .putInt("currentWifiPreset", currentWifiPreset = 3)
+                .putInt("currentRoamingPreset", currentRoamingPreset = 3)
+                .commit();
         }
 
         AndroidUtilities.runOnUIThread(() -> {

@@ -124,6 +124,8 @@ public class FilterTabsView extends FrameLayout {
         public boolean isDefault;
         public boolean isLocked;
         public boolean noanimate;
+        // AlfaGram — nom o'rniga ikonka (tizim papkalari); setTitle uni almashtirmaydi
+        public CharSequence alfaIcon;
 
         public Tab(int i, CharSequence title, boolean noanimate) {
             this.id = i;
@@ -161,6 +163,9 @@ public class FilterTabsView extends FrameLayout {
         }
 
         public boolean setTitle(String newTitle, ArrayList<TLRPC.MessageEntity> newEntities, boolean noanimate) {
+            if (alfaIcon != null) {
+                return false;
+            }
             if (TextUtils.equals(title, newTitle)) {
                 return false;
             }
@@ -1276,6 +1281,16 @@ public class FilterTabsView extends FrameLayout {
         tab.isLocked = isLocked;
         allTabsWidth += tab.getWidth(true) + dp(TAB_PADDING_WIDTH);
         tabs.add(tab);
+    }
+
+    /** AlfaGram — nomsiz, faqat ikonkali tab (rang tanlangan/tanlanmagan holatga qarab textPaint'dan olinadi). */
+    public void addIconTab(int id, int stableId, int iconRes, boolean isDefault, boolean isLocked) {
+        ColoredImageSpan span = new ColoredImageSpan(iconRes, ColoredImageSpan.ALIGN_CENTER);
+        span.setSize(dp(22));
+        SpannableStringBuilder icon = new SpannableStringBuilder("i");
+        icon.setSpan(span, 0, 1, android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        addTab(id, stableId, icon, true, isDefault, isLocked);
+        tabs.get(tabs.size() - 1).alfaIcon = icon;
     }
 
     public void addTab(int id, int stableId, CharSequence text, boolean noanimate, boolean isDefault, boolean isLocked) {
