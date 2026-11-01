@@ -1189,7 +1189,26 @@ public class DialogStoriesCell extends FrameLayout implements NotificationCenter
     }
 
     private int getTextLogoColor() {
-        return getThemedColor(Theme.key_telegram_color_dialogsLogo);
+        return alfaReadableColor(getThemedColor(Theme.key_telegram_color_dialogsLogo), getThemedColor(Theme.key_actionBarDefault), getThemedColor(Theme.key_actionBarDefaultTitle));
+    }
+
+    /**
+     * AlfaGram — logotip rangi sarlavha fonida ko'rinmasa (kunduzgi mavzuda fon bilan bir xil bo'lib qolsa),
+     * sarlavha matni rangiga, u ham bo'lmasa qora/oqqa o'tadi.
+     */
+    public static int alfaReadableColor(int color, int background, int fallback) {
+        try {
+            final int bg = background | 0xFF000000;
+            if (androidx.core.graphics.ColorUtils.calculateContrast(color | 0xFF000000, bg) >= 2.5) {
+                return color;
+            }
+            if (androidx.core.graphics.ColorUtils.calculateContrast(fallback | 0xFF000000, bg) >= 2.5) {
+                return fallback;
+            }
+            return AndroidUtilities.computePerceivedBrightness(bg) > 0.6f ? 0xFF000000 : 0xFFFFFFFF;
+        } catch (Throwable e) {
+            return color;
+        }
     }
 
     private int getTextColor() {

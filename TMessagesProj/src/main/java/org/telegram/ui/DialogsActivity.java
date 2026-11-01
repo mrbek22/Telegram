@@ -3532,7 +3532,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 logoDrawable.setColorFilter(getThemedColor(Theme.key_telegram_color_dialogsLogo), PorterDuff.Mode.MULTIPLY);
                 // AlfaGram: "Telegram" yozuvli rasm o'rniga brend nomi (langpack bosib keta olmaydi)
                 SpannableStringBuilder ssb = new SpannableStringBuilder("AlfaGram");
-                ssb.setSpan(new android.text.style.ForegroundColorSpan(getThemedColor(Theme.key_telegram_color_dialogsLogo)), 0, ssb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                ssb.setSpan(new android.text.style.ForegroundColorSpan(org.telegram.ui.Stories.DialogStoriesCell.alfaReadableColor(getThemedColor(Theme.key_telegram_color_dialogsLogo), getThemedColor(Theme.key_actionBarDefault), getThemedColor(Theme.key_actionBarDefaultTitle))), 0, ssb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
                 ssb.setSpan(new android.text.style.StyleSpan(android.graphics.Typeface.BOLD), 0, ssb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
                 actionBar.setTitle(ssb, statusDrawable);
                 updateStatus(UserConfig.getInstance(currentAccount).getCurrentUser(), false);
