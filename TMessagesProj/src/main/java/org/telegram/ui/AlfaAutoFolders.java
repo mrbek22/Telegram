@@ -4,6 +4,7 @@ import org.telegram.messenger.AlfaCyrillic;
 import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.NotificationCenter;
 import org.telegram.messenger.R;
+import org.telegram.tgnet.TLRPC;
 import org.telegram.ui.ActionBar.AlertDialog;
 import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.Components.BulletinFactory;
@@ -97,7 +98,7 @@ public class AlfaAutoFolders {
         MessagesController mc = fragment.getMessagesController();
         ArrayList<Integer> todo = new ArrayList<>();
         for (int i = 0; i < FLAGS.length; i++) {
-            if (!exists(mc, FLAGS[i])) {
+            if (!exists(mc, FLAGS[i], NAMES[i])) {
                 todo.add(i);
             }
         }
@@ -150,14 +151,39 @@ public class AlfaAutoFolders {
                 () -> createNext(fragment, todo, pos + 1, skipped));
     }
 
-    private static boolean exists(MessagesController mc, int flags) {
+    // Papka turini belgilovchi bitlar; arxiv/ovozsizni chiqarish farqi papkani boshqa qilmaydi
+    private static final int TYPE_MASK = MessagesController.DIALOG_FILTER_FLAG_ALL_CHATS | MessagesController.DIALOG_FILTER_FLAG_EXCLUDE_READ;
+
+    /** Shu turdagi (yoki shu nomdagi) papka bormi — masalan Telegram tavsiyasidan qo'shilgan "Shaxsiy" ham hisoblanadi. */
+    private static boolean exists(MessagesController mc, int flags, String name) {
         ArrayList<MessagesController.DialogFilter> filters = mc.getDialogFilters();
         for (int i = 0; i < filters.size(); i++) {
             MessagesController.DialogFilter f = filters.get(i);
-            if (!f.isDefault() && f.flags == flags && f.alwaysShow.isEmpty() && f.neverShow.isEmpty()) {
+            if (f.isDefault()) {
+                continue;
+            }
+            if (name != null && f.name != null && (f.name.equalsIgnoreCase(name) || f.name.equalsIgnoreCase(AlfaCyrillic.ui(name)))) {
+                return true;
+            }
+            if ((f.flags & TYPE_MASK) == (flags & TYPE_MASK) && f.alwaysShow.isEmpty() && f.neverShow.isEmpty()) {
                 return true;
             }
         }
         return false;
+    }
+
+    /** Telegram tavsiya qilgan papka allaqachon bormi (bo'lsa "Tavsiya etilgan" ro'yxatida ko'rsatilmaydi). */
+    public static boolean isSuggestedCovered(MessagesController mc, TLRPC.DialogFilter s) {
+        if (s == null || !s.include_peers.isEmpty() || !s.exclude_peers.isEmpty()) {
+            return false;
+        }
+        int flags = 0;
+        if (s.contacts) flags |= MessagesController.DIALOG_FILTER_FLAG_CONTACTS;
+        if (s.non_contacts) flags |= MessagesController.DIALOG_FILTER_FLAG_NON_CONTACTS;
+        if (s.groups) flags |= MessagesController.DIALOG_FILTER_FLAG_GROUPS;
+        if (s.broadcasts) flags |= MessagesController.DIALOG_FILTER_FLAG_CHANNELS;
+        if (s.bots) flags |= MessagesController.DIALOG_FILTER_FLAG_BOTS;
+        if (s.exclude_read) flags |= MessagesController.DIALOG_FILTER_FLAG_EXCLUDE_READ;
+        return flags != 0 && exists(mc, flags, null);
     }
 }

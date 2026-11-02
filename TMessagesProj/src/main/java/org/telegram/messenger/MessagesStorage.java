@@ -6052,6 +6052,11 @@ public class MessagesStorage extends BaseController {
                 alfaRecalcPending = true;
                 storageQueue.postRunnable(() -> {
                     alfaRecalcPending = false;
+                    // calcUnreadCounters faqat pendingUnreadCount < 0 bo'lgan papkalarni hisoblaydi —
+                    // aks holda papka hisoblagichlari birinchi hisobdan keyin qotib qoladi
+                    for (int a = 0, N = dialogFilters.size(); a < N; a++) {
+                        dialogFilters.get(a).pendingUnreadCount = -1;
+                    }
                     calcUnreadCounters(false);
                     AndroidUtilities.runOnUIThread(() -> {
                         ArrayList<MessagesController.DialogFilter> filters = getMessagesController().dialogFilters;

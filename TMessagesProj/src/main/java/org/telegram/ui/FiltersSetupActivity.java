@@ -564,8 +564,14 @@ public class FiltersSetupActivity extends BaseFragment implements NotificationCe
         oldItems.addAll(items);
         items.clear();
 
-        ArrayList<TLRPC.TL_dialogFilterSuggested> suggestedFilters = getMessagesController().suggestedFilters;
+        ArrayList<TLRPC.TL_dialogFilterSuggested> suggestedFilters = new ArrayList<>(getMessagesController().suggestedFilters);
         ArrayList<MessagesController.DialogFilter> dialogFilters = getMessagesController().getDialogFilters();
+        // AlfaGram — bor papkani (masalan avto papkalardagi "O'qilmagan") qayta tavsiya qilmaslik
+        for (int i = suggestedFilters.size() - 1; i >= 0; i--) {
+            if (AlfaAutoFolders.isSuggestedCovered(getMessagesController(), suggestedFilters.get(i).filter)) {
+                suggestedFilters.remove(i);
+            }
+        }
         items.add(ItemInner.asHint());
         if (!suggestedFilters.isEmpty() && dialogFilters.size() < 10) {
             int start = items.size();
