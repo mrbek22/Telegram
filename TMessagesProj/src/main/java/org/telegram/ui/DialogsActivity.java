@@ -3279,7 +3279,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             passcodeItem.setContentDescription(getString(R.string.AccDescrPasscodeLock));
 
             if (initialDialogsType == DIALOGS_TYPE_DEFAULT && folderId == 0) {
-                ghostItem = menu.addItem(ALFA_GHOST_ITEM_ID, R.drawable.alfa_ic_ghost);
+                ghostItem = menu.addItem(ALFA_GHOST_ITEM_ID, ghostDrawable = new AlfaGhostDrawable(context));
                 ghostItem.setContentDescription("Ghost");
                 updateAlfaGhostItem();
             }
@@ -9030,52 +9030,77 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
 
     // AlfaGram: Ghost yoqilgan bo'lsa — gradient squircle ichida oq belgi, aks holda oddiy sarlavha ikonkasi
     private void updateAlfaGhostItem() {
-        if (ghostItem == null) {
+        if (ghostDrawable == null) {
             return;
         }
-        if (ghostDefaultFilter == null) {
-            ghostDefaultFilter = ghostItem.getIconView().getColorFilter();
-        }
-        boolean on = org.telegram.messenger.AlfaFeatures.ghostMode;
-        if (on) {
-            ghostItem.getIconView().setBackground(new AlfaSquircleDrawable(dp(34), dp(11)));
-            ghostItem.getIconView().setColorFilter(new PorterDuffColorFilter(0xFFFFFFFF, PorterDuff.Mode.SRC_IN));
-        } else {
-            ghostItem.getIconView().setBackground(null);
-            ghostItem.getIconView().setColorFilter(ghostDefaultFilter);
-        }
+        ghostDrawable.setOn(org.telegram.messenger.AlfaFeatures.ghostMode);
     }
 
-    private android.graphics.ColorFilter ghostDefaultFilter;
+    private AlfaGhostDrawable ghostDrawable;
 
-    /** Markazda brend gradientli squircle chizadigan fon. */
-    private static class AlfaSquircleDrawable extends Drawable {
+    /**
+     * Ghost belgisi. ActionBar mavzu/qidiruv paytida ikonkaga o'z rang filtrini qo'yadi —
+     * u eslab qolinadi va faqat o'chiq holatda ishlatiladi; yoqiq holatda doim gradient + oq belgi.
+     * Shu sabab kunduzgi va tungi rejimda tugma bir xil ko'rinadi.
+     */
+    private static class AlfaGhostDrawable extends Drawable {
+        private final Drawable icon;
         private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
         private final RectF rect = new RectF();
-        private final float size, radius;
+        private final android.graphics.ColorFilter whiteFilter = new PorterDuffColorFilter(0xFFFFFFFF, PorterDuff.Mode.SRC_IN);
+        private android.graphics.ColorFilter themeFilter;
+        private int alpha = 255;
+        private boolean on;
 
-        AlfaSquircleDrawable(float size, float radius) {
-            this.size = size;
-            this.radius = radius;
+        AlfaGhostDrawable(Context context) {
+            icon = context.getResources().getDrawable(R.drawable.alfa_ic_ghost).mutate();
+        }
+
+        void setOn(boolean value) {
+            if (on != value) {
+                on = value;
+                invalidateSelf();
+            }
         }
 
         @Override
         public void draw(@NonNull Canvas canvas) {
             android.graphics.Rect b = getBounds();
-            float l = b.centerX() - size / 2f, t = b.centerY() - size / 2f;
-            rect.set(l, t, l + size, t + size);
-            paint.setShader(new android.graphics.LinearGradient(l, t, l + size, t + size,
-                org.telegram.messenger.AlfaFeatures.BRAND_START, org.telegram.messenger.AlfaFeatures.BRAND_END, android.graphics.Shader.TileMode.CLAMP));
-            canvas.drawRoundRect(rect, radius, radius, paint);
+            if (on) {
+                float size = dp(34), radius = dp(11);
+                float l = b.centerX() - size / 2f, t = b.centerY() - size / 2f;
+                rect.set(l, t, l + size, t + size);
+                paint.setShader(new android.graphics.LinearGradient(l, t, l + size, t + size,
+                    org.telegram.messenger.AlfaFeatures.BRAND_START, org.telegram.messenger.AlfaFeatures.BRAND_END, android.graphics.Shader.TileMode.CLAMP));
+                paint.setAlpha(alpha);
+                canvas.drawRoundRect(rect, radius, radius, paint);
+            }
+            icon.setColorFilter(on ? whiteFilter : themeFilter);
+            icon.setAlpha(alpha);
+            icon.setBounds(b);
+            icon.draw(canvas);
         }
 
         @Override
         public void setAlpha(int alpha) {
-            paint.setAlpha(alpha);
+            this.alpha = alpha;
+            invalidateSelf();
         }
 
         @Override
         public void setColorFilter(@Nullable android.graphics.ColorFilter colorFilter) {
+            themeFilter = colorFilter;
+            invalidateSelf();
+        }
+
+        @Override
+        public int getIntrinsicWidth() {
+            return icon.getIntrinsicWidth();
+        }
+
+        @Override
+        public int getIntrinsicHeight() {
+            return icon.getIntrinsicHeight();
         }
 
         @Override
