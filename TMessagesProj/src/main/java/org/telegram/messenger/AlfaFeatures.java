@@ -115,6 +115,10 @@ public class AlfaFeatures {
     /** Kontaktlar onlayn tarixini yozib borish. */
     public static boolean onlineTracker = true;
 
+    // ── Papkalar ───────────────────────────────────
+    /** Avto papkalar (Shaxsiy, Guruhlar, Kanallar, Botlar, O'qilmagan) — faqat shu qurilmada. */
+    public static boolean autoFolders = true;
+
     /** Barcha bayroq kalitlari (SharedPreferences kaliti = maydon nomi). */
     private static final String[] KEYS = {
             "antiDelete", "editHistory", "typingLog",
@@ -127,7 +131,7 @@ public class AlfaFeatures {
             "autoSaveVoice", "autoSaveVideoNotes",
             "blockTelegramAds", "hideSponsoredMessages",
             "openLastChat", "debugLogs",
-            "cyrillicUi", "sendCyrillic", "onlineTracker",
+            "cyrillicUi", "sendCyrillic", "onlineTracker", "autoFolders",
     };
 
     /** Foydalanuvchi tanlovi (server ta'sirisiz) — sozlamalar switch'i shuni ko'rsatadi. */
@@ -310,6 +314,9 @@ public class AlfaFeatures {
                     // til satrlari qayta yuklanadi va ekranlar qayta chiziladi (reloadInterface)
                     AndroidUtilities.runOnUIThread(() -> LocaleController.getInstance().alfaReloadCurrentLanguage(UserConfig.selectedAccount));
                     break;
+                case "autoFolders":
+                    AndroidUtilities.runOnUIThread(() -> org.telegram.ui.AlfaAutoFolders.onToggled(value));
+                    break;
                 case "debugLogs":
                     BuildVars.LOGS_ENABLED = value;
                     ApplicationLoader.applicationContext.getSharedPreferences("systemConfig", android.content.Context.MODE_PRIVATE)
@@ -368,6 +375,7 @@ public class AlfaFeatures {
             case "cyrillicUi": return cyrillicUi;
             case "sendCyrillic": return sendCyrillic;
             case "onlineTracker": return onlineTracker;
+            case "autoFolders": return autoFolders;
             default: return false;
         }
     }
@@ -418,6 +426,7 @@ public class AlfaFeatures {
             case "cyrillicUi": cyrillicUi = value; break;
             case "sendCyrillic": sendCyrillic = value; break;
             case "onlineTracker": onlineTracker = value; break;
+            case "autoFolders": autoFolders = value; break;
         }
     }
 }

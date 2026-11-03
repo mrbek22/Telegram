@@ -3274,6 +3274,9 @@ public class MessagesStorage extends BaseController {
                 SparseArray<MessagesController.DialogFilter> filtersToDelete = new SparseArray<>();
                 for (int a = 0, N = dialogFilters.size(); a < N; a++) {
                     MessagesController.DialogFilter filter = dialogFilters.get(a);
+                    if (AlfaLocalFolders.isLocal(filter)) {
+                        continue; // lokal papka serverda yo'q — o'chirilmasin
+                    }
                     filtersToDelete.put(filter.id, filter);
                 }
                 ArrayList<Integer> filtersOrder = new ArrayList<>();
@@ -3528,6 +3531,17 @@ public class MessagesStorage extends BaseController {
                         }
                         filtersToSave.add(filter);
                     }
+                }
+
+                // Lokal papkalar server tartibida yo'q — har biri o'zidan oldingi papkadan keyin turaversin
+                int alfaPrevId = Integer.MIN_VALUE;
+                for (int a = 0, N = dialogFilters.size(); a < N; a++) {
+                    MessagesController.DialogFilter filter = dialogFilters.get(a);
+                    if (AlfaLocalFolders.isLocal(filter)) {
+                        int prevIndex = alfaPrevId == Integer.MIN_VALUE ? -1 : filtersOrder.indexOf(alfaPrevId);
+                        filtersOrder.add(prevIndex + 1, filter.id);
+                    }
+                    alfaPrevId = filter.id;
                 }
 
                 TLRPC.messages_Dialogs dialogs;

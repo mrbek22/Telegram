@@ -2068,8 +2068,12 @@ public class PeerStoriesView extends SizeNotifierFrameLayout implements Notifica
                             createQualityItem(popupLayout);
                         }
 
-                        if (!unsupported && allowShare && !currentStory.isLive) {
-                            if (UserConfig.getInstance(currentAccount).isPremium()) {
+                        // AlfaGram — cheklovsiz saqlash: Premium'siz, yopiq (faqat do'stlar) va himoyalangan story'ni ham saqlash
+                        final boolean alfaSave = org.telegram.messenger.AlfaFeatures.unrestrictedSave && !unsupported && !currentStory.isLive
+                                && currentStory.storyItem != null && !(currentStory.storyItem instanceof TL_stories.TL_storyItemDeleted)
+                                && !(currentStory.storyItem instanceof TL_stories.TL_storyItemSkipped);
+                        if (alfaSave || !unsupported && allowShare && !currentStory.isLive) {
+                            if (alfaSave || UserConfig.getInstance(currentAccount).isPremium()) {
                                 ActionBarMenuItem.addItem(popupLayout, R.drawable.msg_gallery, getString(R.string.SaveToGallery), false, resourcesProvider).setOnClickListener(v -> {
                                     saveToGallery();
                                     if (popupMenu != null) {

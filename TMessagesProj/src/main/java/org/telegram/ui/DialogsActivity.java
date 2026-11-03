@@ -3597,9 +3597,11 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                         builder.setMessage(LocaleController.getString(R.string.FilterDeleteAlert));
                         builder.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
                         builder.setPositiveButton(LocaleController.getString(R.string.Delete), (dialog2, which2) -> {
-                            TLRPC.TL_messages_updateDialogFilter req = new TLRPC.TL_messages_updateDialogFilter();
-                            req.id = dialogFilter.id;
-                            getConnectionsManager().sendRequest(req, null);
+                            if (!org.telegram.messenger.AlfaLocalFolders.isLocal(dialogFilter)) {
+                                TLRPC.TL_messages_updateDialogFilter req = new TLRPC.TL_messages_updateDialogFilter();
+                                req.id = dialogFilter.id;
+                                getConnectionsManager().sendRequest(req, null);
+                            }
                             getMessagesController().removeFilter(dialogFilter);
                             getMessagesStorage().deleteDialogFilter(dialogFilter);
                         });
@@ -3741,7 +3743,8 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                                     i--;
                                 }
                             }
-                            hasShare = filter.isChatlist() || filter.neverShow.isEmpty() && (filter.flags & ~(MessagesController.DIALOG_FILTER_FLAG_CHATLIST | MessagesController.DIALOG_FILTER_FLAG_CHATLIST_ADMIN)) == 0;
+                            // lokal (AlfaGram) papkani havola orqali ulashib bo'lmaydi — u serverda yo'q
+                            hasShare = !org.telegram.messenger.AlfaLocalFolders.isLocal(filter) && (filter.isChatlist() || filter.neverShow.isEmpty() && (filter.flags & ~(MessagesController.DIALOG_FILTER_FLAG_CHATLIST | MessagesController.DIALOG_FILTER_FLAG_CHATLIST_ADMIN)) == 0);
                             if (hasShare) {
                                 for (int i = 0; i < filter.alwaysShow.size(); ++i) {
                                     long did = filter.alwaysShow.get(i);
@@ -9040,14 +9043,12 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
 
     /**
      * Ghost belgisi. ActionBar mavzu/qidiruv paytida ikonkaga o'z rang filtrini qo'yadi —
-     * u eslab qolinadi va faqat o'chiq holatda ishlatiladi; yoqiq holatda doim gradient + oq belgi.
-     * Shu sabab kunduzgi va tungi rejimda tugma bir xil ko'rinadi.
+     * belgi doim shu rangda (qidiruv, qulf ikonkalari bilan bir xil) chiziladi. Yoqiq holat
+     * ajralib turmasligi uchun belgi orqasida shu rangdagi xira doira ko'rsatiladi.
      */
     private static class AlfaGhostDrawable extends Drawable {
         private final Drawable icon;
         private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        private final RectF rect = new RectF();
-        private final android.graphics.ColorFilter whiteFilter = new PorterDuffColorFilter(0xFFFFFFFF, PorterDuff.Mode.SRC_IN);
         private android.graphics.ColorFilter themeFilter;
         private int alpha = 255;
         private boolean on;
@@ -9067,15 +9068,18 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         public void draw(@NonNull Canvas canvas) {
             android.graphics.Rect b = getBounds();
             if (on) {
-                float size = dp(34), radius = dp(11);
-                float l = b.centerX() - size / 2f, t = b.centerY() - size / 2f;
-                rect.set(l, t, l + size, t + size);
-                paint.setShader(new android.graphics.LinearGradient(l, t, l + size, t + size,
-                    org.telegram.messenger.AlfaFeatures.BRAND_START, org.telegram.messenger.AlfaFeatures.BRAND_END, android.graphics.Shader.TileMode.CLAMP));
-                paint.setAlpha(alpha);
-                canvas.drawRoundRect(rect, radius, radius, paint);
+                // oq rang mavzu filtri (MULTIPLY) orqali ikonka rangiga aylanadi
+                if (themeFilter != null) {
+                    paint.setColor(0xFFFFFFFF);
+                    paint.setColorFilter(themeFilter);
+                } else {
+                    paint.setColor(Theme.getColor(Theme.key_actionBarDefaultIcon));
+                    paint.setColorFilter(null);
+                }
+                paint.setAlpha(alpha * 0x2E / 255);
+                canvas.drawCircle(b.centerX(), b.centerY(), dp(17), paint);
             }
-            icon.setColorFilter(on ? whiteFilter : themeFilter);
+            icon.setColorFilter(themeFilter);
             icon.setAlpha(alpha);
             icon.setBounds(b);
             icon.draw(canvas);

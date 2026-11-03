@@ -110,7 +110,13 @@ public class DialogsAdapter extends RecyclerListView.SelectionAdapter implements
             VIEW_TYPE_GRAY_SECTION = 20,
             VIEW_TYPE_FORWARD_TO_STORIES_CELL = 21,
             VIEW_TYPE_HEADER_3 = 22,
-            VIEW_TYPE_DIALOG_COMMUNITY = 23;
+            VIEW_TYPE_DIALOG_COMMUNITY = 23,
+            VIEW_TYPE_ALFA_ARCHIVE_TABS = 40;
+
+    // AlfaGram — arxivdagi tur tugmalari (Shaxsiy, Guruhlar, ...): tanlangan tur (-1 — hammasi)
+    private int alfaArchiveCategory = -1;
+    private final int[] alfaArchiveUnread = new int[org.telegram.ui.AlfaAutoFolders.ARCHIVE_TABS.length - 1];
+    private org.telegram.ui.Components.AlfaArchiveTabsView alfaArchiveTabsView;
 
     private Context mContext;
     private ArchiveHintCell archiveHintCell;
@@ -384,6 +390,8 @@ public class DialogsAdapter extends RecyclerListView.SelectionAdapter implements
             this.emptyType = viewTypeEmpty;
             if (viewTypeEmpty == VIEW_TYPE_LAST_EMPTY) {
                 stableId = 1;
+            } else if (viewTypeEmpty == VIEW_TYPE_ALFA_ARCHIVE_TABS) {
+                stableId = 7;
             } else {
                 if (viewType == VIEW_TYPE_ARCHIVE_FULLSCREEN) {
                     stableId = 5;
@@ -639,7 +647,8 @@ public class DialogsAdapter extends RecyclerListView.SelectionAdapter implements
         return viewType != VIEW_TYPE_FLICKER && viewType != VIEW_TYPE_EMPTY && viewType != VIEW_TYPE_DIVIDER &&
                 viewType != VIEW_TYPE_SHADOW && viewType != VIEW_TYPE_HEADER &&
                 viewType != VIEW_TYPE_LAST_EMPTY && viewType != VIEW_TYPE_NEW_CHAT_HINT && viewType != VIEW_TYPE_CONTACTS_FLICKER &&
-                viewType != VIEW_TYPE_REQUIREMENTS && viewType != VIEW_TYPE_REQUIRED_EMPTY && viewType != VIEW_TYPE_STORIES && viewType != VIEW_TYPE_ARCHIVE_FULLSCREEN && viewType != VIEW_TYPE_GRAY_SECTION;
+                viewType != VIEW_TYPE_REQUIREMENTS && viewType != VIEW_TYPE_REQUIRED_EMPTY && viewType != VIEW_TYPE_STORIES && viewType != VIEW_TYPE_ARCHIVE_FULLSCREEN && viewType != VIEW_TYPE_GRAY_SECTION &&
+                viewType != VIEW_TYPE_ALFA_ARCHIVE_TABS;
     }
 
     @Override
@@ -784,6 +793,14 @@ public class DialogsAdapter extends RecyclerListView.SelectionAdapter implements
                 break;
             case VIEW_TYPE_LAST_EMPTY: {
                 view = new LastEmptyView(mContext);
+                break;
+            }
+            case VIEW_TYPE_ALFA_ARCHIVE_TABS: {
+                view = alfaArchiveTabsView = new org.telegram.ui.Components.AlfaArchiveTabsView(mContext, org.telegram.ui.AlfaAutoFolders.ARCHIVE_TABS, category -> {
+                    alfaArchiveCategory = category;
+                    notifyDataSetChanged();
+                });
+                alfaArchiveTabsView.update(alfaArchiveCategory, alfaArchiveUnread);
                 break;
             }
             case VIEW_TYPE_NEW_CHAT_HINT: {
@@ -1644,6 +1661,34 @@ public class DialogsAdapter extends RecyclerListView.SelectionAdapter implements
         if (dialogsCount == 0 && parentFragment.isArchive()) {
             itemInternals.add(new ItemInternal(VIEW_TYPE_ARCHIVE_FULLSCREEN));
             return;
+        }
+
+        // AlfaGram — arxivda tur tugmalari: chatlar Shaxsiy/Guruhlar/Kanallar/Botlar/O'qilmagan bo'yicha saralanadi
+        if (folderId == 1 && dialogsType == DialogsActivity.DIALOGS_TYPE_DEFAULT && org.telegram.messenger.AlfaFeatures.autoFolders) {
+            java.util.Arrays.fill(alfaArchiveUnread, 0);
+            ArrayList<TLRPC.Dialog> filtered = alfaArchiveCategory >= 0 ? new ArrayList<>() : null;
+            for (int k = 0; k < array.size(); k++) {
+                TLRPC.Dialog d = array.get(k);
+                boolean unread = messagesController.getDialogUnreadCount(d) > 0 || d.unread_mark;
+                for (int c = 0; c < alfaArchiveUnread.length; c++) {
+                    if (org.telegram.ui.AlfaAutoFolders.matchesArchiveCategory(currentAccount, c, d)) {
+                        if (unread) {
+                            alfaArchiveUnread[c]++;
+                        }
+                        if (c == alfaArchiveCategory) {
+                            filtered.add(d);
+                        }
+                    }
+                }
+            }
+            if (filtered != null) {
+                array = filtered;
+                dialogsCount = array.size();
+            }
+            itemInternals.add(new ItemInternal(VIEW_TYPE_ALFA_ARCHIVE_TABS));
+            if (alfaArchiveTabsView != null) {
+                alfaArchiveTabsView.update(alfaArchiveCategory, alfaArchiveUnread);
+            }
         }
 
         if (!hasHints && dialogsType == 0 && folderId == 0 && messagesController.isDialogsEndReached(folderId) && !forceUpdatingContacts) {

@@ -87,8 +87,11 @@ public class AlfaSettingsActivity extends BaseFragment {
             }
         }));
         rows.add(Row.action("Ilova ikonkasini tanlash", () -> presentFragment(new ThemeActivity(ThemeActivity.THEME_TYPE_BASIC))));
-        rows.add(Row.action("Avto papkalar yaratish", () -> AlfaAutoFolders.ask(this)));
         rows.add(Row.info("Wrapped — oy davomida kim bilan ko'p yozishganingiz, faol soatingiz va sevimli emojilaringiz. Ikonkalar: Oq, Qora, Oltin, Binafsha, Neon — hammasi bepul."));
+
+        rows.add(Row.header("Papkalar"));
+        rows.add(Row.toggle("autoFolders", "Avto papkalar"));
+        rows.add(Row.info("Shaxsiy, Guruhlar, Kanallar, Botlar va O'qilmagan papkalari. Ular faqat AlfaGram'da, shu telefonda ko'rinadi — boshqa Telegram ilovalarida chiqmaydi."));
 
         rows.add(Row.header("Til"));
         rows.add(Row.toggle("cyrillicUi", "Kirill alifbosi (Ўзбекча)"));

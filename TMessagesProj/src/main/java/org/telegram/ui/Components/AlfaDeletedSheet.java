@@ -3,12 +3,15 @@ package org.telegram.ui.Components;
 import static org.telegram.messenger.AndroidUtilities.dp;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Typeface;
 import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -22,11 +25,13 @@ import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.R;
 import org.telegram.messenger.UserObject;
+import org.telegram.messenger.Utilities;
 import org.telegram.tgnet.TLRPC;
 import org.telegram.ui.ActionBar.AlertDialog;
 import org.telegram.ui.ActionBar.BottomSheet;
 import org.telegram.ui.ActionBar.Theme;
 
+import java.io.File;
 import java.util.ArrayList;
 
 /**
@@ -178,10 +183,45 @@ public class AlfaDeletedSheet extends BottomSheet {
         }
     }
 
+    /** Media turi nomi (o'chirilganlar ro'yxati uchun). */
+    private static String mediaLabel(String type) {
+        if (type == null) return null;
+        switch (type) {
+            case AlfaDeleted.MEDIA_PHOTO: return "📷 Rasm";
+            case AlfaDeleted.MEDIA_VIDEO: return "🎬 Video";
+            case AlfaDeleted.MEDIA_ROUND: return "⏺ Video xabar";
+            case AlfaDeleted.MEDIA_VOICE: return "🎤 Ovozli xabar";
+            case AlfaDeleted.MEDIA_MUSIC: return "🎵 Musiqa";
+            case AlfaDeleted.MEDIA_GIF: return "GIF";
+            case AlfaDeleted.MEDIA_STICKER: return "Stiker";
+            case AlfaDeleted.MEDIA_FILE: return "📎 Fayl";
+            default: return "[media]";
+        }
+    }
+
+    private static File existingFile(String path) {
+        if (path == null) return null;
+        File f = new File(path);
+        return f.exists() ? f : null;
+    }
+
+    private void openMedia(File file) {
+        try {
+            android.app.Activity activity = AndroidUtilities.findActivity(getContext());
+            if (activity == null || !AndroidUtilities.openForView(file, file.getName(), null, activity, resourcesProvider, false)) {
+                BulletinFactory.of(getContainer(), resourcesProvider).createSimpleBulletin(R.raw.error, org.telegram.messenger.AlfaCyrillic.ui("Faylni ochib bo'lmadi")).show();
+            }
+        } catch (Throwable e) {
+            org.telegram.messenger.FileLog.e(e);
+        }
+    }
+
     private class Row extends LinearLayout {
         final TextView nameView;
         final TextView timeView;
         final TextView textView;
+        final ImageView thumbView;
+        String boundPath;
 
         Row(Context context) {
             super(context);
@@ -214,12 +254,79 @@ public class AlfaDeletedSheet extends BottomSheet {
             textView.setTypeface(Typeface.DEFAULT);
             textView.setLineSpacing(dp(2), 1f);
             addView(textView, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 4, 0, 0));
+
+            thumbView = new ImageView(context);
+            thumbView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            thumbView.setClipToOutline(true);
+            thumbView.setOutlineProvider(new android.view.ViewOutlineProvider() {
+                @Override
+                public void getOutline(View view, android.graphics.Outline outline) {
+                    outline.setRoundRect(0, 0, view.getWidth(), view.getHeight(), dp(10));
+                }
+            });
+            thumbView.setVisibility(GONE);
+            addView(thumbView, LayoutHelper.createLinear(160, 160, 0, 6, 0, 0));
+        }
+
+        /** Rasm/video eskizi fon oqimida yasaladi. */
+        private void loadThumb(File file, boolean video) {
+            final String path = file.getAbsolutePath();
+            Utilities.globalQueue.postRunnable(() -> {
+                Bitmap bmp = null;
+                try {
+                    if (video) {
+                        bmp = android.media.ThumbnailUtils.createVideoThumbnail(path, android.provider.MediaStore.Images.Thumbnails.MINI_KIND);
+                    } else {
+                        BitmapFactory.Options o = new BitmapFactory.Options();
+                        o.inJustDecodeBounds = true;
+                        BitmapFactory.decodeFile(path, o);
+                        int sample = 1;
+                        while (o.outWidth / (sample * 2) >= dp(160) && o.outHeight / (sample * 2) >= dp(160)) {
+                            sample *= 2;
+                        }
+                        o = new BitmapFactory.Options();
+                        o.inSampleSize = sample;
+                        bmp = BitmapFactory.decodeFile(path, o);
+                    }
+                } catch (Throwable ignore) {
+                }
+                final Bitmap result = bmp;
+                AndroidUtilities.runOnUIThread(() -> {
+                    if (result != null && path.equals(boundPath)) {
+                        thumbView.setImageBitmap(result);
+                        thumbView.setVisibility(VISIBLE);
+                    }
+                });
+            });
         }
 
         void bind(AlfaDeleted.Record r) {
             nameView.setText(senderName(r.fromId));
             timeView.setText(LocaleController.formatDateChat(r.deletedAt / 1000L));
-            if (TextUtils.isEmpty(r.text)) {
+            final File file = existingFile(r.mediaPath);
+            boundPath = file != null ? file.getAbsolutePath() : null;
+            thumbView.setImageDrawable(null);
+            thumbView.setVisibility(GONE);
+            setOnClickListener(file != null ? v -> openMedia(file) : null);
+            setClickable(file != null);
+            final String label = mediaLabel(r.mediaType);
+            if (label != null) {
+                StringBuilder sb = new StringBuilder(org.telegram.messenger.AlfaCyrillic.ui(label));
+                if (file == null) {
+                    sb.append(org.telegram.messenger.AlfaCyrillic.ui(" (telefonga yuklanmagan edi)"));
+                } else if (!AlfaDeleted.MEDIA_PHOTO.equals(r.mediaType) && !AlfaDeleted.MEDIA_VIDEO.equals(r.mediaType) && !AlfaDeleted.MEDIA_ROUND.equals(r.mediaType)) {
+                    sb.append(org.telegram.messenger.AlfaCyrillic.ui(" — ochish uchun bosing"));
+                }
+                if (!TextUtils.isEmpty(r.text)) {
+                    sb.append('\n').append(r.text);
+                }
+                textView.setText(sb);
+                textView.setTextColor(getThemedColor(Theme.key_dialogTextBlack));
+                textView.setTypeface(Typeface.DEFAULT);
+                if (file != null && (AlfaDeleted.MEDIA_PHOTO.equals(r.mediaType) || AlfaDeleted.MEDIA_VIDEO.equals(r.mediaType) || AlfaDeleted.MEDIA_ROUND.equals(r.mediaType))) {
+                    loadThumb(file, !AlfaDeleted.MEDIA_PHOTO.equals(r.mediaType));
+                }
+            } else if (TextUtils.isEmpty(r.text)) {
                 textView.setText(org.telegram.messenger.AlfaCyrillic.ui("[media]"));
                 textView.setTextColor(getThemedColor(Theme.key_dialogTextGray3));
                 textView.setTypeface(Typeface.defaultFromStyle(Typeface.ITALIC));

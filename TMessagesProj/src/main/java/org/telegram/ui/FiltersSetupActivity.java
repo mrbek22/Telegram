@@ -566,6 +566,8 @@ public class FiltersSetupActivity extends BaseFragment implements NotificationCe
 
         ArrayList<TLRPC.TL_dialogFilterSuggested> suggestedFilters = new ArrayList<>(getMessagesController().suggestedFilters);
         ArrayList<MessagesController.DialogFilter> dialogFilters = getMessagesController().getDialogFilters();
+        // AlfaGram lokal papkalari server limitiga kirmaydi
+        final int alfaServerFilters = dialogFilters.size() - org.telegram.messenger.AlfaLocalFolders.count(dialogFilters);
         // AlfaGram — bor papkani (masalan avto papkalardagi "O'qilmagan") qayta tavsiya qilmaslik
         for (int i = suggestedFilters.size() - 1; i >= 0; i--) {
             if (AlfaAutoFolders.isSuggestedCovered(getMessagesController(), suggestedFilters.get(i).filter)) {
@@ -594,11 +596,11 @@ public class FiltersSetupActivity extends BaseFragment implements NotificationCe
             }
             filtersSectionEnd = items.size();
 
-            if (listView != null) listView.forcedSections.add(AndroidUtilities.pack(filtersSectionStart, filtersSectionEnd - 1 + (dialogFilters.size() < getMessagesController().dialogFiltersLimitPremium ? 1 : 0)));
+            if (listView != null) listView.forcedSections.add(AndroidUtilities.pack(filtersSectionStart, filtersSectionEnd - 1 + (alfaServerFilters < getMessagesController().dialogFiltersLimitPremium ? 1 : 0)));
         } else {
             filtersSectionStart = filtersSectionEnd = -1;
         }
-        if (dialogFilters.size() < getMessagesController().dialogFiltersLimitPremium) {
+        if (alfaServerFilters < getMessagesController().dialogFiltersLimitPremium) {
             items.add(ItemInner.asButton(LocaleController.getString(R.string.CreateNewFilter)));
             // AlfaGram: bir bosishda tayyor papkalar
             items.add(ItemInner.asButton(org.telegram.messenger.AlfaCyrillic.ui(AlfaAutoFolders.BUTTON_TEXT)));
@@ -631,6 +633,9 @@ public class FiltersSetupActivity extends BaseFragment implements NotificationCe
             ArrayList<MessagesController.DialogFilter> filters = getMessagesController().getDialogFilters();
             for (int a = 0, N = filters.size(); a < N; a++) {
                 MessagesController.DialogFilter filter = filters.get(a);
+                if (org.telegram.messenger.AlfaLocalFolders.isLocal(filter)) {
+                    continue;
+                }
                 req.order.add(filter.id);
             }
             getConnectionsManager().sendRequest(req, (response, error) -> {
@@ -743,7 +748,8 @@ public class FiltersSetupActivity extends BaseFragment implements NotificationCe
     }
 
     public void createFolder(INavigationLayout navigationLayout) {
-        final int count = getMessagesController().getDialogFilters().size();
+        final ArrayList<MessagesController.DialogFilter> alfaFilters = getMessagesController().getDialogFilters();
+        final int count = alfaFilters.size() - org.telegram.messenger.AlfaLocalFolders.count(alfaFilters);
         if (
             count - 1 >= getMessagesController().dialogFiltersLimitDefault && !getUserConfig().isPremium() ||
             count >= getMessagesController().dialogFiltersLimitPremium
@@ -942,6 +948,11 @@ public class FiltersSetupActivity extends BaseFragment implements NotificationCe
                             builder.setMessage(LocaleController.getString(R.string.FilterDeleteAlert));
                             builder.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
                             builder.setPositiveButton(LocaleController.getString(R.string.Delete), (dialog2, which2) -> {
+                                if (org.telegram.messenger.AlfaLocalFolders.isLocal(filter)) {
+                                    getMessagesController().removeFilter(filter);
+                                    getMessagesStorage().deleteDialogFilter(filter);
+                                    return;
+                                }
                                 AlertDialog progressDialog = null;
                                 if (getParentActivity() != null) {
                                     progressDialog = new AlertDialog(getParentActivity(), AlertDialog.ALERT_TYPE_SPINNER);

@@ -363,7 +363,10 @@ public class FilterCreateActivity extends BaseFragment {
             items.add(ItemInner.asShadow(LocaleController.getString(R.string.FolderTagColorInfo)));
         }
 
-        if (invites.isEmpty()) {
+        if (org.telegram.messenger.AlfaLocalFolders.isLocal(filter)) {
+            // lokal papkani havola bilan ulashib bo'lmaydi
+            items.add(ItemInner.asShadow(org.telegram.messenger.AlfaCyrillic.ui("Bu papka faqat AlfaGram'da, shu telefonda ko'rinadi — boshqa Telegram ilovalarida chiqmaydi.")));
+        } else if (invites.isEmpty()) {
             items.add(ItemInner.asHeader(LocaleController.getString(R.string.FilterShareFolder), true));
             items.add(ItemInner.asButton(R.drawable.msg2_link2, LocaleController.getString(R.string.FilterShareFolderButton), false));
             items.add(ItemInner.asShadow(LocaleController.getString(R.string.FilterInviteLinksHintNew)));
@@ -805,6 +808,12 @@ public class FilterCreateActivity extends BaseFragment {
             builder.setMessage(LocaleController.getString(R.string.FilterDeleteAlert));
             builder.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
             builder.setPositiveButton(LocaleController.getString(R.string.Delete), (dialog, which) -> {
+                if (org.telegram.messenger.AlfaLocalFolders.isLocal(filter)) {
+                    getMessagesController().removeFilter(filter);
+                    getMessagesStorage().deleteDialogFilter(filter);
+                    finishFragment();
+                    return;
+                }
                 AlertDialog progressDialog = null;
                 if (getParentActivity() != null) {
                     progressDialog = new AlertDialog(getParentActivity(), AlertDialog.ALERT_TYPE_SPINNER);
@@ -1103,6 +1112,9 @@ public class FilterCreateActivity extends BaseFragment {
             TLRPC.TL_messages_updateDialogFiltersOrder req = new TLRPC.TL_messages_updateDialogFiltersOrder();
             ArrayList<MessagesController.DialogFilter> filters = fragment.getMessagesController().getDialogFilters();
             for (int a = 0, N = filters.size(); a < N; a++) {
+                if (org.telegram.messenger.AlfaLocalFolders.isLocal(filters.get(a))) {
+                    continue;
+                }
                 req.order.add(filters.get(a).id);
             }
             fragment.getConnectionsManager().sendRequest(req, null);
@@ -1114,6 +1126,11 @@ public class FilterCreateActivity extends BaseFragment {
 
     public static void saveFilterToServer(MessagesController.DialogFilter filter, int newFilterFlags, String newFilterName, ArrayList<TLRPC.MessageEntity> newFilterNameEntities, boolean newFilterNoanimate, int newFilterColor, ArrayList<Long> newAlwaysShow, ArrayList<Long> newNeverShow, LongSparseIntArray newPinned, boolean creatingNew, boolean atBegin, boolean hasUserChanged, boolean resetUnreadCounter, boolean progress, BaseFragment fragment, Runnable onFinish) {
         if (fragment == null || fragment.getParentActivity() == null) {
+            return;
+        }
+        if (org.telegram.messenger.AlfaLocalFolders.isLocal(filter)) {
+            // AlfaGram lokal papkasi — serverga yuborilmaydi, faqat shu qurilmada saqlanadi
+            processAddFilter(filter, newFilterFlags, newFilterName, newFilterNameEntities, newFilterNoanimate, newFilterColor, newAlwaysShow, newNeverShow, creatingNew, atBegin, hasUserChanged, resetUnreadCounter, fragment, onFinish);
             return;
         }
         AlertDialog progressDialog;

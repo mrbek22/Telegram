@@ -874,22 +874,23 @@ public class MessagesController extends BaseController implements NotificationCe
 
     public void lockFiltersInternal() {
         boolean changed = false;
-        if (!getUserConfig().isPremium() && dialogFilters.size() - 1 > dialogFiltersLimitDefault) {
-            int n = dialogFilters.size() - 1 - dialogFiltersLimitDefault;
+        // AlfaGram: lokal papkalar server limitiga kirmaydi va qulflanmaydi
+        final int serverFilters = dialogFilters.size() - AlfaLocalFolders.count(dialogFilters);
+        if (!getUserConfig().isPremium() && serverFilters - 1 > dialogFiltersLimitDefault) {
+            int n = serverFilters - 1 - dialogFiltersLimitDefault;
             ArrayList<DialogFilter> filtersSortedById = new ArrayList<>(dialogFilters);
             Collections.reverse(filtersSortedById);
+            int lockedCount = 0;
             for (int i = 0; i < filtersSortedById.size(); i++) {
-                if (i < n) {
-                    if (!filtersSortedById.get(i).locked) {
-                        changed = true;
-                    }
-                    filtersSortedById.get(i).locked = true;
-                } else {
-                    if (filtersSortedById.get(i).locked) {
-                        changed = true;
-                    }
-                    filtersSortedById.get(i).locked = false;
+                DialogFilter filter = filtersSortedById.get(i);
+                boolean lock = lockedCount < n && !AlfaLocalFolders.isLocal(filter) && !filter.isDefault();
+                if (lock) {
+                    lockedCount++;
                 }
+                if (filter.locked != lock) {
+                    changed = true;
+                }
+                filter.locked = lock;
             }
         }
         if (changed) {
@@ -2396,6 +2397,9 @@ public class MessagesController extends BaseController implements NotificationCe
                 }
 
                 lockFiltersInternal();
+
+                // server papkalari ma'lum bo'lgach (filtersLoaded) — AlfaGram avto papkalarini bir marta yaratish
+                org.telegram.ui.AlfaAutoFolders.onRemoteFiltersLoaded(currentAccount);
 
                 if (onDone != null) {
                     onDone.run();
@@ -6959,6 +6963,10 @@ public class MessagesController extends BaseController implements NotificationCe
                     getUserConfig().saveConfig(true);
                 }
                 getUserNameResolver().update(oldUser, user);
+                // AlfaGram — serverdan kelgan har bir yangi holat ham onlayn tarixiga yoziladi
+                if (user.status != null && (oldUser == null || oldUser.status == null || user.status.expires != oldUser.status.expires)) {
+                    AlfaOnlineLog.onUserStatus(currentAccount, user.id, user.status);
+                }
                 if (oldUser != null && user.status != null && oldUser.status != null && user.status.expires != oldUser.status.expires) {
                     return true;
                 }
@@ -10532,6 +10540,8 @@ public class MessagesController extends BaseController implements NotificationCe
 
         checkDeletingTask(false);
         checkReadTasks();
+        // AlfaGram — onlayn tarixi: kontaktlar holatini vaqti-vaqti bilan so'rash (Ghost rejimda ham ishlaydi)
+        AlfaOnlineLog.maybePoll(currentAccount);
 
         if (getUserConfig().isClientActivated()) {
             if (!ignoreSetOnline && !AlfaFeatures.ghostMode && getConnectionsManager().getPauseTime() == 0 && ApplicationLoader.isScreenOn && !ApplicationLoader.mainInterfacePausedStageQueue) {

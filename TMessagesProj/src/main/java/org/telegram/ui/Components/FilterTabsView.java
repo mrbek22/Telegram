@@ -1704,6 +1704,9 @@ public class FilterTabsView extends FrameLayout {
             ArrayList<MessagesController.DialogFilter> filters = MessagesController.getInstance(UserConfig.selectedAccount).getDialogFilters();
             for (int a = 0, N = filters.size(); a < N; a++) {
                 MessagesController.DialogFilter filter = filters.get(a);
+                if (org.telegram.messenger.AlfaLocalFolders.isLocal(filter)) {
+                    continue;
+                }
                 if (filter.isDefault()) {
                     req.order.add(0);
                 } else {

@@ -1,9 +1,16 @@
 package org.telegram.ui;
 
+import android.content.SharedPreferences;
+
 import org.telegram.messenger.AlfaCyrillic;
+import org.telegram.messenger.AlfaFeatures;
+import org.telegram.messenger.AlfaLocalFolders;
 import org.telegram.messenger.MessagesController;
+import org.telegram.messenger.MessagesStorage;
 import org.telegram.messenger.NotificationCenter;
 import org.telegram.messenger.R;
+import org.telegram.messenger.UserConfig;
+import org.telegram.tgnet.ConnectionsManager;
 import org.telegram.tgnet.TLRPC;
 import org.telegram.ui.ActionBar.AlertDialog;
 import org.telegram.ui.ActionBar.BaseFragment;
@@ -13,12 +20,13 @@ import java.util.ArrayList;
 
 /**
  * AlfaGram — bir bosishda tayyor papkalar: Shaxsiy, Guruhlar, Kanallar, Botlar, O'qilmagan.
- * Papkalar Telegram serverida saqlanadi (boshqa qurilmalarda ham ko'rinadi).
+ * Papkalar faqat shu qurilmada saqlanadi (AlfaLocalFolders) — boshqa Telegram ilovalarida ko'rinmaydi.
  * Bir xil turdagi papka allaqachon bo'lsa — qayta yaratilmaydi.
  */
 public class AlfaAutoFolders {
 
     public static final String BUTTON_TEXT = "Avto papkalar yaratish";
+    private static final String PREF_DONE = "alfaLocalAutoFoldersDone";
 
     private static final int NO_ARCHIVE = MessagesController.DIALOG_FILTER_FLAG_EXCLUDE_ARCHIVED;
     private static final String[] NAMES = {"Shaxsiy", "Guruhlar", "Kanallar", "Botlar", "O'qilmagan"};
@@ -82,73 +90,150 @@ public class AlfaAutoFolders {
         return false;
     }
 
+    /**
+     * Sozlamalardagi tugma: avto papkalar o'chiq bo'lsa yoqiladi, yoqiq bo'lsa
+     * o'chirib yuborilgan papkalar qayta yaratiladi.
+     */
     public static void ask(BaseFragment fragment) {
         if (fragment == null || fragment.getParentActivity() == null) {
             return;
         }
         AlertDialog.Builder b = new AlertDialog.Builder(fragment.getParentActivity(), fragment.getResourceProvider());
         b.setTitle(AlfaCyrillic.ui("Avto papkalar"));
-        b.setMessage(AlfaCyrillic.ui("Chatlar ro'yxati tepasida 5 ta papka paydo bo'ladi: Shaxsiy, Guruhlar, Kanallar, Botlar va O'qilmagan. Bor papkalaringizga tegilmaydi."));
-        b.setPositiveButton(AlfaCyrillic.ui("Yaratish"), (d, w) -> create(fragment));
+        b.setMessage(AlfaCyrillic.ui("Chatlar ro'yxati tepasida 5 ta papka paydo bo'ladi: Shaxsiy, Guruhlar, Kanallar, Botlar va O'qilmagan. Ular faqat AlfaGram'da ko'rinadi — boshqa Telegram ilovalarida chiqmaydi. Bor papkalaringizga tegilmaydi."));
+        b.setPositiveButton(AlfaCyrillic.ui("Yaratish"), (d, w) -> {
+            int created;
+            if (!AlfaFeatures.autoFolders) {
+                AlfaFeatures.setFlag("autoFolders", true);
+                created = countLocal(fragment.getMessagesController());
+            } else {
+                created = ensure(fragment.getCurrentAccount());
+            }
+            BulletinFactory.of(fragment).createSimpleBulletin(R.raw.contact_check, AlfaCyrillic.ui(
+                    created > 0 ? "Avto papkalar tayyor" : "Bu papkalar allaqachon bor")).show();
+        });
         b.setNegativeButton(AlfaCyrillic.ui("Bekor qilish"), null);
         fragment.showDialog(b.create());
     }
 
-    private static void create(BaseFragment fragment) {
-        MessagesController mc = fragment.getMessagesController();
-        ArrayList<Integer> todo = new ArrayList<>();
-        for (int i = 0; i < FLAGS.length; i++) {
-            if (!exists(mc, FLAGS[i], NAMES[i])) {
-                todo.add(i);
-            }
-        }
-        if (todo.isEmpty()) {
-            BulletinFactory.of(fragment).createSimpleBulletin(R.raw.contact_check, AlfaCyrillic.ui("Bu papkalar allaqachon bor")).show();
+    /** Server papkalari yuklandi: avto papkalar yoqiq bo'lsa — har akkauntda bir marta yaratiladi. */
+    public static void onRemoteFiltersLoaded(int account) {
+        if (!AlfaFeatures.autoFolders) {
             return;
         }
-        // Bepul akkauntda papkalar soni cheklangan ("Barcha chatlar" hisobga kirmaydi)
-        int limit = fragment.getUserConfig().isPremium() ? mc.dialogFiltersLimitPremium : mc.dialogFiltersLimitDefault;
-        int free = Math.max(0, limit - Math.max(0, mc.getDialogFilters().size() - 1));
-        if (free == 0) {
-            BulletinFactory.of(fragment).createSimpleBulletin(R.raw.error, AlfaCyrillic.ui("Papkalar soni limitga yetgan — avval keraksizini o'chiring")).show();
-            return;
+        SharedPreferences prefs = MessagesController.getMainSettings(account);
+        if (prefs.getBoolean(PREF_DONE, false)) {
+            return; // foydalanuvchi o'chirgan papkani qayta tiklamaymiz
         }
-        int skipped = Math.max(0, todo.size() - free);
-        while (todo.size() > free) {
-            todo.remove(todo.size() - 1);
+        if (ensure(account) >= 0) {
+            prefs.edit().putBoolean(PREF_DONE, true).apply();
         }
-        createNext(fragment, todo, 0, skipped);
     }
 
-    private static void createNext(BaseFragment fragment, ArrayList<Integer> todo, int pos, int skipped) {
-        if (fragment.getParentActivity() == null) {
-            return;
-        }
-        if (pos >= todo.size()) {
-            fragment.getNotificationCenter().postNotificationName(NotificationCenter.dialogFiltersUpdated);
-            String msg = "Yaratildi: " + todo.size() + " ta papka";
-            if (skipped > 0) {
-                msg += " (" + skipped + " tasi limit sababli qo'shilmadi)";
+    /** Sozlamalardagi "Avto papkalar" switch'i. */
+    public static void onToggled(boolean enabled) {
+        for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
+            if (!UserConfig.isValidAccount(a)) {
+                continue;
             }
-            BulletinFactory.of(fragment).createSimpleBulletin(R.raw.contact_check, AlfaCyrillic.ui(msg)).show();
-            return;
+            SharedPreferences prefs = MessagesController.getMainSettings(a);
+            if (enabled) {
+                if (ensure(a) >= 0) {
+                    prefs.edit().putBoolean(PREF_DONE, true).apply();
+                }
+            } else {
+                removeLocal(a);
+                prefs.edit().putBoolean(PREF_DONE, false).apply();
+            }
         }
-        MessagesController mc = fragment.getMessagesController();
-        int idx = todo.get(pos);
-        MessagesController.DialogFilter filter = new MessagesController.DialogFilter();
-        filter.name = AlfaCyrillic.ui(NAMES[idx]);
-        filter.id = 2;
-        while (mc.dialogFiltersById.get(filter.id) != null) {
-            filter.id++;
+    }
+
+    /**
+     * Yetishmayotgan avto papkalarni lokal yaratadi. Avval AlfaGram serverga yozib qo'ygan eski
+     * avto papkalar (shu nom va turdagi) lokalga ko'chiriladi. Natija: yaratilganlar soni,
+     * papkalar hali yuklanmagan bo'lsa -1.
+     */
+    static int ensure(int account) {
+        MessagesController mc = MessagesController.getInstance(account);
+        if (!mc.dialogFiltersLoaded || !UserConfig.getInstance(account).filtersLoaded) {
+            return -1;
         }
-        filter.order = mc.getDialogFilters().size();
-        filter.pendingUnreadCount = filter.unreadCount = -1;
-        filter.flags = FLAGS[idx];
-        filter.color = -1;
-        // progress=false: filtr darhol mahalliy qo'shiladi, server javobidan keyin keyingisi yaratiladi
-        FilterCreateActivity.saveFilterToServer(filter, filter.flags, filter.name, filter.entities, false, filter.color,
-                filter.alwaysShow, filter.neverShow, filter.pinnedDialogs, true, false, true, true, false, fragment,
-                () -> createNext(fragment, todo, pos + 1, skipped));
+        migrateServerFolders(account);
+        int created = 0;
+        for (int i = 0; i < FLAGS.length; i++) {
+            if (mc.dialogFiltersById.get(AlfaLocalFolders.BASE_ID + i) != null || exists(mc, FLAGS[i], NAMES[i])) {
+                continue;
+            }
+            MessagesController.DialogFilter filter = new MessagesController.DialogFilter();
+            filter.id = AlfaLocalFolders.BASE_ID + i;
+            filter.name = AlfaCyrillic.ui(NAMES[i]);
+            filter.flags = FLAGS[i];
+            filter.color = -1;
+            filter.pendingUnreadCount = filter.unreadCount = -1;
+            mc.addFilter(filter, false);
+            MessagesStorage.getInstance(account).saveDialogFilter(filter, false, true);
+            created++;
+        }
+        if (created > 0) {
+            NotificationCenter.getInstance(account).postNotificationName(NotificationCenter.dialogFiltersUpdated);
+        }
+        return created;
+    }
+
+    /** Oldingi versiyalar avto papkalarni serverga yozgan — ularni serverdan olib, lokalga o'tkazamiz. */
+    private static void migrateServerFolders(int account) {
+        MessagesController mc = MessagesController.getInstance(account);
+        ArrayList<MessagesController.DialogFilter> filters = new ArrayList<>(mc.getDialogFilters());
+        for (MessagesController.DialogFilter f : filters) {
+            if (f.isDefault() || AlfaLocalFolders.isLocal(f) || f.isChatlist() || !f.alwaysShow.isEmpty() || !f.neverShow.isEmpty() || f.color >= 0 || f.name == null) {
+                continue;
+            }
+            for (int i = 0; i < FLAGS.length; i++) {
+                if (f.flags == FLAGS[i] && (f.name.equalsIgnoreCase(NAMES[i]) || f.name.equalsIgnoreCase(AlfaCyrillic.toCyrillic(NAMES[i])))) {
+                    TLRPC.TL_messages_updateDialogFilter req = new TLRPC.TL_messages_updateDialogFilter();
+                    req.id = f.id;
+                    ConnectionsManager.getInstance(account).sendRequest(req, null);
+                    mc.removeFilter(f);
+                    MessagesStorage.getInstance(account).deleteDialogFilter(f);
+                    break;
+                }
+            }
+        }
+    }
+
+    private static void removeLocal(int account) {
+        MessagesController mc = MessagesController.getInstance(account);
+        ArrayList<MessagesController.DialogFilter> filters = new ArrayList<>(mc.getDialogFilters());
+        for (MessagesController.DialogFilter f : filters) {
+            if (AlfaLocalFolders.isLocal(f)) {
+                mc.removeFilter(f);
+                MessagesStorage.getInstance(account).deleteDialogFilter(f);
+            }
+        }
+    }
+
+    private static int countLocal(MessagesController mc) {
+        return AlfaLocalFolders.count(mc.getDialogFilters());
+    }
+
+    /** Arxiv tepasidagi tur tugmalari: birinchisi "Hammasi", qolganlari NAMES tartibida. */
+    public static final String[] ARCHIVE_TABS = {"Hammasi", "Shaxsiy", "Guruhlar", "Kanallar", "Botlar", "O'qilmagan"};
+    private static MessagesController.DialogFilter[] archiveCategoryFilters;
+
+    /** Arxivdagi chat shu turga (0..4, NAMES tartibida) kiradimi. category < 0 — hammasi. */
+    public static boolean matchesArchiveCategory(int account, int category, TLRPC.Dialog dialog) {
+        if (category < 0 || category >= FLAGS.length) {
+            return true;
+        }
+        if (archiveCategoryFilters == null) {
+            archiveCategoryFilters = new MessagesController.DialogFilter[FLAGS.length];
+            for (int i = 0; i < FLAGS.length; i++) {
+                MessagesController.DialogFilter f = new MessagesController.DialogFilter();
+                f.flags = FLAGS[i] & ~NO_ARCHIVE;
+                archiveCategoryFilters[i] = f;
+            }
+        }
+        return archiveCategoryFilters[category].includesDialog(org.telegram.messenger.AccountInstance.getInstance(account), dialog.id, dialog);
     }
 
     // Papka turini belgilovchi bitlar; arxiv/ovozsizni chiqarish farqi papkani boshqa qilmaydi

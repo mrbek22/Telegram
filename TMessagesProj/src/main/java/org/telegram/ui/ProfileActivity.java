@@ -12193,7 +12193,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                 if (getParentActivity() == null) return;
                 StringBuilder sb = new StringBuilder();
                 if (list.isEmpty()) {
-                    sb.append(org.telegram.messenger.AlfaCyrillic.ui("Hali yozuv yo'q. AlfaGram bu kontakt qachon onlayn bo'lganini kuzatib boradi (ilova internetga ulangan paytlarda)."));
+                    sb.append(org.telegram.messenger.AlfaCyrillic.ui("Hali yozuv yo'q. AlfaGram bu kontakt qachon onlayn bo'lganini kuzatib boradi (ilova internetga ulangan paytlarda). Kontakt «oxirgi marta» vaqtini yashirgan bo'lsa, aniq vaqt ko'rinmaydi."));
                 } else {
                     java.text.SimpleDateFormat day = new java.text.SimpleDateFormat("dd.MM", java.util.Locale.US);
                     java.text.SimpleDateFormat time = new java.text.SimpleDateFormat("HH:mm", java.util.Locale.US);
@@ -12205,10 +12205,18 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                             sb.append("📅 ").append(d0).append('\n');
                             lastDay = d0;
                         }
-                        sb.append("   ").append(time.format(new java.util.Date(sess.start))).append(" – ");
-                        if (sess.end == 0) {
-                            sb.append(org.telegram.messenger.AlfaCyrillic.ui("hozir onlayn"));
+                        sb.append("   ").append(time.format(new java.util.Date(sess.start)));
+                        if (sess.end != 0 && sess.end == sess.start) {
+                            // onlayn paytini ko'rmadik — faqat server aytgan oxirgi onlayn vaqti
+                            sb.append(org.telegram.messenger.AlfaCyrillic.ui("  — oxirgi marta onlayn"));
+                        } else if (sess.end == 0 && System.currentTimeMillis() - sess.seen <= org.telegram.messenger.AlfaOnlineLog.GAP_MS) {
+                            sb.append(" – ").append(org.telegram.messenger.AlfaCyrillic.ui("hozir onlayn"));
+                        } else if (sess.end == 0) {
+                            // kuzatuv uzilgan: oxirgi marta onlayn ko'rilgan paytgacha
+                            long mins = Math.max(1, (sess.seen - sess.start) / 60000L);
+                            sb.append(" – ~").append(time.format(new java.util.Date(sess.seen))).append("  (").append(mins).append(org.telegram.messenger.AlfaCyrillic.ui(" daq")).append(")");
                         } else {
+                            sb.append(" – ");
                             long mins = Math.max(1, (sess.end - sess.start) / 60000L);
                             sb.append(time.format(new java.util.Date(sess.end))).append("  (").append(mins).append(org.telegram.messenger.AlfaCyrillic.ui(" daq")).append(")");
                         }
