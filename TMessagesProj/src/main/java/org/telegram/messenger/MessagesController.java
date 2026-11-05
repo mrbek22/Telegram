@@ -19026,7 +19026,7 @@ public class MessagesController extends BaseController implements NotificationCe
                                 arr.add(newUser);
                                 printChanged = true;
                                 // AlfaGram — yozayotgan sessiyani boshlash
-                                if (AlfaFeatures.typingLog) {
+                                if (AlfaFeatures.typingLog && DialogObject.isUserDialog(uid)) {
                                     try {
                                         int actType = action != null ? action.getClass().hashCode() : 0;
                                         AlfaTyping.getInstance().startSession(currentAccount, uid, userId, actType);
@@ -21869,6 +21869,8 @@ public class MessagesController extends BaseController implements NotificationCe
         } catch (Throwable t) {
             FileLog.e(t);
         }
+        // ochiq chat xabarni darhol 🗑 belgisi bilan qayta chizsin
+        getNotificationCenter().postNotificationName(NotificationCenter.alfaMessagesKept, kept);
     }
 
     /** AlfaGram — o'chirilgan xabar ustida "🗑 O'chirildi" belgisi. */

@@ -124,13 +124,50 @@ public class AlfaOnlineLog extends SQLiteOpenHelper {
         // TL_userStatusOffline: oxirgi onlayn vaqti expires maydonida (sekund)
         final long offlineAt = status instanceof TLRPC.TL_userStatusOffline && status.expires > 0 ? status.expires * 1000L : 0;
         final long now = System.currentTimeMillis();
-        Utilities.globalQueue.postRunnable(() -> {
-            try {
-                getInstance().apply(account, userId, online, offlineAt > 0 ? Math.min(offlineAt, now) : 0, now);
-            } catch (Throwable e) {
-                FileLog.e(e);
+        // yozuvlar o'z navbatida va bitta tranzaksiyada (umumiy globalQueue band qilinmasin — ro'yxat qotmasin)
+        synchronized (PENDING) {
+            PENDING.add(new long[]{account, userId, online ? 1 : 0, offlineAt > 0 ? Math.min(offlineAt, now) : 0, now});
+            if (!flushScheduled) {
+                flushScheduled = true;
+                QUEUE.postRunnable(AlfaOnlineLog::flush, 400);
             }
-        });
+        }
+    }
+
+    private static final DispatchQueue QUEUE = new DispatchQueue("alfaOnlineLog");
+    private static final ArrayList<long[]> PENDING = new ArrayList<>();
+    private static boolean flushScheduled;
+
+    private static void flush() {
+        ArrayList<long[]> batch;
+        synchronized (PENDING) {
+            batch = new ArrayList<>(PENDING);
+            PENDING.clear();
+            flushScheduled = false;
+        }
+        if (batch.isEmpty()) return;
+        AlfaOnlineLog log = getInstance();
+        SQLiteDatabase db;
+        try {
+            db = log.getWritableDatabase();
+        } catch (Throwable e) {
+            FileLog.e(e);
+            return;
+        }
+        db.beginTransaction();
+        try {
+            for (long[] r : batch) {
+                log.apply((int) r[0], r[1], r[2] == 1, r[3], r[4]);
+            }
+            db.setTransactionSuccessful();
+        } catch (Throwable e) {
+            FileLog.e(e);
+        } finally {
+            try {
+                db.endTransaction();
+            } catch (Throwable ignore) {
+            }
+        }
     }
 
     /**
@@ -205,7 +242,7 @@ public class AlfaOnlineLog extends SQLiteOpenHelper {
     }
 
     public void clear(int account, long userId) {
-        Utilities.globalQueue.postRunnable(() -> {
+        QUEUE.postRunnable(() -> {
             try {
                 getWritableDatabase().execSQL("DELETE FROM online WHERE account=? AND user_id=?", new Object[]{account, userId});
             } catch (Throwable e) {

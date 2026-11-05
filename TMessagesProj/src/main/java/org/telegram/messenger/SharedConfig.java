@@ -1586,6 +1586,11 @@ public class SharedConfig {
     }
 
     public static int getChatSwipeAction(int currentAccount) {
+        // AlfaGram: chapga/o'ngga surish amallari AlfaSwipe'da (papka almashish — o'rtadan surish)
+        final int alfaAction = AlfaSwipe.current();
+        if (alfaAction != AlfaSwipe.NONE) {
+            return alfaAction;
+        }
         if (chatSwipeAction >= 0) {
             if (chatSwipeAction == SwipeGestureSettingsView.SWIPE_GESTURE_FOLDERS && MessagesController.getInstance(currentAccount).dialogFilters.isEmpty()) {
                 return SwipeGestureSettingsView.SWIPE_GESTURE_ARCHIVE;

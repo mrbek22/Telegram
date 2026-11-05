@@ -104,6 +104,8 @@ public class AlfaCopySend implements NotificationCenter.NotificationCenterDelega
         job.notify = notify;
         job.scheduleDate = scheduleDate;
         job.scheduleRepeatPeriod = scheduleRepeatPeriod;
+        // mavzuli guruh: yangi xabar mavzuga tushishi uchun replyToMsg ham mavzu boshi bo'lishi shart
+        // (aks holda SendMessagesHelper reply_to qo'ymaydi va xabar General'ga ketadi)
         job.replyToTopMsg = replyToTopMsg;
         job.payStars = payStars;
         job.monoForumPeerId = monoForumPeerId;
@@ -370,7 +372,7 @@ public class AlfaCopySend implements NotificationCenter.NotificationCenterDelega
 
     private void sendAlbum(Job job, ArrayList<SendMessagesHelper.SendingMediaInfo> album) {
         try {
-            SendMessagesHelper.prepareSendingMedia(AccountInstance.getInstance(job.account), album, job.peer, null, job.replyToTopMsg, null, null,
+            SendMessagesHelper.prepareSendingMedia(AccountInstance.getInstance(job.account), album, job.peer, job.replyToTopMsg, job.replyToTopMsg, null, null,
                     false, album.size() > 1, null, job.notify, job.scheduleDate, job.scheduleRepeatPeriod, 0, false, null, null, 0, 0, false,
                     job.payStars, job.monoForumPeerId, null);
         } catch (Throwable e) {
@@ -384,7 +386,7 @@ public class AlfaCopySend implements NotificationCenter.NotificationCenterDelega
             return false;
         }
         ArrayList<TLRPC.MessageEntity> ents = item.obj.messageOwner.entities == null || item.obj.messageOwner.entities.isEmpty() ? null : new ArrayList<>(item.obj.messageOwner.entities);
-        SendMessagesHelper.SendMessageParams params = SendMessagesHelper.SendMessageParams.of(text, job.peer, null, job.replyToTopMsg, null, true, ents, null, null, job.notify, job.scheduleDate, job.scheduleRepeatPeriod, null, false);
+        SendMessagesHelper.SendMessageParams params = SendMessagesHelper.SendMessageParams.of(text, job.peer, job.replyToTopMsg, job.replyToTopMsg, null, true, ents, null, null, job.notify, job.scheduleDate, job.scheduleRepeatPeriod, null, false);
         params.payStars = job.payStars;
         params.monoForumPeer = job.monoForumPeerId;
         SendMessagesHelper.getInstance(job.account).sendMessage(params);
@@ -414,7 +416,7 @@ public class AlfaCopySend implements NotificationCenter.NotificationCenterDelega
                 doc.attributes.add(attr);
             }
         }
-        SendMessagesHelper.SendMessageParams params = SendMessagesHelper.SendMessageParams.of(doc, null, item.path, job.peer, null, job.replyToTopMsg,
+        SendMessagesHelper.SendMessageParams params = SendMessagesHelper.SendMessageParams.of(doc, null, item.path, job.peer, job.replyToTopMsg, job.replyToTopMsg,
                 caption(job, item), entities(job, item), null, null, job.notify, job.scheduleDate, job.scheduleRepeatPeriod, 0, null, null, false);
         params.payStars = job.payStars;
         params.monoForumPeer = job.monoForumPeerId;

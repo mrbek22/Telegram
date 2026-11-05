@@ -144,7 +144,9 @@ public class AlfaSettingsActivity extends BaseFragment {
         rows.add(Row.toggle("hideStories", "Storieslar qatorini yashirish"));
         rows.add(Row.toggle("hideMuted", "Ovozsiz chatlarni yashirish"));
         rows.add(Row.toggle("compactChats", "Ixcham (2 qatorli) chat ro'yxati"));
-        rows.add(Row.info("Chatlar sahifasini xohlaganingizday sozlang."));
+        rows.add(Row.action("Chapga surish: " + org.telegram.messenger.AlfaSwipe.name(org.telegram.messenger.AlfaSwipe.leftAction()), () -> showSwipePicker(false)));
+        rows.add(Row.action("O'ngga surish: " + org.telegram.messenger.AlfaSwipe.name(org.telegram.messenger.AlfaSwipe.rightAction()), () -> showSwipePicker(true)));
+        rows.add(Row.info("Chatni o'ng chetdan chapga yoki chap chetdan o'ngga torting — tanlangan amal bajariladi. O'rtadan surish papkani almashtiradi."));
 
         rows.add(Row.header("Chat ichida"));
         rows.add(Row.action("Ikki marta bosish: " + AlfaFeatures.DOUBLE_TAP_NAMES[AlfaFeatures.getDoubleTapAction()], this::showDoubleTapPicker));
@@ -199,6 +201,14 @@ public class AlfaSettingsActivity extends BaseFragment {
         CharSequence[] out = new CharSequence[src.length];
         for (int i = 0; i < src.length; i++) out[i] = org.telegram.messenger.AlfaCyrillic.ui(src[i]);
         return out;
+    }
+
+    /** Chapga/o'ngga surish amalini tanlash. */
+    private void showSwipePicker(boolean isRight) {
+        org.telegram.messenger.AlfaSwipe.showPicker(this, isRight, () -> {
+            buildRows();
+            if (listAdapter != null) listAdapter.notifyDataSetChanged();
+        });
     }
 
     /** Ikki marta bosish amalini tanlash oynasi. */

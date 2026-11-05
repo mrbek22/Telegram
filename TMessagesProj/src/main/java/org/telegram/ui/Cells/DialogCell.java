@@ -3897,10 +3897,14 @@ public class DialogCell extends BaseCell implements StoriesListPlaceProvider.Ava
                 translationDrawable.start();
             }
 
-            float tx = getMeasuredWidth() + translationX;
+            // AlfaGram: o'ngga surilganda (translationX > 0) fon va ikonka chap tomonda
+            final boolean alfaRight = translationX > 0;
+            float tx = alfaRight ? translationX : getMeasuredWidth() + translationX;
+            final float revealL = alfaRight ? 0 : tx - dp(8);
+            final float revealR = alfaRight ? tx + dp(8) : getMeasuredWidth();
             if (currentRevealProgress < 1.0f) {
                 Theme.dialogs_pinnedPaint.setColor(backgroundColor);
-                canvas.drawRect(tx - dp(8), 0, getMeasuredWidth(), getMeasuredHeight(), Theme.dialogs_pinnedPaint);
+                canvas.drawRect(revealL, 0, revealR, getMeasuredHeight(), Theme.dialogs_pinnedPaint);
                 if (currentRevealProgress == 0) {
                     if (Theme.dialogs_archiveDrawableRecolored) {
                         Theme.dialogs_archiveDrawable.setLayerColor("Arrow.**", Theme.getNonAnimatedColor(Theme.key_chats_archiveBackground));
@@ -3916,17 +3920,18 @@ public class DialogCell extends BaseCell implements StoriesListPlaceProvider.Ava
                     }
                 }
             }
-            int drawableX = getMeasuredWidth() - dp(43) - translationDrawable.getIntrinsicWidth() / 2;
+            int drawableX = alfaRight ? dp(43) - translationDrawable.getIntrinsicWidth() / 2 : getMeasuredWidth() - dp(43) - translationDrawable.getIntrinsicWidth() / 2;
             int drawableY = (getMeasuredHeight() - dp(52)) / 2;
             int drawableCx = drawableX + translationDrawable.getIntrinsicWidth() / 2;
             int drawableCy = drawableY + translationDrawable.getIntrinsicHeight() / 2;
 
             if (currentRevealProgress > 0.0f) {
                 canvas.save();
-                canvas.clipRect(tx - dp(8), 0, getMeasuredWidth(), getMeasuredHeight());
+                canvas.clipRect(revealL, 0, revealR, getMeasuredHeight());
                 Theme.dialogs_pinnedPaint.setColor(revealBackgroundColor);
 
-                float rad = (float) Math.sqrt(drawableCx * drawableCx + (drawableCy - getMeasuredHeight()) * (drawableCy - getMeasuredHeight()));
+                final float farX = alfaRight ? getMeasuredWidth() - drawableCx : drawableCx;
+                float rad = (float) Math.sqrt(farX * farX + (drawableCy - getMeasuredHeight()) * (drawableCy - getMeasuredHeight()));
                 canvas.drawCircle(drawableCx, drawableCy, rad * AndroidUtilities.accelerateInterpolator.getInterpolation(currentRevealProgress), Theme.dialogs_pinnedPaint);
                 canvas.restore();
 
@@ -3954,7 +3959,11 @@ public class DialogCell extends BaseCell implements StoriesListPlaceProvider.Ava
             translationDrawable.draw(canvas);
             canvas.restore();
 
-            canvas.clipRect(tx, 0, getMeasuredWidth(), getMeasuredHeight());
+            if (alfaRight) {
+                canvas.clipRect(0, 0, tx, getMeasuredHeight());
+            } else {
+                canvas.clipRect(tx, 0, getMeasuredWidth(), getMeasuredHeight());
+            }
 
             int width = (int) Math.ceil(Theme.dialogs_countTextPaint2.measureText(swipeMessage));
 
@@ -3971,7 +3980,7 @@ public class DialogCell extends BaseCell implements StoriesListPlaceProvider.Ava
             if (swipeMessageTextLayout != null) {
                 canvas.save();
                 float yOffset = swipeMessageTextLayout.getLineCount() > 1 ? -dp(4) : 0;
-                canvas.translate(getMeasuredWidth() - dp(43) - swipeMessageTextLayout.getWidth() / 2f, drawableY + dp(52 - 16) + yOffset);
+                canvas.translate((alfaRight ? dp(43) : getMeasuredWidth() - dp(43)) - swipeMessageTextLayout.getWidth() / 2f, drawableY + dp(52 - 16) + yOffset);
                 swipeMessageTextLayout.draw(canvas);
                 canvas.restore();
             }

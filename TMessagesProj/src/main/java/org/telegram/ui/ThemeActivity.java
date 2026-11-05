@@ -215,6 +215,7 @@ public class ThemeActivity extends BaseFragment implements NotificationCenter.No
 
     private int swipeGestureHeaderRow;
     private int swipeGestureRow;
+    private int alfaSwipeRightRow;
     private int swipeGestureInfoRow;
 
     private int selectThemeHeaderRow;
@@ -600,6 +601,7 @@ public class ThemeActivity extends BaseFragment implements NotificationCenter.No
 
         swipeGestureHeaderRow = -1;
         swipeGestureRow = -1;
+        alfaSwipeRightRow = -1;
         swipeGestureInfoRow = -1;
 
         selectThemeHeaderRow = -1;
@@ -678,6 +680,7 @@ public class ThemeActivity extends BaseFragment implements NotificationCenter.No
 
             swipeGestureHeaderRow = rowCount++;
             swipeGestureRow = rowCount++;
+            alfaSwipeRightRow = rowCount++;
             swipeGestureInfoRow = rowCount++;
 
             nightThemeRow = rowCount++;
@@ -1104,6 +1107,13 @@ public class ThemeActivity extends BaseFragment implements NotificationCenter.No
         frameLayout.addView(listView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
         actionBar.setAdaptiveBackground(listView);
         listView.setOnItemClickListener((view, position, x, y) -> {
+            if (position == swipeGestureRow || position == alfaSwipeRightRow) {
+                // AlfaGram: chapga / o'ngga surish amali
+                org.telegram.messenger.AlfaSwipe.showPicker(this, position == alfaSwipeRightRow, () -> {
+                    if (listAdapter != null) listAdapter.notifyItemChanged(position);
+                });
+                return;
+            }
             if (position == enableAnimationsRow) {
                 SharedPreferences preferences = MessagesController.getGlobalMainSettings();
                 boolean animations = preferences.getBoolean("view_animations", true);
@@ -2516,6 +2526,10 @@ public class ThemeActivity extends BaseFragment implements NotificationCenter.No
                         updateDistance = false;
                     } else if (position == searchEngineRow) {
                         cell.setTextAndValue(getString(R.string.SearchEngine), SearchEngine.getCurrent().name, updateSearchEngine, false);
+                    } else if (position == swipeGestureRow || position == alfaSwipeRightRow) {
+                        final boolean isRight = position == alfaSwipeRightRow;
+                        cell.setTextAndValue(org.telegram.messenger.AlfaSwipe.title(isRight),
+                                org.telegram.messenger.AlfaSwipe.name(isRight ? org.telegram.messenger.AlfaSwipe.rightAction() : org.telegram.messenger.AlfaSwipe.leftAction()), !isRight);
                     } else if (position == bluetoothScoRow) {
                         cell.setTextAndValue(getString(R.string.MicrophoneForVoiceMessages), getString(SharedConfig.recordViaSco ? R.string.MicrophoneForVoiceMessagesSco : R.string.MicrophoneForVoiceMessagesBuiltIn), updateRecordViaSco, false);
                         updateRecordViaSco = false;
@@ -2530,7 +2544,7 @@ public class ThemeActivity extends BaseFragment implements NotificationCenter.No
                     } else if (position == scheduleLocationInfoRow) {
                         cell.setText(getLocationSunString());
                     } else if (position == swipeGestureInfoRow) {
-                        cell.setText(getString("ChatListSwipeGestureInfo", R.string.ChatListSwipeGestureInfo));
+                        cell.setText(org.telegram.messenger.AlfaCyrillic.ui("Chatni ekranning o'ng chetidan chapga yoki chap chetidan o'ngga torting. Papkalar bo'lsa, o'rtadan surish papkani almashtiradi."));
                     } else if (position == liteModeInfoRow) {
                         cell.setText(getString("LiteModeInfo", R.string.LiteModeInfo));
                     } else {
@@ -2733,7 +2747,8 @@ public class ThemeActivity extends BaseFragment implements NotificationCenter.No
             if (position == scheduleFromRow || position == distanceRow ||
                     position == scheduleToRow || position == scheduleUpdateLocationRow ||
                     position == contactsReimportRow || position == contactsSortRow ||
-                    position == bluetoothScoRow || position == searchEngineRow) {
+                    position == bluetoothScoRow || position == searchEngineRow ||
+                    position == swipeGestureRow || position == alfaSwipeRightRow) {
                 return TYPE_TEXT_SETTING;
             } else if (position == automaticBrightnessInfoRow || position == scheduleLocationInfoRow || position == swipeGestureInfoRow || position == stickersInfoRow || position == liteModeInfoRow) {
                 return TYPE_TEXT_INFO_PRIVACY;
@@ -2771,7 +2786,7 @@ public class ThemeActivity extends BaseFragment implements NotificationCenter.No
             } else if (position == backgroundRow || position == editThemeRow || position == createNewThemeRow ||
                         position == liteModeRow || position == stickersRow) {
                 return TYPE_TEXT_PREFERENCE;
-            } else if (position == swipeGestureRow) {
+            } else if (false) {
                 return TYPE_SWIPE_GESTURE;
             } else if (position == themePreviewRow) {
                 return TYPE_THEME_PREVIEW;

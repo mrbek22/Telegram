@@ -2939,6 +2939,7 @@ public class ChatActivity extends BaseFragment implements
             .add(NotificationCenter.didLoadSendAsPeers)
             .add(NotificationCenter.closeChatActivity)
             .add(NotificationCenter.messagesDeleted)
+            .add(NotificationCenter.alfaMessagesKept)
             .add(NotificationCenter.historyCleared)
             .add(NotificationCenter.messageReceivedByServer)
             .add(NotificationCenter.messageReceivedByAck)
@@ -4444,7 +4445,8 @@ public class ChatActivity extends BaseFragment implements
             if (org.telegram.messenger.AlfaFeatures.editHistory) {
                 headerItem.lazilyAddSubItem(alfa_edit_history, R.drawable.msg_edit, org.telegram.messenger.AlfaCyrillic.ui("Tahrir tarixi"));
             }
-            if (org.telegram.messenger.AlfaFeatures.typingLog) {
+            // "Yozdi, yubormadi" faqat shaxsiy chatlarda (kanal/guruhda ma'nosiz va ishlamaydi)
+            if (org.telegram.messenger.AlfaFeatures.typingLog && DialogObject.isUserDialog(dialog_id)) {
                 headerItem.lazilyAddSubItem(alfa_typing_log, R.drawable.msg_recent, org.telegram.messenger.AlfaCyrillic.ui("Yozdi, yubormadi"));
             }
             headerItem.lazilyAddSubItem(alfa_stats, R.drawable.msg_stats, org.telegram.messenger.AlfaCyrillic.ui("Chat statistikasi"));
@@ -22199,6 +22201,24 @@ public class ChatActivity extends BaseFragment implements
             removeUnreadPlane(true);
             if (updated && chatAdapter != null) {
                 chatAdapter.notifyDataSetChanged(false);
+            }
+        } else if (id == NotificationCenter.alfaMessagesKept) {
+            // AlfaGram — suhbatdosh o'chirgan, lekin saqlab qolingan xabar: vaqt oldida 🗑 darhol chiqsin
+            ArrayList<long[]> kept = (ArrayList<long[]>) args[0];
+            java.util.HashSet<Integer> ids = new java.util.HashSet<>();
+            for (long[] pair : kept) {
+                if (pair[0] == dialog_id) {
+                    ids.add((int) pair[1]);
+                }
+            }
+            if (!ids.isEmpty()) {
+                updateVisibleRows(m -> {
+                    if (m != null && ids.contains(m.getId())) {
+                        m.alfaDeletedBySender = true;
+                        return true;
+                    }
+                    return false;
+                });
             }
         } else if (id == NotificationCenter.messagesDeleted) {
             boolean scheduled = (Boolean) args[2];

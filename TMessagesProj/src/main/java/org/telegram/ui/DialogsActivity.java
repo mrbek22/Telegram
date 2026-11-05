@@ -1328,6 +1328,9 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         @Override
         public boolean onInterceptTouchEvent(MotionEvent ev) {
             int action = ev.getActionMasked();
+            if (action == MotionEvent.ACTION_DOWN) {
+                alfaCheckSwipeEdge(ev.getX());
+            }
             if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
                 if (actionBar.isActionModeShowed()) {
                     allowMoving = true;
@@ -1357,10 +1360,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                                             startedTracking ||
                                             ev.getY() > getActionBarTop() + getActionBarFullHeight() && (chatInputViewsContainer == null || chatInputViewsContainer.getVisibility() != VISIBLE || ev.getY() < chatInputViewsContainer.getY())
                             ) && (
-                            initialDialogsType == DIALOGS_TYPE_FORWARD ||
-                                    SharedConfig.getChatSwipeAction(currentAccount) == SwipeGestureSettingsView.SWIPE_GESTURE_FOLDERS ||
-                                    SharedConfig.getChatSwipeAction(currentAccount) == SwipeGestureSettingsView.SWIPE_GESTURE_ARCHIVE &&
-                                            viewPages[0] != null && (viewPages[0].dialogsAdapter.getDialogsType() == 7 || viewPages[0].dialogsAdapter.getDialogsType() == 8))
+                            initialDialogsType == DIALOGS_TYPE_FORWARD || !alfaEdgeTouch)
             ) {
                 if (ev != null) {
                     if (velocityTracker == null) {
@@ -2185,7 +2185,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
                 if (!parentPage.itemTouchhelper.isIdle() && parentPage.swipeController.swipingFolder) {
                     parentPage.swipeController.swipeFolderBack = true;
-                    if (parentPage.itemTouchhelper.checkHorizontalSwipe(null, ItemTouchHelper.LEFT) != 0) {
+                    if (parentPage.itemTouchhelper.checkHorizontalSwipe(null, org.telegram.messenger.AlfaSwipe.rightDir ? ItemTouchHelper.RIGHT : ItemTouchHelper.LEFT) != 0) {
                         if (parentPage.swipeController.currentItemViewHolder != null) {
                             ViewHolder viewHolder = parentPage.swipeController.currentItemViewHolder;
                             if (viewHolder.itemView instanceof DialogCell) {
@@ -2399,6 +2399,39 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         return getMessagesController().getStoriesController();
     }
 
+    /** AlfaGram: joriy teginish ekran chetidan boshlandimi (chat amali uchun). */
+    private boolean alfaEdgeTouch;
+
+    private boolean alfaTabsVisible() {
+        return filterTabsView != null && filterTabsView.getVisibility() == View.VISIBLE;
+    }
+
+    /** Teginish boshida: yo'nalish va chet zonasini aniqlash. Papkalar bo'lmasa — butun kenglik (chap yarmi o'ngga). */
+    private void alfaCheckSwipeEdge(float x) {
+        final float w = fragmentView != null ? fragmentView.getMeasuredWidth() : AndroidUtilities.displaySize.x;
+        if (w <= 0) {
+            alfaEdgeTouch = false;
+            return;
+        }
+        if (alfaTabsVisible()) {
+            final float edge = w * org.telegram.messenger.AlfaSwipe.EDGE;
+            alfaEdgeTouch = x <= edge || x >= w - edge;
+        } else {
+            alfaEdgeTouch = true;
+        }
+        org.telegram.messenger.AlfaSwipe.rightDir = x < w / 2f;
+    }
+
+    private boolean alfaSwipeBlocked() {
+        if (alfaTabsVisible() && !alfaEdgeTouch) {
+            return true; // o'rtadan surish — papka almashadi
+        }
+        if (folderId != 0 && org.telegram.messenger.AlfaSwipe.rightDir) {
+            return true; // arxivda faqat chapga surib arxivdan chiqariladi
+        }
+        return folderId == 0 && org.telegram.messenger.AlfaSwipe.current() == org.telegram.messenger.AlfaSwipe.NONE;
+    }
+
     private class SwipeController extends ItemTouchHelper.Callback {
 
         private RectF buttonInstance;
@@ -2441,7 +2474,8 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                         currentDialogsType = parentPage.dialogsAdapter.getDialogsType();
                     } catch (Exception ignore) {
                     }
-                    if ((filterTabsView != null && filterTabsView.getVisibility() == View.VISIBLE && SharedConfig.getChatSwipeAction(currentAccount) == SwipeGestureSettingsView.SWIPE_GESTURE_FOLDERS) || !allowSwipeDuringCurrentTouch || ((dialogId == getUserConfig().clientUserId || dialogId == 777000 || currentDialogsType == 7 || currentDialogsType == 8) && SharedConfig.getChatSwipeAction(currentAccount) == SwipeGestureSettingsView.SWIPE_GESTURE_ARCHIVE) || getMessagesController().isPromoDialog(dialogId, false) && getMessagesController().promoDialogType != MessagesController.PROMO_TYPE_PSA) {
+                    // AlfaGram: papkalar bo'lsa amal faqat chetdan; arxiv ichida faqat chapga (arxivdan chiqarish); amal o'chiq bo'lsa — surilmaydi
+                    if (alfaSwipeBlocked() || !allowSwipeDuringCurrentTouch || ((dialogId == getUserConfig().clientUserId || dialogId == 777000 || currentDialogsType == 7 || currentDialogsType == 8) && SharedConfig.getChatSwipeAction(currentAccount) == SwipeGestureSettingsView.SWIPE_GESTURE_ARCHIVE) || getMessagesController().isPromoDialog(dialogId, false) && getMessagesController().promoDialogType != MessagesController.PROMO_TYPE_PSA) {
                         return 0;
                     }
                     boolean canSwipeBack = folderId == 0 && (ChatObject.isCommunity(currentAccount, dialogId) || SharedConfig.getChatSwipeAction(currentAccount) == SwipeGestureSettingsView.SWIPE_GESTURE_MUTE || SharedConfig.getChatSwipeAction(currentAccount) == SwipeGestureSettingsView.SWIPE_GESTURE_READ || SharedConfig.getChatSwipeAction(currentAccount) == SwipeGestureSettingsView.SWIPE_GESTURE_PIN || SharedConfig.getChatSwipeAction(currentAccount) == SwipeGestureSettingsView.SWIPE_GESTURE_DELETE) && !rightSlidingDialogContainer.hasFragment();
@@ -2460,7 +2494,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                     swipeFolderBack = false;
                     swipingFolder = (canSwipeBack && !DialogObject.isFolderDialogId(dialogCell.getDialogId())) || (SharedConfig.archiveHidden && DialogObject.isFolderDialogId(dialogCell.getDialogId()));
                     dialogCell.setSliding(true);
-                    return makeMovementFlags(0, ItemTouchHelper.LEFT);
+                    return makeMovementFlags(0, org.telegram.messenger.AlfaSwipe.rightDir ? ItemTouchHelper.RIGHT : ItemTouchHelper.LEFT);
                 }
             }
             return 0;
