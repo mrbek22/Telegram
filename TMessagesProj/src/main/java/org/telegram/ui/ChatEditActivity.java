@@ -167,6 +167,7 @@ public class ChatEditActivity extends BaseFragment implements ImageUpdater.Image
     private TextCell adminCell;
     private TextCell blockCell;
     private TextCell logCell;
+    private TextCell alfaApkFilterCell;
     private TextCell channelAffiliateProgramsCell;
     private TextCell statsAndBoosts;
     private TextCell setAvatarCell;
@@ -1284,6 +1285,23 @@ public class ChatEditActivity extends BaseFragment implements ImageUpdater.Image
             }
             infoContainer.addView(adminCell, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
             infoContainer.addView(membersCell, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
+            if (org.telegram.messenger.AlfaApkGuard.canUseGroupFilter(currentChat)) {
+                // AlfaGram: shu guruh uchun APK filtri (faqat admin, faqat shu telefonda)
+                alfaApkFilterCell = new TextCell(context, 23, false, true, resourceProvider);
+                alfaApkFilterCell.setBackground(Theme.getSelectorDrawable(false));
+                alfaApkFilterCell.setTextAndCheckAndIcon(org.telegram.messenger.AlfaCyrillic.ui("APK filtri"),
+                        org.telegram.messenger.AlfaApkGuard.isGroupFilterOn(currentAccount, chatId), R.drawable.msg2_permissions, true);
+                alfaApkFilterCell.setOnClickListener(v -> {
+                    boolean on = !org.telegram.messenger.AlfaApkGuard.isGroupFilterOn(currentAccount, chatId);
+                    org.telegram.messenger.AlfaApkGuard.setGroupFilter(currentAccount, chatId, on);
+                    alfaApkFilterCell.setChecked(on);
+                    BulletinFactory.of(this).createSimpleBulletin(on ? R.raw.contact_check : R.raw.ic_delete,
+                            org.telegram.messenger.AlfaCyrillic.ui(on
+                                    ? "APK filtri yoqildi: a'zolar yuborgan APK hamma uchun avtomatik o'chiriladi"
+                                    : "APK filtri o'chirildi")).show();
+                });
+                infoContainer.addView(alfaApkFilterCell, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
+            }
             if (memberRequestsCell != null && info != null && info.requests_pending > 0) {
                 infoContainer.addView(memberRequestsCell, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
             }

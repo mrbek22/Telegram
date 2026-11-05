@@ -119,6 +119,12 @@ public class AlfaFeatures {
     /** Avto papkalar (Shaxsiy, Guruhlar, Kanallar, Botlar, O'qilmagan) — faqat shu qurilmada. */
     public static boolean autoFolders = true;
 
+    // ── Xavfsizlik ─────────────────────────────────
+    /** Chatlardan kelgan APK'ni o'rnatishni bloklash (sukut — yoqiq). */
+    public static boolean apkGuard = true;
+    /** Shubhali havolalarni ochishdan oldin ogohlantirish. */
+    public static boolean linkGuard = true;
+
     /** Barcha bayroq kalitlari (SharedPreferences kaliti = maydon nomi). */
     private static final String[] KEYS = {
             "antiDelete", "editHistory", "typingLog",
@@ -132,6 +138,7 @@ public class AlfaFeatures {
             "blockTelegramAds", "hideSponsoredMessages",
             "openLastChat", "debugLogs",
             "cyrillicUi", "sendCyrillic", "onlineTracker", "autoFolders",
+            "apkGuard", "linkGuard",
     };
 
     /** Foydalanuvchi tanlovi (server ta'sirisiz) — sozlamalar switch'i shuni ko'rsatadi. */
@@ -376,6 +383,8 @@ public class AlfaFeatures {
             case "sendCyrillic": return sendCyrillic;
             case "onlineTracker": return onlineTracker;
             case "autoFolders": return autoFolders;
+            case "apkGuard": return apkGuard;
+            case "linkGuard": return linkGuard;
             default: return false;
         }
     }
@@ -427,6 +436,8 @@ public class AlfaFeatures {
             case "sendCyrillic": sendCyrillic = value; break;
             case "onlineTracker": onlineTracker = value; break;
             case "autoFolders": autoFolders = value; break;
+            case "apkGuard": apkGuard = value; break;
+            case "linkGuard": linkGuard = value; break;
         }
     }
 }

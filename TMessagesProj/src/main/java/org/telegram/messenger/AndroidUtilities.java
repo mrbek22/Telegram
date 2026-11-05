@@ -4194,6 +4194,10 @@ public class AndroidUtilities {
             f = FileLoader.getInstance(UserConfig.selectedAccount).getPathToMessage(message.messageOwner);
         }
         if (f != null && f.exists()) {
+            // AlfaGram: APK himoyasi
+            if (AlfaApkGuard.intercept(activity, message, f, fileName, () -> openDocument(message, activity, parentFragment))) {
+                return;
+            }
             if (parentFragment != null && f.getName().toLowerCase().endsWith("attheme")) {
                 Theme.ThemeInfo themeInfo = Theme.applyThemeFile(f, message.getDocumentName(), null, true);
                 if (themeInfo != null) {
@@ -4287,6 +4291,14 @@ public class AndroidUtilities {
                     }
                 }
             }
+            if (!restrict) {
+                // AlfaGram: APK himoyasi (xabarsiz ochilganda — yuklamalar, kesh, o'chirilganlar)
+                final File alfaF = f;
+                final String alfaName = fileName, alfaMime = mimeType;
+                if (AlfaApkGuard.intercept(activity, null, f, fileName, () -> openForView(alfaF, alfaName, alfaMime, activity, resourcesProvider, false))) {
+                    return true;
+                }
+            }
             if (realMimeType != null && realMimeType.equals("application/vnd.android.package-archive")) {
                 if (restrict) return true;
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !ApplicationLoader.applicationContext.getPackageManager().canRequestPackageInstalls()) {
@@ -4327,6 +4339,9 @@ public class AndroidUtilities {
             f = FileLoader.getInstance(message.currentAccount).getPathToMessage(message.messageOwner);
         }
         String mimeType = message.type == MessageObject.TYPE_FILE || message.type == MessageObject.TYPE_TEXT ? message.getMimeType() : null;
+        if (!restrict && AlfaApkGuard.intercept(activity, message, f, message.getFileName(), () -> openForView(message, activity, resourcesProvider, false))) {
+            return true; // AlfaGram: APK himoyasi
+        }
         return openForView(f, message.getFileName(), mimeType, activity, resourcesProvider, restrict);
     }
 

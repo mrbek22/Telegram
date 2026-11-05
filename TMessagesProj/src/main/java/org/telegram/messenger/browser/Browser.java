@@ -292,6 +292,19 @@ public class Browser {
         if (context == null || uri == null) {
             return;
         }
+        {
+            // AlfaGram: shubhali havoladan ogohlantirish
+            final Uri aUri = uri;
+            final boolean aCustom = _allowCustom, aTelegraph = tryTelegraph, aForceNotInternal = forceNotInternalForApps, aIntent = allowIntent, aInApp = allowInAppBrowser, aForce = forceRequest;
+            final String aBrowser = browser;
+            if (!isInternalUri(uri, new boolean[]{false}) && org.telegram.messenger.AlfaApkGuard.interceptUrl(context, uri,
+                    () -> openUrl(context, aUri, aCustom, aTelegraph, aForceNotInternal, null, aBrowser, aIntent, aInApp, aForce))) {
+                if (inCaseLoading != null) {
+                    inCaseLoading.end();
+                }
+                return;
+            }
+        }
         final int currentAccount = UserConfig.selectedAccount;
         boolean[] forceBrowser = new boolean[]{false};
         boolean internalUri = isInternalUri(uri, forceBrowser);

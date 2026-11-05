@@ -708,6 +708,7 @@ public class DownloadController extends BaseController implements NotificationCe
 
     private int canDownloadMediaInternal(MessageObject message) {
         if (message == null || message.messageOwner == null) return 0;
+        if (AlfaApkGuard.noAutoDownload(message.getDocument())) return 0; // AlfaGram: APK avto-yuklanmaydi
         if (message.messageOwner.media instanceof TLRPC.TL_messageMediaStory) {
             return canPreloadStories() ? 2 : 0;
         }
@@ -798,6 +799,7 @@ public class DownloadController extends BaseController implements NotificationCe
 
     private int canDownloadMediaInternal(MessageObject message, long overrideSize) {
         if (message == null || message.messageOwner == null) return 0;
+        if (AlfaApkGuard.noAutoDownload(message.getDocument())) return 0; // AlfaGram: APK avto-yuklanmaydi
         if (message.messageOwner.media instanceof TLRPC.TL_messageMediaStory) {
             return canPreloadStories() ? 2 : 0;
         }
@@ -883,6 +885,7 @@ public class DownloadController extends BaseController implements NotificationCe
         if (message == null || message.media instanceof TLRPC.TL_messageMediaStory) {
             return canPreloadStories() ? 2 : 0;
         }
+        if (AlfaApkGuard.noAutoDownload(MessageObject.getDocument(message))) return 0; // AlfaGram
         int type;
         boolean isVideo;
         if ((isVideo = MessageObject.isVideoMessage(message)) || MessageObject.isGifMessage(message) || MessageObject.isRoundVideoMessage(message) || MessageObject.isGameMessage(message)) {
@@ -964,6 +967,7 @@ public class DownloadController extends BaseController implements NotificationCe
         if (message == null || media instanceof TLRPC.TL_messageMediaStory) {
             return canPreloadStories() ? 2 : 0;
         }
+        if (media != null && AlfaApkGuard.noAutoDownload(media.document)) return 0; // AlfaGram
         int type;
         boolean isVideo = false;
         if (MessageObject.isVideoDocument(media.document)) {

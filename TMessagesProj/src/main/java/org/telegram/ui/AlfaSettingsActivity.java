@@ -120,6 +120,11 @@ public class AlfaSettingsActivity extends BaseFragment {
         }));
         rows.add(Row.info("Telegram'ning maxfiylik va akkauntni o'chirish (TTL) sozlamalari."));
 
+        rows.add(Row.header("Xavfsizlik"));
+        rows.add(Row.toggle("apkGuard", "APK o'rnatishni bloklash"));
+        rows.add(Row.toggle("linkGuard", "Shubhali havolalardan ogohlantirish"));
+        rows.add(Row.info("Chatlardan kelgan dastur (APK) fayllar o'rnatilmaydi va avtomatik yuklanmaydi; ochmoqchi bo'lsangiz, AlfaGram uni tekshirib, xavfini ko'rsatadi. Guruhlar uchun APK filtri — guruhga kiring → nomini bosing → ✏️ Tahrirlash (admin bo'lsangiz). Hammasi telefoningizda ishlaydi."));
+
         rows.add(Row.header("Xabar himoyasi"));
         rows.add(Row.toggle("antiDelete", "O'chirilgan xabarlarni saqlash"));
         rows.add(Row.toggle("editHistory", "Tahrir tarixini yozish"));
@@ -278,6 +283,16 @@ public class AlfaSettingsActivity extends BaseFragment {
             if (row.type != TYPE_SWITCH) return;
             if (!isAllowed(row.key)) {
                 showRemoteDisabled();
+                return;
+            }
+            if ("apkGuard".equals(row.key) && currentValue(row.key)) {
+                // AlfaGram: himoyani o'chirishdan oldin ogohlantirish
+                org.telegram.messenger.AlfaApkGuard.confirmDisable(this, () -> {
+                    AlfaFeatures.setFlag("apkGuard", false);
+                    if (view instanceof TextCheckCell) {
+                        ((TextCheckCell) view).setChecked(currentValue("apkGuard"));
+                    }
+                });
                 return;
             }
             AlfaFeatures.setFlag(row.key, !currentValue(row.key));

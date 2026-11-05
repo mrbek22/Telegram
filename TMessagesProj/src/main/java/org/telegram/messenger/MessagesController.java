@@ -21963,6 +21963,9 @@ public class MessagesController extends BaseController implements NotificationCe
         if (messages == null || messages.isEmpty()) {
             return false;
         }
+        if (mode == 0) {
+            AlfaApkGuard.onNewMessages(currentAccount, dialogId, messages); // AlfaGram: guruhda APK filtri
+        }
         final boolean scheduled = mode == ChatActivity.MODE_SCHEDULED;
         final boolean quickReplies = mode == ChatActivity.MODE_QUICK_REPLIES;
 

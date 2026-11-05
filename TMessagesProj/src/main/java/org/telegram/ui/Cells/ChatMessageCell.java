@@ -12828,6 +12828,12 @@ public class ChatMessageCell extends BaseCell implements SeekBar.SeekBarDelegate
             String str = AndroidUtilities.formatFileSize(documentAttach.size) + " " + FileLoader.getDocumentExtension(documentAttach);
             infoWidth = Math.min(maxWidth - dp(30), (int) Math.ceil(Theme.chat_infoPaint.measureText("000.0 mm / " + AndroidUtilities.formatFileSize(documentAttach.size))));
             CharSequence str2 = TextUtils.ellipsize(str, Theme.chat_infoPaint, infoWidth, TextUtils.TruncateAt.END);
+            final CharSequence alfaApk = org.telegram.messenger.AlfaApkGuard.bubbleLabel(documentAttach);
+            if (alfaApk != null) {
+                // AlfaGram: APK fayl — qizil ogohlantirish
+                infoWidth = Math.max(infoWidth, Math.min(maxWidth - dp(10), (int) Math.ceil(Theme.chat_infoPaint.measureText(alfaApk.toString()))));
+                str2 = TextUtils.ellipsize(alfaApk, Theme.chat_infoPaint, infoWidth, TextUtils.TruncateAt.END);
+            }
             try {
                 if (infoWidth < 0) {
                     infoWidth = dp(10);
