@@ -185,6 +185,41 @@ public class DialogStoriesCell extends FrameLayout implements NotificationCenter
     BaseFragment fragment;
     private CharSequence currentTitle;
     private boolean hasOverlayText;
+    // AlfaGram — salomlashuv ("Xayrli tong, …"), AlfaGreeting
+    private boolean alfaGreetingActive;
+    private CharSequence alfaGreetingText;
+    private final Runnable alfaGreetingHide = this::alfaHideGreeting;
+
+    public void alfaShowGreeting(CharSequence text, long durationMs) {
+        if (text == null) {
+            return;
+        }
+        alfaGreetingText = text;
+        alfaGreetingActive = true;
+        if (!hasOverlayText) {
+            titleView.setText(text, !LocaleController.isRTL);
+            animatorHasTitleText.setValue(true, true);
+        }
+        org.telegram.messenger.AndroidUtilities.cancelRunOnUIThread(alfaGreetingHide);
+        org.telegram.messenger.AndroidUtilities.runOnUIThread(alfaGreetingHide, durationMs);
+    }
+
+    private void alfaHideGreeting() {
+        if (!alfaGreetingActive) {
+            return;
+        }
+        alfaGreetingActive = false;
+        alfaGreetingText = null;
+        if (!hasOverlayText) {
+            if (TextUtils.isEmpty(currentTitle)) {
+                // matn o'zgarmaydi — faqat silliq so'nib, logotip qaytadi
+                animatorHasTitleText.setValue(false, true);
+            } else {
+                titleView.setText(currentTitle, !LocaleController.isRTL);
+                animatorHasTitleText.setValue(true, true);
+            }
+        }
+    }
     private int overlayTextId;
     private SpannableStringBuilder uploadingString;
     private ValueAnimator textAnimator;
@@ -654,11 +689,11 @@ public class DialogStoriesCell extends FrameLayout implements NotificationCenter
                 LocaleController.formatPluralString("Stories", totalCount);
         }
 
-        if (!hasOverlayText) {
+        if (!hasOverlayText && !alfaGreetingActive) {
             titleView.setText(currentTitle, animated && !LocaleController.isRTL);
         }
 
-        animatorHasTitleText.setValue(!TextUtils.isEmpty(currentTitle) || hasOverlayText, animated);
+        animatorHasTitleText.setValue(!TextUtils.isEmpty(currentTitle) || hasOverlayText || alfaGreetingActive, animated);
 
         miniItems.clear();
         for (int i = 0; i < items.size(); i++) {
@@ -1338,10 +1373,10 @@ public class DialogStoriesCell extends FrameLayout implements NotificationCenter
         } else {
             hasOverlayText = false;
             overlayTextId = 0;
-            titleView.setText(currentTitle, !LocaleController.isRTL);
+            titleView.setText(alfaGreetingActive ? alfaGreetingText : currentTitle, !LocaleController.isRTL);
         }
 
-        animatorHasTitleText.setValue(hasOverlayText, true);
+        animatorHasTitleText.setValue(hasOverlayText || alfaGreetingActive, true);
         if (hasEllipsizedText) {
             ellipsizeSpanAnimator.addView(titleView);
         } else {

@@ -6791,6 +6791,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
     protected void onPause() {
         super.onPause();
         isResumed = false;
+        org.telegram.messenger.AlfaGreeting.onAppPaused();
         pipActivityHandler.onPause();
         NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.stopAllHeavyOperations, 4096);
         ApplicationLoader.mainInterfacePaused = true;
@@ -7023,6 +7024,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
     protected void onResume() {
         super.onResume();
         isResumed = true;
+        org.telegram.messenger.AlfaGreeting.onAppResumed();
         pipActivityHandler.onResume();
         if (onResumeStaticCallback != null) {
             onResumeStaticCallback.run();

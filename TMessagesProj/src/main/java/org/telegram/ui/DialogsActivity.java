@@ -7104,6 +7104,22 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         }
     }
 
+    /** AlfaGram: parol ekrani ochiq bo'lsa, qulf ochilguncha kutadi (30 s gacha). */
+    private void alfaScheduleGreeting(int attempt) {
+        AndroidUtilities.runOnUIThread(() -> {
+            if (dialogStoriesCell == null || getParentActivity() == null || isPaused) {
+                return;
+            }
+            if (org.telegram.messenger.SharedConfig.appLocked) {
+                if (attempt < 60) {
+                    alfaScheduleGreeting(attempt + 1);
+                }
+                return;
+            }
+            dialogStoriesCell.alfaShowGreeting(org.telegram.messenger.AlfaGreeting.text(currentAccount), org.telegram.messenger.AlfaGreeting.SHOW_MS);
+        }, attempt == 0 ? 450 : 500);
+    }
+
     @Override
     public void onResume() {
         super.onResume();
@@ -7111,6 +7127,11 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         if (!onlySelect && folderId == 0 && communityId == 0) {
             org.telegram.messenger.AlfaUpdate.onMainScreen(this);
             org.telegram.messenger.AlfaReview.onMainScreen(this);
+            // AlfaGram — salomlashuv faqat ilovaga kirganda; birinchi ochilishda 3 ta slayd
+            if (dialogStoriesCell != null && org.telegram.messenger.AlfaGreeting.consume()) {
+                alfaScheduleGreeting(0);
+            }
+            AlfaOnboardingSheet.maybeShow(this);
             org.telegram.messenger.AlfaAds.onTransition(getParentActivity());
             // AlfaGram — xabar menyusidagi "Tarjima" tugmasi sukut bo'yicha yoqiladi (har akkauntda bir marta)
             try {
