@@ -17,7 +17,7 @@ import org.telegram.tgnet.TLRPC;
 import org.telegram.ui.ActionBar.AlertDialog;
 import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.ActionBar.Theme;
-import org.telegram.ui.AlfaSettingsActivity;
+import org.telegram.ui.AlfaApkSettingsActivity;
 import org.telegram.ui.LaunchActivity;
 
 import java.io.File;
@@ -429,7 +429,7 @@ public final class AlfaApkGuard {
         try {
             BaseFragment f = LaunchActivity.getSafeLastFragment();
             if (f != null) {
-                f.presentFragment(new AlfaSettingsActivity());
+                f.presentFragment(new AlfaApkSettingsActivity());
             }
         } catch (Throwable e) {
             FileLog.e(e);

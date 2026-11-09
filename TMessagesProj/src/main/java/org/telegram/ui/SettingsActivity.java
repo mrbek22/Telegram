@@ -723,6 +723,8 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
         items.add(SettingCell.Factory.of(8, IconBackgroundColors.BLUE.top, IconBackgroundColors.BLUE.bottom, R.drawable.settings_devices, getString(R.string.SettingsDevices), getString(R.string.SettingsDevicesInfo)));
         items.add(SettingCell.Factory.of(9, IconBackgroundColors.ORANGE_DEEP.top, IconBackgroundColors.ORANGE_DEEP.bottom, R.drawable.settings_power, getString(R.string.SettingsPowerSaving), getString(R.string.SettingsPowerSavingInfo)));
         items.add(SettingCell.Factory.of(10, IconBackgroundColors.GREEN.top, IconBackgroundColors.GREEN.bottom, R.drawable.settings_language, getString(R.string.SettingsLanguage), LocaleController.getCurrentLanguageName()));
+        // AlfaGram — rasmiy yordam guruhi
+        items.add(SettingCell.Factory.of(104, IconBackgroundColors.CYAN.top, IconBackgroundColors.BLUE.bottom, R.drawable.settings_ask, org.telegram.messenger.AlfaCyrillic.ui("Yordam guruhi"), org.telegram.messenger.AlfaCyrillic.ui("Savol, taklif va xatolar — @alfagram_chat")));
 
         items.add(UItem.asShadow(null));
 
@@ -891,6 +893,9 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
                 UserSelectorBottomSheet.open(0, BirthdayController.getInstance(UserConfig.selectedAccount).getState());
                 break;
 
+            case 104:
+                Browser.openUrl(getParentActivity(), "https://t.me/alfagram_chat");
+                break;
             case 17:
                 showDialog(AlertsCreator.createSupportAlert(this, resourceProvider));
                 break;

@@ -496,7 +496,7 @@ public class PrivacySettingsActivity extends BaseFragment implements Notificatio
                     PasskeysActivity.showLearnSheet(context, currentAccount, resourceProvider, true);
                 }
             } else if (position == alfaApkRow) {
-                presentFragment(new AlfaSettingsActivity());
+                presentFragment(new AlfaApkSettingsActivity());
             } else if (position == passcodeRow) {
                 presentFragment(PasscodeActivity.determineOpenFragment());
             } else if (position == secretWebpageRow) {

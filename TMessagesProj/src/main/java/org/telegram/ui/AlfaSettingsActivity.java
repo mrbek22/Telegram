@@ -120,10 +120,7 @@ public class AlfaSettingsActivity extends BaseFragment {
         }));
         rows.add(Row.info("Telegram'ning maxfiylik va akkauntni o'chirish (TTL) sozlamalari."));
 
-        rows.add(Row.header("Xavfsizlik"));
-        rows.add(Row.toggle("apkGuard", "APK o'rnatishni bloklash"));
-        rows.add(Row.toggle("linkGuard", "Shubhali havolalardan ogohlantirish"));
-        rows.add(Row.info("Chatlardan kelgan dastur (APK) fayllar o'rnatilmaydi va avtomatik yuklanmaydi; ochmoqchi bo'lsangiz, AlfaGram uni tekshirib, xavfini ko'rsatadi. Guruhlar uchun APK filtri — guruhga kiring → nomini bosing → ✏️ Tahrirlash (admin bo'lsangiz). Hammasi telefoningizda ishlaydi."));
+        // APK va havola himoyasi — faqat Maxfiylik va xavfsizlik → APK himoyasi (AlfaApkSettingsActivity)
 
         rows.add(Row.header("Xabar himoyasi"));
         rows.add(Row.toggle("antiDelete", "O'chirilgan xabarlarni saqlash"));
