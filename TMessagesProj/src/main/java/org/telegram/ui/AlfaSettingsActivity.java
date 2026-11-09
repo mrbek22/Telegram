@@ -40,6 +40,7 @@ public class AlfaSettingsActivity extends BaseFragment {
     private static final int TYPE_ACTION = 3;
     private static final int TYPE_HERO = 4;
     private static final int TYPE_QUICK = 5;
+    private static final int TYPE_CATEGORY = 6;
 
     // Tezkor kafellar: kalit, nom, ikonka, gradient
     private static final String[] QUICK_KEYS = { "ghostMode", "stealthStories", "noReadReceipts" };
@@ -55,6 +56,12 @@ public class AlfaSettingsActivity extends BaseFragment {
         final String title;
         final String info;
         final Runnable action;
+        // TYPE_CATEGORY uchun
+        int category;
+        int icon;
+        int color1;
+        int color2;
+        String value;
 
         static Row header(String title) { return new Row(TYPE_HEADER, null, title, null, null); }
         static Row info(String text)    { return new Row(TYPE_INFO, null, null, text, null); }
@@ -72,131 +79,238 @@ public class AlfaSettingsActivity extends BaseFragment {
 
     private final ArrayList<Row> rows = new ArrayList<>();
 
+    // ── Bo'limlar (bosh sahifada rangli qatorlar, har biri alohida ekran) ──
+    private static final int CAT_MAIN = 0;
+    private static final int CAT_PRIVACY = 1;
+    private static final int CAT_MESSAGES = 2;
+    private static final int CAT_CHATS = 3;
+    private static final int CAT_UNLOCK = 4;
+    private static final int CAT_LOOK = 5;
+    private static final int CAT_TRACK = 6;
+    private static final int CAT_ABOUT = 7;
+
+    private final int category;
+
+    public AlfaSettingsActivity() {
+        this(CAT_MAIN);
+    }
+
+    public AlfaSettingsActivity(int category) {
+        this.category = category;
+    }
+
+    private static String categoryTitle(int cat) {
+        switch (cat) {
+            case CAT_PRIVACY: return "Maxfiylik va Ghost";
+            case CAT_MESSAGES: return "Xabarlar";
+            case CAT_CHATS: return "Chatlar ro'yxati";
+            case CAT_UNLOCK: return "Cheklovlarsiz";
+            case CAT_LOOK: return "Ko'rinish va til";
+            case CAT_TRACK: return "Kuzatuv";
+            case CAT_ABOUT: return "Ilova haqida";
+            default: return "AlfaGram sozlamalari";
+        }
+    }
+
+    private static String categorySubtitle(int cat) {
+        switch (cat) {
+            case CAT_PRIVACY: return "Ghost, anonim story, o'qildi belgisi";
+            case CAT_MESSAGES: return "O'chirilgan xabarlar, tahrir tarixi, yuborish";
+            case CAT_CHATS: return "Avto papkalar, surish, ixcham ro'yxat";
+            case CAT_UNLOCK: return "Saqlash, forward, reklama, media";
+            case CAT_LOOK: return "Kirill alifbosi, ikonka, animatsiyalar";
+            case CAT_TRACK: return "Onlayn tarixi, profil o'zgarishlari";
+            case CAT_ABOUT: return "Ulashish, yangiliklar, sayt";
+            default: return "";
+        }
+    }
+
+    private void addCategory(int cat, int icon, int color1, int color2) {
+        Row r = new Row(TYPE_CATEGORY, null, categoryTitle(cat), categorySubtitle(cat), null);
+        r.category = cat;
+        r.icon = icon;
+        r.color1 = color1;
+        r.color2 = color2;
+        r.value = categoryCounter(cat);
+        rows.add(r);
+    }
+
+    /** Bo'limdagi yoqilgan switch'lar soni / jami ("3/5"). */
+    private String categoryCounter(int cat) {
+        ArrayList<Row> tmp = new ArrayList<>();
+        buildCategoryRows(cat, tmp);
+        int on = 0, total = 0;
+        for (Row r : tmp) {
+            if (r.type == TYPE_SWITCH) {
+                total++;
+                if (currentValue(r.key)) on++;
+            }
+        }
+        return total == 0 ? "" : on + "/" + total;
+    }
+
     private void buildRows() {
         rows.clear();
+        if (category == CAT_MAIN) {
+            rows.add(new Row(TYPE_HERO, null, null, null, null));
+            rows.add(Row.header("Tezkor"));
+            rows.add(new Row(TYPE_QUICK, null, null, null, null));
+            rows.add(Row.info("Ghost — onlayn/yozyapman signali ketmaydi. Story — anonim ko'rish. O'qildi — o'qish tasdig'i yuborilmaydi."));
 
-        rows.add(new Row(TYPE_HERO, null, null, null, null));
-        rows.add(Row.header("Tezkor"));
-        rows.add(new Row(TYPE_QUICK, null, null, null, null));
-        rows.add(Row.info("Ghost — onlayn/yozyapman signali ketmaydi. Story — anonim ko'rish. O'qildi — o'qish tasdig'i yuborilmaydi."));
+            rows.add(Row.header("Bo'limlar"));
+            addCategory(CAT_PRIVACY, R.drawable.alfa_ic_ghost, 0xFF0034B6, 0xFF2563EB);
+            addCategory(CAT_MESSAGES, R.drawable.alfa_ic_deleted, 0xFFEC4899, 0xFFF97316);
+            addCategory(CAT_CHATS, R.drawable.alfa_ic_folders, 0xFF10B981, 0xFF06B6D4);
+            addCategory(CAT_UNLOCK, R.drawable.alfa_ic_saved, 0xFFF59E0B, 0xFFEF4444);
+            addCategory(CAT_LOOK, R.drawable.alfa_ic_language, 0xFF7C3AED, 0xFFEC4899);
+            addCategory(CAT_TRACK, R.drawable.alfa_ic_stealth, 0xFF06B6D4, 0xFF6366F1);
+            addCategory(CAT_ABOUT, R.drawable.alfa_ic_alfagram, AlfaFeatures.BRAND_START, AlfaFeatures.BRAND_END);
+            rows.add(Row.info("Har bir bo'limni oching — ichida o'sha mavzudagi barcha sozlamalar."));
 
-        rows.add(Row.header("Yangi"));
-        rows.add(Row.action("Oy yakuni (AlfaGram Wrapped)", () -> {
-            if (getParentActivity() != null) {
-                showDialog(new org.telegram.ui.Components.AlfaWrappedSheet(getParentActivity(), currentAccount));
-            }
-        }));
-        rows.add(Row.action("Ilova ikonkasini tanlash", () -> presentFragment(new ThemeActivity(ThemeActivity.THEME_TYPE_BASIC))));
-        rows.add(Row.info("Wrapped — oy davomida kim bilan ko'p yozishganingiz, faol soatingiz va sevimli emojilaringiz. Ikonkalar: Oq, Qora, Oltin, Binafsha, Neon — hammasi bepul."));
-
-        rows.add(Row.header("Papkalar"));
-        rows.add(Row.toggle("autoFolders", "Avto papkalar"));
-        rows.add(Row.info("Shaxsiy, Guruhlar, Kanallar, Botlar va O'qilmagan papkalari. Ular faqat AlfaGram'da, shu telefonda ko'rinadi — boshqa Telegram ilovalarida chiqmaydi."));
-
-        rows.add(Row.header("Til"));
-        rows.add(Row.toggle("cyrillicUi", "Kirill alifbosi (Ўзбекча)"));
-        rows.add(Row.toggle("sendCyrillic", "Lotincha yozsam, kirillda yuborilsin"));
-        rows.add(Row.info("O'zbek tili tanlangan bo'lsa, butun ilova kirillda ko'rinadi. Xabarni bosib ushlab, matnni kirill ↔ lotinga o'girish ham mumkin."));
-
-        rows.add(Row.header("Kuzatuv"));
-        rows.add(Row.toggle("onlineTracker", "Kontaktlar onlayn tarixini yozish"));
-        rows.add(Row.info("Profil → ⋮ → «Onlayn tarixi»: kontakt qachon va qancha vaqt onlayn bo'lgani. Ilova internetga ulangan paytdagi holatlar yoziladi."));
-
-        rows.add(Row.header("Ilova qulfi"));
-        rows.add(Row.action("PIN kod sozlash", () -> {
-            try {
-                presentFragment(new PasscodeActivity(PasscodeActivity.TYPE_SETUP_CODE));
-            } catch (Throwable ignore) {
-            }
-        }));
-        rows.add(Row.info("Ilova ochilganda PIN so'raladi. Kimdir ilovangizni ochsa, xabarlaringizni ko'ra olmaydi."));
-
-        rows.add(Row.header("Akkaunt boshqaruvi"));
-        rows.add(Row.action("Maxfiylik va akkauntni o'chirish", () -> {
-            try {
-                presentFragment(new PrivacySettingsActivity());
-            } catch (Throwable ignore) {
-            }
-        }));
-        rows.add(Row.info("Telegram'ning maxfiylik va akkauntni o'chirish (TTL) sozlamalari."));
-
-        // APK va havola himoyasi — faqat Maxfiylik va xavfsizlik → APK himoyasi (AlfaApkSettingsActivity)
-
-        rows.add(Row.header("Xabar himoyasi"));
-        rows.add(Row.toggle("antiDelete", "O'chirilgan xabarlarni saqlash"));
-        rows.add(Row.toggle("editHistory", "Tahrir tarixini yozish"));
-        rows.add(Row.toggle("typingLog", "Yozdi-yubormadi jurnali"));
-        rows.add(Row.info("Kim yozib, o'chirsa yoki tahrirlagan bo'lsa — hammasi sizda qoladi. Long-press bilan tarixni ko'ring."));
-
-        rows.add(Row.header("Xabar yuborish"));
-        rows.add(Row.toggle("confirmSend", "Yuborishdan oldin tasdiq"));
-        rows.add(Row.toggle("sendByEnter", "Enter tugmasi bilan yuborish"));
-        rows.add(Row.toggle("silentByDefault", "Sukut (silent) rejim'da"));
-        rows.add(Row.info("Yuborishni tezlashtiring yoki tasodifiy yuborishning oldini oling."));
-
-        rows.add(Row.header("Cheklovlarsiz"));
-        rows.add(Row.toggle("unrestrictedSave", "Cheklovlarsiz saqlash/forward"));
-        rows.add(Row.toggle("allowScreenshots", "Screenshotga ruxsat"));
-        rows.add(Row.toggle("unlimitedPins", "Cheksiz pin"));
-        rows.add(Row.toggle("forwardWithoutAuthor", "Forward — muallifsiz"));
-        rows.add(Row.toggle("forwardWithoutReply", "Forward — izohsiz (caption'siz)"));
-        rows.add(Row.info("Telegram'ning standart cheklovlarini olib tashlash."));
-
-        rows.add(Row.header("Chat ro'yxati"));
-        rows.add(Row.toggle("hideStories", "Storieslar qatorini yashirish"));
-        rows.add(Row.toggle("hideMuted", "Ovozsiz chatlarni yashirish"));
-        rows.add(Row.toggle("compactChats", "Ixcham (2 qatorli) chat ro'yxati"));
-        rows.add(Row.action("Chapga surish: " + org.telegram.messenger.AlfaSwipe.name(org.telegram.messenger.AlfaSwipe.leftAction()), () -> showSwipePicker(false)));
-        rows.add(Row.action("O'ngga surish: " + org.telegram.messenger.AlfaSwipe.name(org.telegram.messenger.AlfaSwipe.rightAction()), () -> showSwipePicker(true)));
-        rows.add(Row.info("Chatni o'ng chetdan chapga yoki chap chetdan o'ngga torting — tanlangan amal bajariladi. O'rtadan surish papkani almashtiradi."));
-
-        rows.add(Row.header("Chat ichida"));
-        rows.add(Row.action("Ikki marta bosish: " + AlfaFeatures.DOUBLE_TAP_NAMES[AlfaFeatures.getDoubleTapAction()], this::showDoubleTapPicker));
-        rows.add(Row.toggle("showMessageIds", "Xabar menyusida ID nusxalash"));
-        rows.add(Row.toggle("swipeToReply", "Chapga siljitib javob"));
-        rows.add(Row.toggle("disableStickerSuggest", "Stiker taklifini o'chirish"));
-        rows.add(Row.toggle("fastSendAnimation", "Tez yuborish animatsiyasi"));
-        rows.add(Row.info("Xabarni bosib ushlang — menyuda «ID nusxalash» chiqadi."));
-
-        rows.add(Row.header("Maxfiylik"));
-        rows.add(Row.toggle("ghostMode", "Ghost mode (onlayn, o'qildi, yozyapti yashirin)"));
-        rows.add(Row.toggle("stealthStories", "Anonim story ko'rish"));
-        rows.add(Row.toggle("noReadReceipts", "O'qish tasdig'ini yubormaslik"));
-        rows.add(Row.toggle("hidePhoneInSettings", "Sozlamalarda telefonni yashirish"));
-        rows.add(Row.toggle("blurAppInRecents", "Recent apps'da ilovani yashirish"));
-        rows.add(Row.info("Sizdan hech qanday signal ketmaydi va hech kim sizni kuzatolmaydi."));
-
-        rows.add(Row.header("Ko'rinish"));
-        rows.add(Row.toggle("showIdInProfile", "Profilda ID ko'rinsin"));
-        rows.add(Row.toggle("hideSeenTicks", "Ko'rildi belgisini yashirish"));
-        rows.add(Row.toggle("disableAnimations", "Barcha animatsiyalarni o'chirish"));
-
-        rows.add(Row.header("Media"));
-        rows.add(Row.toggle("autoSaveVoice", "Barcha ovozli xabarlarni saqlash"));
-        rows.add(Row.toggle("autoSaveVideoNotes", "Barcha video-notelarni saqlash"));
-        rows.add(Row.info("Kelgan media avtomatik telefoningizga tushiriladi."));
-
-        rows.add(Row.header("Reklama"));
-        rows.add(Row.toggle("blockTelegramAds", "Telegram reklamalarini bloklash"));
-        rows.add(Row.toggle("hideSponsoredMessages", "\"Homiylik\" xabarlarni yashirish"));
-
-        rows.add(Row.header("Ilova"));
-        rows.add(Row.toggle("openLastChat", "Ochilganda so'nggi chatga o'tish"));
-        rows.add(Row.toggle("debugLogs", "Debug loglar"));
-
-        rows.add(Row.header("Ilova haqida"));
-        rows.add(Row.action("Do'stlarga ulashish", this::shareAlfaGram));
-        rows.add(Row.action("Yangi nimalar?", () -> org.telegram.messenger.AlfaWhatsNew.show(this, true)));
-        rows.add(Row.action("Maxfiylik siyosati", () -> openLink("https://alfagram.uz/privacy")));
-        rows.add(Row.action("Hisob va ma'lumotlarni o'chirish", () -> openLink("https://alfagram.uz/delete-account")));
-        rows.add(Row.action("Sayt: alfagram.uz", () -> openLink("https://alfagram.uz")));
-        String version = "";
-        try {
-            android.content.Context c = org.telegram.messenger.ApplicationLoader.applicationContext;
-            version = c.getPackageManager().getPackageInfo(c.getPackageName(), 0).versionName;
-        } catch (Throwable ignore) {
+            rows.add(Row.header("Yangi"));
+            rows.add(Row.action("Oy yakuni (AlfaGram Wrapped)", () -> {
+                if (getParentActivity() != null) {
+                    showDialog(new org.telegram.ui.Components.AlfaWrappedSheet(getParentActivity(), currentAccount));
+                }
+            }));
+            rows.add(Row.info("Oy davomida kim bilan ko'p yozishganingiz, faol soatingiz va sevimli emojilaringiz."));
+            return;
         }
-        rows.add(Row.info("AlfaGram " + version + " — Telegram API asosidagi norasmiy klient. Telegram bilan bog'liq emas."));
+        buildCategoryRows(category, rows);
+    }
+
+    private void buildCategoryRows(int cat, ArrayList<Row> out) {
+        switch (cat) {
+            case CAT_PRIVACY:
+                out.add(Row.header("Ko'rinmaslik"));
+                out.add(Row.toggle("ghostMode", "Ghost mode (onlayn, o'qildi, yozyapti yashirin)"));
+                out.add(Row.toggle("stealthStories", "Anonim story ko'rish"));
+                out.add(Row.toggle("noReadReceipts", "O'qish tasdig'ini yubormaslik"));
+                out.add(Row.info("Sizdan hech qanday signal ketmaydi va hech kim sizni kuzatolmaydi."));
+
+                out.add(Row.header("Telefoningizda"));
+                out.add(Row.toggle("hidePhoneInSettings", "Sozlamalarda telefonni yashirish"));
+                out.add(Row.toggle("blurAppInRecents", "Recent apps'da ilovani yashirish"));
+                out.add(Row.action("PIN kod sozlash", () -> {
+                    try {
+                        presentFragment(new PasscodeActivity(PasscodeActivity.TYPE_SETUP_CODE));
+                    } catch (Throwable ignore) {
+                    }
+                }));
+                out.add(Row.action("Maxfiylik va akkauntni o'chirish", () -> {
+                    try {
+                        presentFragment(new PrivacySettingsActivity());
+                    } catch (Throwable ignore) {
+                    }
+                }));
+                out.add(Row.info("PIN — ilova ochilganda kod so'raladi. APK himoyasi: Maxfiylik va xavfsizlik → APK himoyasi."));
+                break;
+
+            case CAT_MESSAGES:
+                out.add(Row.header("Xabar himoyasi"));
+                out.add(Row.toggle("antiDelete", "O'chirilgan xabarlarni saqlash"));
+                out.add(Row.toggle("editHistory", "Tahrir tarixini yozish"));
+                out.add(Row.toggle("typingLog", "Yozdi-yubormadi jurnali"));
+                out.add(Row.info("Kim yozib, o'chirsa yoki tahrirlagan bo'lsa — hammasi sizda qoladi. Xabarni bosib turib tarixni ko'ring."));
+
+                out.add(Row.header("Xabar yuborish"));
+                out.add(Row.toggle("confirmSend", "Yuborishdan oldin tasdiq"));
+                out.add(Row.toggle("sendByEnter", "Enter tugmasi bilan yuborish"));
+                out.add(Row.toggle("silentByDefault", "Sukut (silent) rejimda"));
+                out.add(Row.info("Yuborishni tezlashtiring yoki tasodifiy yuborishning oldini oling."));
+
+                out.add(Row.header("Chat ichida"));
+                out.add(Row.action("Ikki marta bosish: " + AlfaFeatures.DOUBLE_TAP_NAMES[AlfaFeatures.getDoubleTapAction()], this::showDoubleTapPicker));
+                out.add(Row.toggle("showMessageIds", "Xabar menyusida ID nusxalash"));
+                out.add(Row.toggle("swipeToReply", "Chapga siljitib javob"));
+                out.add(Row.toggle("disableStickerSuggest", "Stiker taklifini o'chirish"));
+                out.add(Row.toggle("fastSendAnimation", "Tez yuborish animatsiyasi"));
+                out.add(Row.info("Xabarni bosib ushlang — menyuda «ID nusxalash» chiqadi."));
+                break;
+
+            case CAT_CHATS:
+                out.add(Row.header("Papkalar"));
+                out.add(Row.toggle("autoFolders", "Avto papkalar"));
+                out.add(Row.info("Shaxsiy, Guruhlar, Kanallar, Botlar va O'qilmagan papkalari. Ular faqat AlfaGram'da, shu telefonda ko'rinadi."));
+
+                out.add(Row.header("Ro'yxat"));
+                out.add(Row.toggle("hideStories", "Storieslar qatorini yashirish"));
+                out.add(Row.toggle("hideMuted", "Ovozsiz chatlarni yashirish"));
+                out.add(Row.toggle("compactChats", "Ixcham (2 qatorli) chat ro'yxati"));
+                out.add(Row.toggle("openLastChat", "Ochilganda so'nggi chatga o'tish"));
+
+                out.add(Row.header("Surish"));
+                out.add(Row.action("Chapga surish: " + org.telegram.messenger.AlfaSwipe.name(org.telegram.messenger.AlfaSwipe.leftAction()), () -> showSwipePicker(false)));
+                out.add(Row.action("O'ngga surish: " + org.telegram.messenger.AlfaSwipe.name(org.telegram.messenger.AlfaSwipe.rightAction()), () -> showSwipePicker(true)));
+                out.add(Row.info("Chatni o'ng chetdan chapga yoki chap chetdan o'ngga torting — tanlangan amal bajariladi. O'rtadan surish papkani almashtiradi."));
+                break;
+
+            case CAT_UNLOCK:
+                out.add(Row.header("Saqlash va forward"));
+                out.add(Row.toggle("unrestrictedSave", "Cheklovlarsiz saqlash/forward"));
+                out.add(Row.toggle("allowScreenshots", "Screenshotga ruxsat"));
+                out.add(Row.toggle("unlimitedPins", "Cheksiz pin"));
+                out.add(Row.toggle("forwardWithoutAuthor", "Forward — muallifsiz"));
+                out.add(Row.toggle("forwardWithoutReply", "Forward — izohsiz (caption'siz)"));
+                out.add(Row.info("Telegram'ning standart cheklovlarini olib tashlash."));
+
+                out.add(Row.header("Media"));
+                out.add(Row.toggle("autoSaveVoice", "Barcha ovozli xabarlarni saqlash"));
+                out.add(Row.toggle("autoSaveVideoNotes", "Barcha video-notelarni saqlash"));
+                out.add(Row.info("Kelgan media avtomatik telefoningizga tushiriladi."));
+
+                out.add(Row.header("Reklama"));
+                out.add(Row.toggle("blockTelegramAds", "Telegram reklamalarini bloklash"));
+                out.add(Row.toggle("hideSponsoredMessages", "\"Homiylik\" xabarlarni yashirish"));
+                break;
+
+            case CAT_LOOK:
+                out.add(Row.header("Til"));
+                out.add(Row.toggle("cyrillicUi", "Kirill alifbosi (Ўзбекча)"));
+                out.add(Row.toggle("sendCyrillic", "Lotincha yozsam, kirillda yuborilsin"));
+                out.add(Row.info("Kirillni Sozlamalar → Til → «Ўзбекча (кирилл)» orqali ham tanlash mumkin. Xabarni bosib ushlab, matnni kirill ↔ lotinga o'girish ham mumkin."));
+
+                out.add(Row.header("Ko'rinish"));
+                out.add(Row.action("Ilova ikonkasini tanlash", () -> presentFragment(new ThemeActivity(ThemeActivity.THEME_TYPE_BASIC))));
+                out.add(Row.toggle("showIdInProfile", "Profilda ID ko'rinsin"));
+                out.add(Row.toggle("hideSeenTicks", "Ko'rildi belgisini yashirish"));
+                out.add(Row.toggle("disableAnimations", "Barcha animatsiyalarni o'chirish"));
+                out.add(Row.info("Ikonkalar: Oq, Qora, Oltin, Binafsha, Neon — hammasi bepul."));
+                break;
+
+            case CAT_TRACK:
+                out.add(Row.header("Onlayn tarixi"));
+                out.add(Row.toggle("onlineTracker", "Kontaktlar onlayn tarixini yozish"));
+                out.add(Row.info("Profil → ⋮ → «Onlayn tarixi»: kontakt qachon va qancha vaqt onlayn bo'lgani."));
+
+                out.add(Row.header("Profil o'zgarishlari"));
+                out.add(Row.toggle("profileLog", "Username, rasm va raqam o'zgarishlarini yozish"));
+                out.add(Row.action("Profil o'zgarishlarini ko'rish", () -> presentFragment(new AlfaProfileLogActivity())));
+                out.add(Row.info("Kontaktlar → «Profil o'zgarishlari» bo'limida ham bor. Ma'lumot faqat telefoningizda saqlanadi."));
+                break;
+
+            case CAT_ABOUT:
+                out.add(Row.header("AlfaGram"));
+                out.add(Row.action("Do'stlarga ulashish", this::shareAlfaGram));
+                out.add(Row.action("Yangi nimalar?", () -> org.telegram.messenger.AlfaWhatsNew.show(this, true)));
+                out.add(Row.action("Yordam guruhi (@alfagram_chat)", () -> openLink("https://t.me/alfagram_chat")));
+                out.add(Row.action("Sayt: alfagram.uz", () -> openLink("https://alfagram.uz")));
+
+                out.add(Row.header("Hujjatlar"));
+                out.add(Row.action("Maxfiylik siyosati", () -> openLink("https://alfagram.uz/privacy")));
+                out.add(Row.action("Hisob va ma'lumotlarni o'chirish", () -> openLink("https://alfagram.uz/delete-account")));
+
+                out.add(Row.header("Dasturchilar uchun"));
+                out.add(Row.toggle("debugLogs", "Debug loglar"));
+                String version = "";
+                try {
+                    android.content.Context c = org.telegram.messenger.ApplicationLoader.applicationContext;
+                    version = c.getPackageManager().getPackageInfo(c.getPackageName(), 0).versionName;
+                } catch (Throwable ignore) {
+                }
+                out.add(Row.info("AlfaGram " + version + " — Telegram API asosidagi norasmiy klient. Telegram bilan bog'liq emas."));
+                break;
+        }
     }
 
     private static CharSequence[] alfaUiArray(String[] src) {
@@ -251,7 +365,7 @@ public class AlfaSettingsActivity extends BaseFragment {
 
         actionBar.setBackButtonImage(R.drawable.ic_ab_back);
         actionBar.setAllowOverlayTitle(true);
-        actionBar.setTitle(org.telegram.messenger.AlfaCyrillic.ui("AlfaGram sozlamalari"));
+        actionBar.setTitle(org.telegram.messenger.AlfaCyrillic.ui(categoryTitle(category)));
         actionBar.setActionBarMenuOnItemClick(new ActionBar.ActionBarMenuOnItemClick() {
             @Override
             public void onItemClick(int id) {
@@ -273,6 +387,10 @@ public class AlfaSettingsActivity extends BaseFragment {
         listView.setOnItemClickListener((view, position) -> {
             if (position < 0 || position >= rows.size()) return;
             Row row = rows.get(position);
+            if (row.type == TYPE_CATEGORY) {
+                presentFragment(new AlfaSettingsActivity(row.category));
+                return;
+            }
             if (row.type == TYPE_ACTION) {
                 if (row.action != null) row.action.run();
                 return;
@@ -300,7 +418,7 @@ public class AlfaSettingsActivity extends BaseFragment {
                 // alifbo almashdi — shu ekran matnlari ham darhol yangilansin
                 AndroidUtilities.runOnUIThread(() -> {
                     buildRows();
-                    if (actionBar != null) actionBar.setTitle(org.telegram.messenger.AlfaCyrillic.ui("AlfaGram sozlamalari"));
+                    if (actionBar != null) actionBar.setTitle(org.telegram.messenger.AlfaCyrillic.ui(categoryTitle(category)));
                     if (listAdapter != null) listAdapter.notifyDataSetChanged();
                 }, 250);
             }
@@ -317,8 +435,9 @@ public class AlfaSettingsActivity extends BaseFragment {
     @Override
     public void onResume() {
         super.onResume();
-        // Boshqa joyda (masalan Ghost tugmasi) yoki server o'zgartirgan holat ko'rinsin
+        // Boshqa joyda (masalan Ghost tugmasi) yoki server o'zgartirgan holat ko'rinsin; bo'lim hisoblagichlari ham
         if (listAdapter != null) {
+            buildRows();
             listAdapter.notifyDataSetChanged();
         }
     }
@@ -477,7 +596,7 @@ public class AlfaSettingsActivity extends BaseFragment {
 
         @Override public boolean isEnabled(RecyclerView.ViewHolder holder) {
             int t = holder.getItemViewType();
-            return t == TYPE_SWITCH || t == TYPE_ACTION;
+            return t == TYPE_SWITCH || t == TYPE_ACTION || t == TYPE_CATEGORY;
         }
 
         @Override
@@ -499,6 +618,13 @@ public class AlfaSettingsActivity extends BaseFragment {
                 case TYPE_HERO:
                     v = createHero(mContext);
                     break;
+                case TYPE_CATEGORY: {
+                    org.telegram.ui.Cells.TextCell cell = new org.telegram.ui.Cells.TextCell(mContext);
+                    cell.heightDp = 60;
+                    cell.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundWhite));
+                    v = cell;
+                    break;
+                }
                 case TYPE_QUICK:
                     v = createQuickRow(mContext);
                     break;
@@ -527,6 +653,13 @@ public class AlfaSettingsActivity extends BaseFragment {
                 case TYPE_QUICK:
                     bindQuickRow((LinearLayout) holder.itemView);
                     break;
+                case TYPE_CATEGORY: {
+                    org.telegram.ui.Cells.TextCell cell = (org.telegram.ui.Cells.TextCell) holder.itemView;
+                    boolean nextIsCategory = position + 1 < rows.size() && rows.get(position + 1).type == TYPE_CATEGORY;
+                    cell.setTextAndValueAndColorfulIcon(row.title, row.value, false, row.icon, row.color1, row.color2, nextIsCategory);
+                    cell.setSubtitle(row.info);
+                    break;
+                }
                 case TYPE_SWITCH:
                     TextCheckCell c = (TextCheckCell) holder.itemView;
                     boolean nextIsSwitch = position + 1 < rows.size() && rows.get(position + 1).type == TYPE_SWITCH;

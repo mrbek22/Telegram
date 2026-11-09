@@ -12314,12 +12314,12 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                         if (userBlocked) {
                             otherItem.addSubItem(block_contact, R.drawable.msg_block, LocaleController.getString(R.string.Unblock));
                         }
-                        otherItem.addSubItem(add_shortcut, R.drawable.msg_home, LocaleController.getString(R.string.AddShortcut));
+                        // AlfaGram: "Bosh ekranga qo'shish" menyudan olib tashlandi
                     } else if (getDialogId() != UserObject.VERIFY) {
                         if (currentEncryptedChat == null) {
                             createAutoDeleteItem(context);
                         }
-                        otherItem.addSubItem(add_shortcut, R.drawable.msg_home, LocaleController.getString(R.string.AddShortcut));
+                        // AlfaGram: "Bosh ekranga qo'shish" menyudan olib tashlandi
                         if (isBot) {
                             otherItem.addSubItem(share, R.drawable.msg_share, LocaleController.getString(R.string.BotShare));
                             shareAction = true;
@@ -12376,7 +12376,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     }
                 }
                 if (!isBot && getContactsController().contactsDict.get(userId) != null) {
-                    otherItem.addSubItem(add_shortcut, R.drawable.msg_home, LocaleController.getString(R.string.AddShortcut));
+                    // AlfaGram: "Bosh ekranga qo'shish" menyudan olib tashlandi
                 }
             }
         } else if (chatId != 0) {
@@ -12428,7 +12428,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                         otherItem.addSubItem(delete_topic, R.drawable.msg_delete, LocaleController.getPluralString("DeleteTopics", 1));
                     }
                     if (topicId == 0) {
-                        otherItem.addSubItem(add_shortcut, R.drawable.msg_home, LocaleController.getString(R.string.AddShortcut));
+                        // AlfaGram: "Bosh ekranga qo'shish" menyudan olib tashlandi
                     }
                     if (chat.creator) {
                         otherItem.addColoredGap();
@@ -12458,7 +12458,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                         discussAction = true;
                     }
                     if (topicId == 0) {
-                        otherItem.addSubItem(add_shortcut, R.drawable.msg_home, LocaleController.getString(R.string.AddShortcut));
+                        // AlfaGram: "Bosh ekranga qo'shish" menyudan olib tashlandi
                     }
                     if (currentChat.creator) {
                         otherItem.addColoredGap();
@@ -12494,7 +12494,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     }
                 }
                 if (topicId == 0) {
-                    otherItem.addSubItem(add_shortcut, R.drawable.msg_home, LocaleController.getString(R.string.AddShortcut));
+                    // AlfaGram: "Bosh ekranga qo'shish" menyudan olib tashlandi
                 }
                 otherItem.addSubItem(leave_group, R.drawable.msg_leave, LocaleController.getString(R.string.DeleteAndExit));
                 leaveAction = true;
@@ -12510,7 +12510,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
         if (userId != 0) {
             TLRPC.User alfaLinkUser = getMessagesController().getUser(userId);
             if (org.telegram.messenger.AlfaLink.linkFor(alfaLinkUser) != null) {
-                otherItem.addSubItem(alfa_share_link, R.drawable.msg_link2, org.telegram.messenger.AlfaCyrillic.ui("AlfaGram havolasi"));
+                // AlfaGram: "AlfaGram havolasi" ⋮ menyudan olib tashlandi
             }
         }
         // AlfaGram — kontakt onlayn tarixi (faqat odamlar uchun)

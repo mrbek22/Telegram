@@ -310,6 +310,16 @@ public class LanguageSelectActivity extends BaseFragment implements Notification
                     }
                     localeInfo = sortedLanguages.get(position);
                 }
+                final boolean alfaScriptSwitch = localeInfo != null && (localeInfo == alfaUzCyrillic || localeInfo == alfaUzLatin)
+                        && LocaleController.getInstance().getCurrentLocaleInfo() == alfaUzLatin;
+                localeInfo = alfaResolveLocale(localeInfo);
+                if (alfaScriptSwitch) {
+                    // faqat alifbo almashdi — ro'yxatdagi belgilar yangilansin
+                    AndroidUtilities.runOnUIThread(() -> {
+                        if (listAdapter != null) listAdapter.notifyDataSetChanged();
+                        if (searchListViewAdapter != null) searchListViewAdapter.notifyDataSetChanged();
+                    }, 300);
+                }
                 if (localeInfo != null) {
                     LocaleController.LocaleInfo prevLocale = LocaleController.getInstance().getCurrentLocaleInfo();
                     boolean sameLang = prevLocale == localeInfo;
@@ -376,7 +386,7 @@ public class LanguageSelectActivity extends BaseFragment implements Notification
                     }
                     localeInfo = sortedLanguages.get(position);
                 }
-                if (localeInfo == null || localeInfo.pathToFile == null || localeInfo.isRemote() && localeInfo.serverIndex != Integer.MAX_VALUE) {
+                if (localeInfo == null || localeInfo == alfaUzCyrillic || localeInfo.pathToFile == null || localeInfo.isRemote() && localeInfo.serverIndex != Integer.MAX_VALUE) {
                     return false;
                 }
                 final LocaleController.LocaleInfo finalLocaleInfo = localeInfo;
@@ -464,6 +474,63 @@ public class LanguageSelectActivity extends BaseFragment implements Notification
         }
         Collections.sort(sortedLanguages, comparator);
         Collections.sort(unofficialLanguages, comparator);
+        alfaAddUzbekCyrillic(sortedLanguages);
+        alfaAddUzbekCyrillic(unofficialLanguages);
+    }
+
+    // AlfaGram — o'zbek tilining kirill varianti: alohida til fayli emas, o'sha o'zbek tili + "Kirill alifbosi"
+    private LocaleController.LocaleInfo alfaUzLatin;
+    private LocaleController.LocaleInfo alfaUzCyrillic;
+
+    private void alfaAddUzbekCyrillic(ArrayList<LocaleController.LocaleInfo> list) {
+        if (list == null || alfaUzCyrillic != null && list.contains(alfaUzCyrillic)) {
+            return;
+        }
+        for (int i = 0; i < list.size(); i++) {
+            LocaleController.LocaleInfo info = list.get(i);
+            if (info == null || info.shortName == null || !info.shortName.toLowerCase().startsWith("uz")) {
+                continue;
+            }
+            alfaUzLatin = info;
+            LocaleController.LocaleInfo cyr = new LocaleController.LocaleInfo();
+            cyr.name = "Ўзбекча (кирилл)";
+            cyr.nameEnglish = "Uzbek (Cyrillic)";
+            cyr.shortName = info.shortName;
+            cyr.pathToFile = info.pathToFile;
+            cyr.baseLangCode = info.baseLangCode;
+            cyr.pluralLangCode = info.pluralLangCode;
+            cyr.isRtl = info.isRtl;
+            cyr.version = info.version;
+            cyr.baseVersion = info.baseVersion;
+            cyr.builtIn = info.builtIn;
+            cyr.serverIndex = info.serverIndex;
+            alfaUzCyrillic = cyr;
+            list.add(i + 1, cyr);
+            return;
+        }
+    }
+
+    /** Kirill qatori — haqiqiy o'zbek tiliga, alifbo bayrog'i bilan. */
+    private LocaleController.LocaleInfo alfaResolveLocale(LocaleController.LocaleInfo info) {
+        if (info != null && info == alfaUzCyrillic && alfaUzLatin != null) {
+            org.telegram.messenger.AlfaFeatures.setFlag("cyrillicUi", true);
+            return alfaUzLatin;
+        }
+        if (info != null && info == alfaUzLatin) {
+            org.telegram.messenger.AlfaFeatures.setFlag("cyrillicUi", false);
+        }
+        return info;
+    }
+
+    private boolean alfaIsChecked(LocaleController.LocaleInfo info) {
+        LocaleController.LocaleInfo current = LocaleController.getInstance().getCurrentLocaleInfo();
+        if (info != null && info == alfaUzCyrillic) {
+            return current == alfaUzLatin && org.telegram.messenger.AlfaFeatures.cyrillicUi;
+        }
+        if (info != null && info == alfaUzLatin) {
+            return current == alfaUzLatin && !org.telegram.messenger.AlfaFeatures.cyrillicUi;
+        }
+        return info == current;
     }
 
     @Override
@@ -708,7 +775,7 @@ public class LanguageSelectActivity extends BaseFragment implements Notification
                             textSettingsCell.setTextAndValueAndCheck(localeInfo.name, localeInfo.nameEnglish, false, false, !last);
                         }
                     }
-                    textSettingsCell.setChecked(localeInfo == LocaleController.getInstance().getCurrentLocaleInfo());
+                    textSettingsCell.setChecked(alfaIsChecked(localeInfo));
                     break;
                 }
                 case VIEW_TYPE_SHADOW: {
