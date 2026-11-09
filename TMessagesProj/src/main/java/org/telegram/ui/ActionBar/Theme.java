@@ -5011,9 +5011,12 @@ public class Theme {
             }
 
             selectedAutoNightType = preferences.getInt("selectedAutoNightType", Build.VERSION.SDK_INT >= 29 ? AUTO_NIGHT_TYPE_SYSTEM : AUTO_NIGHT_TYPE_NONE);
-            // AlfaGram: sukut bo'yicha qorong'i rejim (bir marta). Keyin foydalanuvchi yorug'ni tanlasa — tegilmaydi.
+            // AlfaGram: sukut bo'yicha qorong'i rejim (bir marta, faqat yangi o'rnatishda). Yangi userlarga "Night" mavzusi
+            // o'z sukut ko'rinishida: qora fon, ko'k-binafsha naqsh (fqv01SQ…), gradient pufaklar. Keyin foydalanuvchi
+            // boshqasini tanlasa — tegilmaydi; eski userlarda bu bayroq allaqachon bor, ularga ta'sir qilmaydi.
             if (!preferences.getBoolean("alfa_dark_v1", false)) {
-                ThemeInfo dark = currentNightTheme != null ? currentNightTheme : themeDarkBlue;
+                ThemeInfo alfaNight = themesDict.get("Night");
+                ThemeInfo dark = alfaNight != null ? alfaNight : (currentNightTheme != null ? currentNightTheme : themeDarkBlue);
                 SharedPreferences.Editor darkEditor = preferences.edit().putBoolean("alfa_dark_v1", true);
                 if (dark != null && (applyingTheme == null || !applyingTheme.isDark())) {
                     applyingTheme = dark;
