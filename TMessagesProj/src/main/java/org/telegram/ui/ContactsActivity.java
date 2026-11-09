@@ -684,6 +684,8 @@ public class ContactsActivity extends BaseFragment implements FactorAnimator.Tar
                             presentFragment(new InviteContactsActivity());
                         } else if (row == 1) {
                             presentFragment(new CallLogActivity());
+                        } else if (row == 2) {
+                            presentFragment(new AlfaProfileLogActivity());
                         }
                     } else if (inviteViaLink != 0) {
                         if (row == 0) {

@@ -114,6 +114,8 @@ public class AlfaFeatures {
     // ── Kuzatuv ────────────────────────────────────
     /** Kontaktlar onlayn tarixini yozib borish. */
     public static boolean onlineTracker = true;
+    /** Kontaktlarning username/rasm/raqam o'zgarishlarini yozib borish (AlfaProfileLog). */
+    public static boolean profileLog = true;
 
     // ── Papkalar ───────────────────────────────────
     /** Avto papkalar (Shaxsiy, Guruhlar, Kanallar, Botlar, O'qilmagan) — faqat shu qurilmada. */
@@ -137,7 +139,7 @@ public class AlfaFeatures {
             "autoSaveVoice", "autoSaveVideoNotes",
             "blockTelegramAds", "hideSponsoredMessages",
             "openLastChat", "debugLogs",
-            "cyrillicUi", "sendCyrillic", "onlineTracker", "autoFolders",
+            "cyrillicUi", "sendCyrillic", "onlineTracker", "profileLog", "autoFolders",
             "apkGuard", "linkGuard",
     };
 
@@ -382,6 +384,7 @@ public class AlfaFeatures {
             case "cyrillicUi": return cyrillicUi;
             case "sendCyrillic": return sendCyrillic;
             case "onlineTracker": return onlineTracker;
+            case "profileLog": return profileLog;
             case "autoFolders": return autoFolders;
             case "apkGuard": return apkGuard;
             case "linkGuard": return linkGuard;
@@ -435,6 +438,7 @@ public class AlfaFeatures {
             case "cyrillicUi": cyrillicUi = value; break;
             case "sendCyrillic": sendCyrillic = value; break;
             case "onlineTracker": onlineTracker = value; break;
+            case "profileLog": profileLog = value; break;
             case "autoFolders": autoFolders = value; break;
             case "apkGuard": apkGuard = value; break;
             case "linkGuard": linkGuard = value; break;

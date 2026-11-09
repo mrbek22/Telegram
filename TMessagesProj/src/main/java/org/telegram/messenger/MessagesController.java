@@ -6967,6 +6967,8 @@ public class MessagesController extends BaseController implements NotificationCe
                 if (user.status != null && (oldUser == null || oldUser.status == null || user.status.expires != oldUser.status.expires)) {
                     AlfaOnlineLog.onUserStatus(currentAccount, user.id, user.status);
                 }
+                // AlfaGram — profil o'zgarishlari tarixi (username, rasm, raqam)
+                AlfaProfileLog.onUser(currentAccount, user);
                 if (oldUser != null && user.status != null && oldUser.status != null && user.status.expires != oldUser.status.expires) {
                     return true;
                 }

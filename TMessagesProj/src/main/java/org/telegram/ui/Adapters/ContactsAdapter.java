@@ -246,7 +246,7 @@ public class ContactsAdapter extends RecyclerListView.SectionsAdapter {
                 if (isAdmin) {
                     return row < 1;
                 } else if (needPhonebook) {
-                    return row < 2;
+                    return row < 3; // AlfaGram: + "Profil o'zgarishlari"
                 } else {
                     return row < 3;
                 }
@@ -340,13 +340,13 @@ public class ContactsAdapter extends RecyclerListView.SectionsAdapter {
         } else {
             if (section == 0) {
                 if (isEmpty) {
-                    return (includeSearch ? 1 : 0) + 2;
+                    return (includeSearch ? 1 : 0) + (needPhonebook && !isAdmin ? 3 : 2);
                 }
 
                 if (isAdmin) {
                     return (includeSearch ? 1 : 0) + 3;
                 } else if (needPhonebook) {
-                    return (includeSearch ? 1 : 0) + 4;
+                    return (includeSearch ? 1 : 0) + 5; // AlfaGram: + "Profil o'zgarishlari"
                 } else {
                     return (includeSearch ? 1 : 0) + 4;
                 }
@@ -567,6 +567,8 @@ public class ContactsAdapter extends RecyclerListView.SectionsAdapter {
                             textCell.setTextAndValueAndColorfulIcon(getString(R.string.InviteFriends), "", false, R.drawable.settings_invite, 0xFF1CA5ED, 0xFF1488E1, false);
                         } else if (position == 1) {
                             textCell.setTextAndValueAndColorfulIcon(getString(R.string.RecentCalls), "", false, R.drawable.settings_calls, 0xFF55CA47, 0xFF27B434, false);
+                        } else if (position == 2) {
+                            textCell.setTextAndValueAndColorfulIcon(org.telegram.messenger.AlfaCyrillic.ui("Profil o'zgarishlari"), "", false, R.drawable.msg_recent, 0xFFF38B31, 0xFFE26314, false);
                         }
                     } else if (isAdmin) {
                         if (isChannel) {
@@ -654,13 +656,13 @@ public class ContactsAdapter extends RecyclerListView.SectionsAdapter {
                         return (sortType == SORT_TYPE_BY_NAME || sortType == SORT_TYPE_BY_TIME ? HEADER_CELL : GRAY_CELL);
                     }
                 } else if (needPhonebook) {
-                    if (position < 2) {
+                    if (position < 3) {
                         return TEXT_CELL;
                     }
-                    if (position == 2) {
+                    if (position == 3) {
                         return SHADOW_CELL;
                     }
-                    if (position == 3) {
+                    if (position == 4) {
                         return isEmpty ? SHADOW_CELL : (sortType == SORT_TYPE_BY_NAME || sortType == SORT_TYPE_BY_TIME ? HEADER_CELL : GRAY_CELL);
                     }
                 } else {
