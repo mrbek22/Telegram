@@ -8,7 +8,7 @@
         <item name="android:windowNoTitle">true</item>
         <item name="android:actionBarStyle">@style/ActionBar.Transparent.TMessages.Start</item>
         <item name="android:colorBackground">@android:color/white</item>
-        <item name="android:windowBackground">@android:color/white</item>
+        <item name="android:windowBackground">#0b0f1a</item>
         <item name="android:windowContentOverlay">@null</item>
         <item name="android:textViewStyle">@style/MyTextViewStyle</item>
     </style>

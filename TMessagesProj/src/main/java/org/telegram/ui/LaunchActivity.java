@@ -505,6 +505,18 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         frameLayout.setClipToPadding(false);
         frameLayout.setClipChildren(false);
         setContentView(frameLayout);
+        // AlfaGram — ochilishda logo chiziladi (faqat jarayon boshida). Chatlar tezroq tayyor bo'lsa tez tugaydi,
+        // sekin bo'lsa logo "nafas oladi" (AlfaSplashView).
+        if (savedInstanceState == null) {
+            final int alfaAccount = currentAccount;
+            org.telegram.ui.Components.AlfaSplashView.showIfNeeded(this, () -> {
+                if (!UserConfig.getInstance(alfaAccount).isClientActivated()) {
+                    return true;
+                }
+                MessagesController mc = MessagesController.getInstance(alfaAccount);
+                return mc.dialogsLoaded || !mc.getAllDialogs().isEmpty();
+            });
+        }
         rootAnimatedInsetsListener = new WindowAnimatedInsetsProvider(frameLayout);
         pipActivityController.addPipListener(new IPipActivityListener() {
             final ActivityVisibilityController activityVisibilityController = createActivityVisibilityController(false);
