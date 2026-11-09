@@ -1366,7 +1366,7 @@ public class PrivacySettingsActivity extends BaseFragment implements Notificatio
                         textCell2.setTextAndValueAndIcon(getString(R.string.Passkey), value, true, R.drawable.msg2_permissions, true);
                     } else if (position == alfaApkRow) {
                         textCell2.setTextAndValueAndIcon(org.telegram.messenger.AlfaCyrillic.ui("APK himoyasi"),
-                                org.telegram.messenger.AlfaCyrillic.ui(org.telegram.messenger.AlfaFeatures.apkGuard ? "Yoqiq" : "O'chiq"), true, R.drawable.alfa_ic_policy, true);
+                                org.telegram.messenger.AlfaCyrillic.ui(org.telegram.messenger.AlfaFeatures.apkGuard ? "Yoqiq" : "O'chiq"), true, R.drawable.msg2_policy, true);
                     } else if (position == passcodeRow) {
                         int icon;
                         if (SharedConfig.passcodeHash.length() != 0) {
