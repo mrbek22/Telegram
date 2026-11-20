@@ -215,6 +215,7 @@ public class AlfaSettingsActivity extends BaseFragment {
 
                 out.add(Row.header("Xabar yuborish"));
                 out.add(Row.toggle("confirmSend", "Yuborishdan oldin tasdiq"));
+                out.add(Row.toggle("confirmCalls", "Qo'ng'iroqdan oldin so'rash"));
                 out.add(Row.toggle("sendByEnter", "Enter tugmasi bilan yuborish"));
                 out.add(Row.toggle("silentByDefault", "Sukut (silent) rejimda"));
                 out.add(Row.info("Yuborishni tezlashtiring yoki tasodifiy yuborishning oldini oling."));

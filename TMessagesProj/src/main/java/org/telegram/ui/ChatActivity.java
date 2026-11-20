@@ -12390,6 +12390,17 @@ public class ChatActivity extends BaseFragment implements
         return groupedMessages;
     }
 
+    /** AlfaGram: «Boshiga o'tish» — xabarlar yuklangach, eng birinchi xabarga o'tadi. */
+    public void alfaJumpToStartWhenReady(int attempt) {
+        if (messages.isEmpty() || getParentActivity() == null) {
+            if (attempt < 30) {
+                AndroidUtilities.runOnUIThread(() -> alfaJumpToStartWhenReady(attempt + 1), 300);
+            }
+            return;
+        }
+        jumpToDate(1);
+    }
+
     public void jumpToDate(int date) {
         if (messages.isEmpty()) {
             return;

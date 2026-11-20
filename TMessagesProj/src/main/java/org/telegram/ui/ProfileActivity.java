@@ -597,6 +597,8 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
     private final static int alfa_copy_id = 200;
     private final static int alfa_online_history = 201;
     private final static int alfa_share_link = 202;
+    private final static int alfa_go_to_start = 203;
+    private final static int alfa_typing_log = 204;
 
     private Rect rect = new Rect();
 
@@ -2607,6 +2609,12 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                             org.telegram.messenger.AlfaLink.linkFor(alfaLinkUser), UserObject.isUserSelf(alfaLinkUser));
                 } else if (id == alfa_online_history) {
                     showAlfaOnlineHistory();
+                } else if (id == alfa_go_to_start) {
+                    alfaOpenChatAtStart();
+                } else if (id == alfa_typing_log) {
+                    if (getParentActivity() != null) {
+                        new org.telegram.ui.Components.AlfaTypingSheet(getParentActivity(), currentAccount, userId, getResourceProvider()).show();
+                    }
                 } else if (id == alfa_copy_id) {
                     try {
                         android.content.ClipboardManager cm = (android.content.ClipboardManager) getParentActivity().getSystemService(android.content.Context.CLIPBOARD_SERVICE);
@@ -12184,6 +12192,21 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
     }
 
     /** AlfaGram — kontaktning yozib olingan onlayn sessiyalari. */
+    /** AlfaGram: chatni ochib, eng birinchi xabariga o'tadi (iOS'dagi «Boshiga o'tish»). */
+    private void alfaOpenChatAtStart() {
+        android.os.Bundle args = new android.os.Bundle();
+        if (userId != 0) {
+            args.putLong("user_id", userId);
+        } else if (chatId != 0) {
+            args.putLong("chat_id", chatId);
+        } else {
+            return;
+        }
+        ChatActivity chatActivity = new ChatActivity(args);
+        presentFragment(chatActivity);
+        chatActivity.alfaJumpToStartWhenReady(0);
+    }
+
     private void showAlfaOnlineHistory() {
         final long uid = userId;
         final int account = currentAccount;
@@ -12519,6 +12542,17 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
             if (alfaUser != null && !alfaUser.bot && !UserObject.isUserSelf(alfaUser)) {
                 otherItem.addSubItem(alfa_online_history, R.drawable.msg_recent, org.telegram.messenger.AlfaCyrillic.ui("Onlayn tarixi"));
             }
+        }
+        // AlfaGram — shu odam bo'yicha «Yozdi, yubormadi»
+        if (userId != 0 && org.telegram.messenger.AlfaFeatures.typingLog) {
+            TLRPC.User alfaTypingUser = getMessagesController().getUser(userId);
+            if (alfaTypingUser != null && !alfaTypingUser.bot && !UserObject.isUserSelf(alfaTypingUser)) {
+                otherItem.addSubItem(alfa_typing_log, R.drawable.msg_edit, org.telegram.messenger.AlfaCyrillic.ui("Yozdi, yubormadi"));
+            }
+        }
+        // AlfaGram — chat/guruh/kanalni eng birinchi xabaridan ochish
+        if (userId != 0 || chatId != 0) {
+            otherItem.addSubItem(alfa_go_to_start, R.drawable.msg_go_up, org.telegram.messenger.AlfaCyrillic.ui("Boshiga o'tish"));
         }
 
         if (imageUpdater != null) {

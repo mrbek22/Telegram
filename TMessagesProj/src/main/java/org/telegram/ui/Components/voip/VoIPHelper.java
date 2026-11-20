@@ -73,7 +73,31 @@ public class VoIPHelper {
 
 	private static final int VOIP_SUPPORT_ID = 4244000;
 
+	/** AlfaGram: «Qo'ng'iroq qilinsinmi?» tasdig'i bir marta so'raladi (qayta chaqiruvda o'tkazib yuboriladi). */
+	private static boolean alfaCallConfirmed;
+
 	public static void startCall(TLRPC.User user, boolean videoCall, boolean canVideoCall, final Activity activity, TLRPC.UserFull userFull, AccountInstance accountInstance) {
+		if (org.telegram.messenger.AlfaFeatures.confirmCalls && !alfaCallConfirmed && activity != null && user != null) {
+			final TLRPC.User alfaUser = user;
+			final boolean alfaVideo = videoCall;
+			final boolean alfaCanVideo = canVideoCall;
+			final TLRPC.UserFull alfaUserFull = userFull;
+			final AccountInstance alfaAccount = accountInstance;
+			new AlertDialog.Builder(activity)
+					.setTitle(org.telegram.messenger.AlfaCyrillic.ui(alfaVideo ? "Video qo'ng'iroq qilinsinmi?" : "Qo'ng'iroq qilinsinmi?"))
+					.setMessage(org.telegram.messenger.UserObject.getUserName(alfaUser))
+					.setPositiveButton(org.telegram.messenger.AlfaCyrillic.ui("Qo'ng'iroq qilish"), (dialog, which) -> {
+						alfaCallConfirmed = true;
+						try {
+							startCall(alfaUser, alfaVideo, alfaCanVideo, activity, alfaUserFull, alfaAccount);
+						} finally {
+							alfaCallConfirmed = false;
+						}
+					})
+					.setNegativeButton(LocaleController.getString(R.string.Cancel), null)
+					.show();
+			return;
+		}
 		if (accountInstance == null ? MessagesController.getInstance(UserConfig.selectedAccount).isFrozen() : accountInstance.getMessagesController().isFrozen()) {
 			AccountFrozenAlert.show(accountInstance == null ? UserConfig.selectedAccount : accountInstance.getCurrentAccount());
 			return;

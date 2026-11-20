@@ -126,6 +126,8 @@ public class AlfaFeatures {
     public static boolean apkGuard = true;
     /** Shubhali havolalarni ochishdan oldin ogohlantirish. */
     public static boolean linkGuard = true;
+    /** Qo'ng'iroq (ovozli/video) tugmasi avval «Qo'ng'iroq qilinsinmi?» deb so'raydi (iOS bilan bir xil). */
+    public static boolean confirmCalls = true;
 
     /** Barcha bayroq kalitlari (SharedPreferences kaliti = maydon nomi). */
     private static final String[] KEYS = {
@@ -140,7 +142,7 @@ public class AlfaFeatures {
             "blockTelegramAds", "hideSponsoredMessages",
             "openLastChat", "debugLogs",
             "cyrillicUi", "sendCyrillic", "onlineTracker", "profileLog", "autoFolders",
-            "apkGuard", "linkGuard",
+            "apkGuard", "linkGuard", "confirmCalls",
     };
 
     /** Foydalanuvchi tanlovi (server ta'sirisiz) — sozlamalar switch'i shuni ko'rsatadi. */
@@ -388,6 +390,7 @@ public class AlfaFeatures {
             case "autoFolders": return autoFolders;
             case "apkGuard": return apkGuard;
             case "linkGuard": return linkGuard;
+            case "confirmCalls": return confirmCalls;
             default: return false;
         }
     }
@@ -442,6 +445,7 @@ public class AlfaFeatures {
             case "autoFolders": autoFolders = value; break;
             case "apkGuard": apkGuard = value; break;
             case "linkGuard": linkGuard = value; break;
+            case "confirmCalls": confirmCalls = value; break;
         }
     }
 }
