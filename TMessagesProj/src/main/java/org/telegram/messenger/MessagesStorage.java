@@ -4747,6 +4747,10 @@ public class MessagesStorage extends BaseController {
     }
 
     public void emptyMessagesMedia(long dialogId, ArrayList<Integer> mids) {
+        // AlfaGram: bir martalik / soniyali media o'chirilmaydi — chatda qoladi (secret chatlar bundan mustasno)
+        if (AlfaFeatures.keepSelfDestructing && !DialogObject.isEncryptedDialog(dialogId)) {
+            return;
+        }
         storageQueue.postRunnable(() -> {
             SQLiteCursor cursor = null;
             SQLitePreparedStatement state = null;

@@ -644,7 +644,7 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
 
         accountNumbers.clear();
         for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
-            if (UserConfig.getInstance(a).isClientActivated() && currentAccount != a) {
+            if (UserConfig.getInstance(a).isClientActivated() && currentAccount != a && !org.telegram.messenger.AlfaAccountsPrivacy.isHidden(a)) {
                 accountNumbers.add(a);
             }
         }
@@ -925,6 +925,27 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
     }
 
     private boolean onLongClick(UItem item, View view, int position, float x, float y) {
+        // AlfaGram: akkaunt menyusi — vaqtincha to'xtatish, yashirish, maxfiy akkauntlar
+        if (item.instanceOf(AccountCell.Factory.class) && item.intValue != currentAccount) {
+            final int alfaAccount = item.intValue;
+            final boolean alfaPaused = org.telegram.messenger.AlfaAccountsPrivacy.isPaused(alfaAccount);
+            ItemOptions.makeOptions(this, view)
+                .add(alfaPaused ? R.drawable.msg_unmute : R.drawable.msg_mute, org.telegram.messenger.AlfaCyrillic.ui(alfaPaused ? "Qayta yoqish" : "Vaqtincha to'xtatish"), () -> {
+                    org.telegram.messenger.AlfaAccountsPrivacy.setPaused(alfaAccount, !alfaPaused);
+                    BulletinFactory.of(this).createSimpleBulletin(R.raw.info, org.telegram.messenger.AlfaCyrillic.ui(alfaPaused ? "Akkaunt qayta yoqildi" : "Akkaunt to'xtatildi: bildirishnoma kelmaydi")).show();
+                })
+                .add(R.drawable.msg_secret, org.telegram.messenger.AlfaCyrillic.ui("Yashirish"), () -> {
+                    org.telegram.messenger.AlfaAccountsPrivacy.setHidden(alfaAccount, true);
+                    if (listView != null && listView.adapter != null) {
+                        listView.adapter.update(true);
+                    }
+                    BulletinFactory.of(this).createSimpleBulletin(R.raw.info, org.telegram.messenger.AlfaCyrillic.ui("Akkaunt maxfiy akkauntlarga o'tdi")).show();
+                })
+                .add(R.drawable.msg_viewreplies, org.telegram.messenger.AlfaCyrillic.ui("Maxfiy akkauntlar"), this::alfaOpenHiddenAccounts)
+                .setScrimViewBackground(listView.getClipBackground(view))
+                .show();
+            return true;
+        }
         if (item.object instanceof TLRPC.TL_attachMenuBot) {
             TLRPC.TL_attachMenuBot attachMenuBot = (TLRPC.TL_attachMenuBot) item.object;
             BotWebViewSheet.deleteBot(currentAccount, attachMenuBot.bot_id, () -> listView.adapter.update(true));
@@ -953,6 +974,14 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
             }
         }
         return false;
+    }
+
+    /** AlfaGram: «Maxfiy akkauntlar» — barmoq izi / PIN bilan. */
+    public void alfaOpenHiddenAccounts() {
+        if (LaunchActivity.instance == null) {
+            return;
+        }
+        org.telegram.messenger.AlfaChatLock.authenticate(LaunchActivity.instance, org.telegram.messenger.AlfaCyrillic.ui("Maxfiy akkauntlarni ochish"), () -> presentFragment(new AlfaHiddenAccountsActivity()));
     }
 
     public String getVersionName() {

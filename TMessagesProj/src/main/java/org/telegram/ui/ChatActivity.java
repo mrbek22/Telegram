@@ -1675,6 +1675,8 @@ public class ChatActivity extends BaseFragment implements
     private final static int alfa_typing_log = 802;
     private final static int alfa_select_all = 803;
     private final static int alfa_stats = 804;
+    private final static int alfa_export_chat = 805;
+    private final static int alfa_lock_chat = 806;
 
     private final static int id_chat_compose_panel = 1000;
 
@@ -2869,6 +2871,26 @@ public class ChatActivity extends BaseFragment implements
             return false;
         }
 
+        // AlfaGram: qulflangan chat — avval barmoq izi / yuz / telefon PIN'i
+        if (chatMode == 0 && org.telegram.messenger.AlfaChatLock.needsUnlock(currentAccount, dialog_id)) {
+            final Bundle alfaArgs = arguments;
+            final long alfaDialogId = dialog_id;
+            final int alfaAccount = currentAccount;
+            AndroidUtilities.runOnUIThread(() -> {
+                if (LaunchActivity.instance == null) {
+                    return;
+                }
+                org.telegram.messenger.AlfaChatLock.authenticate(LaunchActivity.instance, org.telegram.messenger.AlfaCyrillic.ui("Qulflangan chatni ochish"), () -> {
+                    org.telegram.messenger.AlfaChatLock.markUnlocked(alfaAccount, alfaDialogId);
+                    BaseFragment alfaLast = LaunchActivity.getLastFragment();
+                    if (alfaLast != null) {
+                        alfaLast.presentFragment(new ChatActivity(alfaArgs));
+                    }
+                });
+            });
+            return false;
+        }
+
         dialog_id_Long = dialog_id;
 
         transitionAnimationGlobalIndex = NotificationCenter.getGlobalInstance().setAnimationInProgress(transitionAnimationGlobalIndex, new int[0]);
@@ -3753,6 +3775,23 @@ public class ChatActivity extends BaseFragment implements
                     if (getParentActivity() != null) {
                         new org.telegram.ui.Components.AlfaStatsSheet(getParentActivity(), currentAccount, dialog_id, themeDelegate).show();
                     }
+                } else if (id == alfa_lock_chat) {
+                    final boolean alfaWasLocked = org.telegram.messenger.AlfaChatLock.isLocked(currentAccount, dialog_id);
+                    Runnable alfaApply = () -> {
+                        org.telegram.messenger.AlfaChatLock.setLocked(currentAccount, dialog_id, !alfaWasLocked);
+                        if (!alfaWasLocked) {
+                            org.telegram.messenger.AlfaChatLock.markUnlocked(currentAccount, dialog_id);
+                        }
+                        BulletinFactory.of(ChatActivity.this).createSimpleBulletin(R.raw.passcode_lock_close, org.telegram.messenger.AlfaCyrillic.ui(alfaWasLocked ? "Chat qulfdan chiqarildi" : "Chat qulflandi: ochish uchun barmoq izi yoki PIN so'raladi")).show();
+                    };
+                    if (alfaWasLocked && LaunchActivity.instance != null) {
+                        org.telegram.messenger.AlfaChatLock.authenticate(LaunchActivity.instance, org.telegram.messenger.AlfaCyrillic.ui("Chat qulfini olib tashlash"), alfaApply);
+                    } else {
+                        alfaApply.run();
+                    }
+                } else if (id == alfa_export_chat) {
+                    String alfaTitle = currentUser != null ? UserObject.getUserName(currentUser) : (currentChat != null ? currentChat.title : "chat");
+                    org.telegram.ui.Components.AlfaChatExport.show(ChatActivity.this, dialog_id, alfaTitle);
                 } else if (id == copy) {
                     SpannableStringBuilder str = new SpannableStringBuilder();
                     long previousUid = 0;
@@ -4450,6 +4489,14 @@ public class ChatActivity extends BaseFragment implements
                 headerItem.lazilyAddSubItem(alfa_typing_log, R.drawable.msg_recent, org.telegram.messenger.AlfaCyrillic.ui("Yozdi, yubormadi"));
             }
             headerItem.lazilyAddSubItem(alfa_stats, R.drawable.msg_stats, org.telegram.messenger.AlfaCyrillic.ui("Chat statistikasi"));
+            // AlfaGram: chat qulfi
+            if (!DialogObject.isEncryptedDialog(dialog_id) && dialog_id != getUserConfig().getClientUserId()) {
+                headerItem.lazilyAddSubItem(alfa_lock_chat, R.drawable.msg_secret, org.telegram.messenger.AlfaCyrillic.ui(org.telegram.messenger.AlfaChatLock.isLocked(currentAccount, dialog_id) ? "Qulfni olib tashlash" : "Chatni qulflash"));
+            }
+            // AlfaGram: chatni HTML / TXT qilib eksport qilish (iOS bilan bir xil)
+            if (!DialogObject.isEncryptedDialog(dialog_id)) {
+                headerItem.lazilyAddSubItem(alfa_export_chat, R.drawable.msg_share, org.telegram.messenger.AlfaCyrillic.ui("Chatni eksport qilish"));
+            }
             if (ChatObject.isBoostSupported(currentChat) && (getUserConfig().isPremium() || ChatObject.isBoosted(chatInfo) || ChatObject.hasAdminRights(currentChat))) {
                 RLottieDrawable drawable = new RLottieDrawable(R.raw.boosts, "" + R.raw.boosts, dp(24), dp(24));
                 headerItem.lazilyAddSubItem(boost_group, drawable, LocaleController.getString(ChatObject.isChannelAndNotMegaGroup(currentChat) ? R.string.BoostingBoostChannelMenu : R.string.BoostingBoostGroupMenu));

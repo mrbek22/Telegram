@@ -6801,6 +6801,8 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
 
     @Override
     protected void onPause() {
+        // AlfaGram: fonga o'tganda qulflangan chatlar yana so'raydi
+        org.telegram.messenger.AlfaChatLock.relockAll();
         super.onPause();
         isResumed = false;
         org.telegram.messenger.AlfaGreeting.onAppPaused();

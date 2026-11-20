@@ -36,11 +36,16 @@ public class AlfaAccountsActivity extends UniversalFragment {
         }
     }
 
-    /** Kirilgan akkauntlar, kirish vaqti bo'yicha (joriy akkaunt ham). */
+    /** Kirilgan akkauntlar, kirish vaqti bo'yicha (joriy akkaunt ham); maxfiylari chiqmaydi. */
     public static ArrayList<Integer> getAccounts(int exclude) {
+        return getAccounts(exclude, false);
+    }
+
+    /** includeHidden — «Maxfiy akkauntlar» sahifasi uchun hammasi. */
+    public static ArrayList<Integer> getAccounts(int exclude, boolean includeHidden) {
         ArrayList<Integer> accounts = new ArrayList<>();
         for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
-            if (UserConfig.getInstance(a).isClientActivated() && a != exclude) {
+            if (UserConfig.getInstance(a).isClientActivated() && a != exclude && (includeHidden || a == UserConfig.selectedAccount || !org.telegram.messenger.AlfaAccountsPrivacy.isHidden(a))) {
                 accounts.add(a);
             }
         }

@@ -41,7 +41,7 @@ public class AlfaOnboardingSheet extends BottomSheet {
             {R.drawable.alfa_ic_ghost, "Ghost rejim", "Onlayn ko'rinmasdan o'qing: «yozyapti» va «o'qildi» yuborilmaydi. Chatlar ro'yxati tepasidagi 👻 tugmasi bilan bir bosishda yoqing."},
             {R.drawable.alfa_ic_deleted, "O'chirilgan xabarlar qoladi", "Suhbatdoshingiz xabarni o'chirsa ham, u sizda 🗑 belgisi bilan saqlanib qoladi."},
             {R.drawable.alfa_ic_edited, "Tahrir tarixi", "Tahrirlangan xabarni bosib turing → «Tahrir tarixi» — barcha oldingi matnlarni ko'rasiz."},
-            {R.drawable.alfa_ic_lock, "Chat qulfi", "Chatni bosib turing → «Chatni qulflash». U barmoq izi yoki PIN bilan ochiladi, xabarlari ro'yxatda va bildirishnomada ko'rinmaydi."},
+            {R.drawable.alfa_ic_lock, "Chat qulfi", "Chat ichida ⋮ → «Chatni qulflash». U barmoq izi yoki PIN bilan ochiladi, xabarlari ro'yxatda va bildirishnomada ko'rinmaydi."},
             {R.drawable.alfa_ic_stealth, "Story'larni anonim ko'rish", "Story'larni muallifga bildirmasdan ko'ring."},
             {R.drawable.alfa_ic_contacts, "10 ta akkaunt", "10 tagacha akkauntni bitta ilovada ishlating. Keraklisini maxfiy qilib yashiring yoki vaqtincha to'xtating."},
             {R.drawable.alfa_ic_calls, "Qo'ng'iroqdan oldin so'rash", "Tasodifan bosib, qo'ng'iroq qilib yubormaysiz — avval «Qo'ng'iroq qilinsinmi?» deb so'raladi."},

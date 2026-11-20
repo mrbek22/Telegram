@@ -128,6 +128,10 @@ public class AlfaFeatures {
     public static boolean linkGuard = true;
     /** Qo'ng'iroq (ovozli/video) tugmasi avval «Qo'ng'iroq qilinsinmi?» deb so'raydi (iOS bilan bir xil). */
     public static boolean confirmCalls = true;
+    /** Bir martalik / soniyali rasm, video, ovozli va dumaloq xabarlar ko'rilgandan keyin ham chatda qoladi. */
+    public static boolean keepSelfDestructing = true;
+    /** Dumaloq video orqa kamerada boshlanadi (o'chiq — old kamera). */
+    public static boolean roundVideoBack = false;
 
     /** Barcha bayroq kalitlari (SharedPreferences kaliti = maydon nomi). */
     private static final String[] KEYS = {
@@ -142,7 +146,7 @@ public class AlfaFeatures {
             "blockTelegramAds", "hideSponsoredMessages",
             "openLastChat", "debugLogs",
             "cyrillicUi", "sendCyrillic", "onlineTracker", "profileLog", "autoFolders",
-            "apkGuard", "linkGuard", "confirmCalls",
+            "apkGuard", "linkGuard", "confirmCalls", "keepSelfDestructing", "roundVideoBack",
     };
 
     /** Foydalanuvchi tanlovi (server ta'sirisiz) — sozlamalar switch'i shuni ko'rsatadi. */
@@ -391,6 +395,8 @@ public class AlfaFeatures {
             case "apkGuard": return apkGuard;
             case "linkGuard": return linkGuard;
             case "confirmCalls": return confirmCalls;
+            case "keepSelfDestructing": return keepSelfDestructing;
+            case "roundVideoBack": return roundVideoBack;
             default: return false;
         }
     }
@@ -446,6 +452,8 @@ public class AlfaFeatures {
             case "apkGuard": apkGuard = value; break;
             case "linkGuard": linkGuard = value; break;
             case "confirmCalls": confirmCalls = value; break;
+            case "keepSelfDestructing": keepSelfDestructing = value; break;
+            case "roundVideoBack": roundVideoBack = value; break;
         }
     }
 }

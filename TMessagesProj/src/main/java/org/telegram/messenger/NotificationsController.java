@@ -1779,7 +1779,7 @@ public class NotificationsController extends BaseController implements Notificat
     }
 
     public String getShortStringForMessage(MessageObject messageObject, String[] userName, boolean[] preview) {
-        if (AndroidUtilities.needShowPasscode() || SharedConfig.isWaitingForPasscodeEnter) {
+        if (AndroidUtilities.needShowPasscode() || SharedConfig.isWaitingForPasscodeEnter || AlfaChatLock.isLocked(currentAccount, messageObject.getDialogId())) {
             return LocaleController.getString(R.string.NotificationHiddenMessage);
         }
         long dialogId = messageObject.messageOwner.dialog_id;
@@ -2465,7 +2465,7 @@ public class NotificationsController extends BaseController implements Notificat
     }
 
     private String getStringForMessage(MessageObject messageObject, boolean shortMessage, boolean[] text, boolean[] preview) {
-        if (AndroidUtilities.needShowPasscode() || SharedConfig.isWaitingForPasscodeEnter) {
+        if (AndroidUtilities.needShowPasscode() || SharedConfig.isWaitingForPasscodeEnter || AlfaChatLock.isLocked(currentAccount, messageObject.getDialogId())) {
             return LocaleController.getString(R.string.YouHaveNewMessage);
         }
         if (messageObject.isStoryPush || messageObject.isStoryMentionPush) {
@@ -4077,7 +4077,8 @@ public class NotificationsController extends BaseController implements Notificat
     }
 
     private void showOrUpdateNotification(boolean notifyAboutLast) {
-        if (!getUserConfig().isClientActivated() || pushMessages.isEmpty() && storyPushMessages.isEmpty() || !SharedConfig.showNotificationsForAllAccounts && currentAccount != UserConfig.selectedAccount) {
+        // AlfaGram: maxfiy yoki vaqtincha to'xtatilgan akkauntdan bildirishnoma chiqmaydi
+        if (!getUserConfig().isClientActivated() || pushMessages.isEmpty() && storyPushMessages.isEmpty() || !SharedConfig.showNotificationsForAllAccounts && currentAccount != UserConfig.selectedAccount || AlfaAccountsPrivacy.isSilenced(currentAccount)) {
             dismissNotification();
             return;
         }
@@ -4223,7 +4224,7 @@ public class NotificationsController extends BaseController implements Notificat
             } else {
                 chatName = UserObject.getUserName(user);
             }
-            boolean passcode = AndroidUtilities.needShowPasscode() || SharedConfig.isWaitingForPasscodeEnter;
+            boolean passcode = AndroidUtilities.needShowPasscode() || SharedConfig.isWaitingForPasscodeEnter || AlfaChatLock.isLocked(currentAccount, dialog_id);
             final boolean allowSummary = !"samsung".equalsIgnoreCase(Build.MANUFACTURER);
             if (DialogObject.isEncryptedDialog(dialog_id) || allowSummary && pushDialogs.size() > 1 || passcode) {
                 if (passcode) {
@@ -5068,6 +5069,12 @@ public class NotificationsController extends BaseController implements Notificat
             if (lastMessageObject != null && lastMessageObject.isStoryReactionPush && !preferences.getBoolean("EnableReactionsPreview", true)) {
                 canReply = false;
                 name = LocaleController.getString(R.string.NotificationHiddenChatName);
+                photoPath = null;
+            }
+            // AlfaGram: qulflangan chat — ism va rasm ko'rinmaydi
+            if (AlfaChatLock.isLocked(currentAccount, dialogId)) {
+                canReply = false;
+                name = "AlfaGram";
                 photoPath = null;
             }
 

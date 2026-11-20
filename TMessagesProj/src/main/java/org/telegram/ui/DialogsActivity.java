@@ -14863,7 +14863,8 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
 
         accountNumbers.clear();
         for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
-            if (UserConfig.getInstance(a).isClientActivated()) {
+            // AlfaGram: maxfiy akkauntlar almashtirishda ko'rinmaydi
+            if (UserConfig.getInstance(a).isClientActivated() && (a == currentAccount || !org.telegram.messenger.AlfaAccountsPrivacy.isHidden(a))) {
                 accountNumbers.add(a);
             }
         }

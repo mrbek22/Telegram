@@ -2628,6 +2628,12 @@ public class DialogCell extends BaseCell implements StoriesListPlaceProvider.Ava
             drawMention = false;
         }
 
+        // AlfaGram: qulflangan chat — ro'yxatda xabar matni va rasmlari ko'rinmaydi
+        if (currentDialogId != 0 && org.telegram.messenger.AlfaChatLock.isLocked(currentAccount, currentDialogId)) {
+            messageString = org.telegram.messenger.AlfaCyrillic.ui("🔒 Qulflangan chat");
+            thumbsCount = 0;
+        }
+
         if (checkMessage) {
             if (messageString == null) {
                 messageString = "";

@@ -95,6 +95,8 @@ public class AlfaSettingsActivity extends BaseFragment {
             case "typingLog": return "Sizga yozib, yubormaganlar";
             case "confirmSend": return "Yuborishdan oldin tasdiq so'raladi, tasodifan ketmaydi";
             case "confirmCalls": return "Tasodifan bosib, qo'ng'iroq qilib yubormaysiz";
+            case "roundVideoBack": return "Dumaloq video old emas, orqa kamerada boshlanadi";
+            case "keepSelfDestructing": return "Bir martalik rasm, video va ovoz chatda qoladi";
             case "sendByEnter": return "Klaviaturadagi Enter xabarni yuboradi";
             case "silentByDefault": return "Xabarlaringiz qabul qiluvchida tovushsiz keladi";
             case "showMessageIds": return "Xabarni bosib turganda «ID nusxalash» bandi";
@@ -242,6 +244,11 @@ public class AlfaSettingsActivity extends BaseFragment {
                 out.add(Row.header("Telefoningizda"));
                 out.add(Row.toggle("hidePhoneInSettings", "Sozlamalarda telefonni yashirish"));
                 out.add(Row.toggle("blurAppInRecents", "Recent apps'da ilovani yashirish"));
+                out.add(Row.action("Maxfiy akkauntlar", () -> {
+                    if (LaunchActivity.instance != null) {
+                        org.telegram.messenger.AlfaChatLock.authenticate(LaunchActivity.instance, org.telegram.messenger.AlfaCyrillic.ui("Maxfiy akkauntlarni ochish"), () -> presentFragment(new AlfaHiddenAccountsActivity()));
+                    }
+                }));
                 out.add(Row.action("PIN kod sozlash", () -> {
                     try {
                         presentFragment(new PasscodeActivity(PasscodeActivity.TYPE_SETUP_CODE));
@@ -267,6 +274,7 @@ public class AlfaSettingsActivity extends BaseFragment {
                 out.add(Row.header("Xabar yuborish"));
                 out.add(Row.toggle("confirmSend", "Yuborishdan oldin tasdiq"));
                 out.add(Row.toggle("confirmCalls", "Qo'ng'iroqdan oldin so'rash"));
+                out.add(Row.toggle("roundVideoBack", "Dumaloq video orqa kamerada"));
                 out.add(Row.toggle("sendByEnter", "Enter tugmasi bilan yuborish"));
                 out.add(Row.toggle("silentByDefault", "Sukut (silent) rejimda"));
                 out.add(Row.info("Yuborishni tezlashtiring yoki tasodifiy yuborishning oldini oling."));
@@ -300,6 +308,7 @@ public class AlfaSettingsActivity extends BaseFragment {
             case CAT_UNLOCK:
                 out.add(Row.header("Saqlash va forward"));
                 out.add(Row.toggle("unrestrictedSave", "Cheklovlarsiz saqlash/forward"));
+                out.add(Row.toggle("keepSelfDestructing", "Bir martalik media o'chmasin"));
                 out.add(Row.toggle("allowScreenshots", "Screenshotga ruxsat"));
                 out.add(Row.toggle("unlimitedPins", "Cheksiz pin"));
                 out.add(Row.toggle("forwardWithoutAuthor", "Forward — muallifsiz"));
