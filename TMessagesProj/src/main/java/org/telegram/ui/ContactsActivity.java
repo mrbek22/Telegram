@@ -684,7 +684,26 @@ public class ContactsActivity extends BaseFragment implements FactorAnimator.Tar
                             presentFragment(new InviteContactsActivity());
                         } else if (row == 1) {
                             presentFragment(new CallLogActivity());
-                        } else if (row == 2) {
+                        } else if (row == 2 || row == 3) {
+                            // AlfaGram: «Yangi guruh» / «Yangi kanal» — «Yangi xabar» ekranidagidek
+                            if (MessagesController.getInstance(currentAccount).isFrozen()) {
+                                AccountFrozenAlert.show(currentAccount);
+                                return;
+                            }
+                            if (row == 2) {
+                                presentFragment(new GroupCreateActivity(new Bundle()), false);
+                            } else {
+                                SharedPreferences alfaPreferences = MessagesController.getGlobalMainSettings();
+                                if (!BuildVars.DEBUG_VERSION && alfaPreferences.getBoolean("channel_intro", false)) {
+                                    Bundle args = new Bundle();
+                                    args.putInt("step", 0);
+                                    presentFragment(new ChannelCreateActivity(args));
+                                } else {
+                                    presentFragment(new ActionIntroActivity(ActionIntroActivity.ACTION_TYPE_CHANNEL_CREATE));
+                                    alfaPreferences.edit().putBoolean("channel_intro", true).commit();
+                                }
+                            }
+                        } else if (row == 4) {
                             presentFragment(new AlfaProfileLogActivity());
                         }
                     } else if (inviteViaLink != 0) {

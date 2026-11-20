@@ -79,6 +79,53 @@ public class AlfaSettingsActivity extends BaseFragment {
 
     private final ArrayList<Row> rows = new ArrayList<>();
 
+    /** AlfaGram: har bir switch ostidagi bir qatorlik izoh (iOS bilan bir xil). */
+    private static String toggleSubtitle(String key) {
+        if (key == null) {
+            return null;
+        }
+        switch (key) {
+            case "ghostMode": return "Onlayn, «yozyapti» va «o'qildi» yuborilmaydi";
+            case "stealthStories": return "Story muallifi siz ko'rganingizni bilmaydi";
+            case "noReadReceipts": return "Xabarni o'qiganingiz yuboruvchiga bildirilmaydi";
+            case "hidePhoneInSettings": return "Sozlamalar tepasida raqamingiz ko'rinmaydi";
+            case "blurAppInRecents": return "Ilovalar ro'yxatida AlfaGram ekrani yopiq turadi";
+            case "antiDelete": return "Suhbatdosh o'chirgan xabar sizda 🗑 bilan qoladi";
+            case "editHistory": return "Tahrirlangan xabarning eski matnlari saqlanadi";
+            case "typingLog": return "Sizga yozib, yubormaganlar";
+            case "confirmSend": return "Yuborishdan oldin tasdiq so'raladi, tasodifan ketmaydi";
+            case "confirmCalls": return "Tasodifan bosib, qo'ng'iroq qilib yubormaysiz";
+            case "sendByEnter": return "Klaviaturadagi Enter xabarni yuboradi";
+            case "silentByDefault": return "Xabarlaringiz qabul qiluvchida tovushsiz keladi";
+            case "showMessageIds": return "Xabarni bosib turganda «ID nusxalash» bandi";
+            case "swipeToReply": return "Xabarni chapga surib, tez javob bering";
+            case "disableStickerSuggest": return "Emoji yozganda stiker takliflari chiqmaydi";
+            case "fastSendAnimation": return "Yuborish animatsiyasi qisqaroq";
+            case "autoFolders": return "Shaxsiy, guruh, kanal, bot va o'qilmagan tablar";
+            case "hideStories": return "Chatlar ro'yxati tepasidagi story qatori yashiriladi";
+            case "hideMuted": return "Ovozi o'chirilgan chatlar ro'yxatda ko'rinmaydi";
+            case "compactChats": return "Chatlar ro'yxati ixchamroq ko'rinadi";
+            case "openLastChat": return "Ilova ochilganda oxirgi chat ochiladi";
+            case "unrestrictedSave": return "Saqlash yopilgan chatlardan ham saqlash";
+            case "allowScreenshots": return "Yopiq chatlarda ham skrinshot olish";
+            case "unlimitedPins": return "Istalgancha chatni tepaga qadash";
+            case "forwardWithoutAuthor": return "Forward qilinganda muallif ko'rsatilmaydi";
+            case "forwardWithoutReply": return "Forward qilinganda izoh (caption) olib tashlanadi";
+            case "autoSaveVoice": return "Ovozli xabarlar avtomatik saqlanadi";
+            case "autoSaveVideoNotes": return "Dumaloq videolar avtomatik saqlanadi";
+            case "blockTelegramAds": return "Kanallardagi homiylik xabarlari ko'rinmaydi";
+            case "cyrillicUi": return "O'zbek tili tanlanganda ilova kirillda";
+            case "sendCyrillic": return "Lotincha matn kirillga o'girib yuboriladi";
+            case "showIdInProfile": return "Profil sahifasida foydalanuvchi ID'si";
+            case "hideSeenTicks": return "Chatlar ro'yxatida ✓✓ belgilari ko'rinmaydi";
+            case "disableAnimations": return "Ilova tezroq, animatsiyalarsiz ishlaydi";
+            case "onlineTracker": return "Kim qachon onlayn bo'lgani yozib boriladi";
+            case "profileLog": return "Username, rasm, raqam yoki ism o'zgarishi";
+            case "debugLogs": return "Xatolarni tekshirish uchun jurnal";
+            default: return null;
+        }
+    }
+
     // ── Bo'limlar (bosh sahifada rangli qatorlar, har biri alohida ekran) ──
     private static final int CAT_MAIN = 0;
     private static final int CAT_PRIVACY = 1;
@@ -166,6 +213,10 @@ public class AlfaSettingsActivity extends BaseFragment {
             addCategory(CAT_TRACK, R.drawable.alfa_ic_stealth, 0xFF06B6D4, 0xFF6366F1);
             addCategory(CAT_ABOUT, R.drawable.alfa_ic_alfagram, AlfaFeatures.BRAND_START, AlfaFeatures.BRAND_END);
             rows.add(Row.info("Har bir bo'limni oching — ichida o'sha mavzudagi barcha sozlamalar."));
+
+            rows.add(Row.header("Qo'llanma"));
+            rows.add(Row.action("AlfaGram haqida — barcha funksiyalar", () -> presentFragment(new AlfaAboutActivity())));
+            rows.add(Row.info("Har bir funksiya qayerdan yoqilishi, qanday ishlashi va qanday o'chirilishi."));
 
             rows.add(Row.header("Yangi"));
             rows.add(Row.action("Oy yakuni (AlfaGram Wrapped)", () -> {
@@ -664,7 +715,12 @@ public class AlfaSettingsActivity extends BaseFragment {
                 case TYPE_SWITCH:
                     TextCheckCell c = (TextCheckCell) holder.itemView;
                     boolean nextIsSwitch = position + 1 < rows.size() && rows.get(position + 1).type == TYPE_SWITCH;
-                    c.setTextAndCheck(row.title, currentValue(row.key), nextIsSwitch);
+                    String alfaSubtitle = toggleSubtitle(row.key);
+                    if (alfaSubtitle != null) {
+                        c.setTextAndValueAndCheck(row.title, org.telegram.messenger.AlfaCyrillic.ui(alfaSubtitle), currentValue(row.key), true, nextIsSwitch);
+                    } else {
+                        c.setTextAndCheck(row.title, currentValue(row.key), nextIsSwitch);
+                    }
                     c.setEnabled(isAllowed(row.key), null);
                     break;
             }

@@ -1,51 +1,53 @@
 package org.telegram.ui;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffColorFilter;
 import android.graphics.drawable.GradientDrawable;
 import android.util.TypedValue;
-import android.view.GestureDetector;
 import android.view.Gravity;
-import android.view.MotionEvent;
 import android.view.View;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 import org.telegram.messenger.AlfaCyrillic;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ApplicationLoader;
-import org.telegram.messenger.MediaDataController;
+import org.telegram.messenger.R;
 import org.telegram.messenger.SharedConfig;
-import org.telegram.tgnet.TLRPC;
 import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.ActionBar.BottomSheet;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Components.LayoutHelper;
-import org.telegram.ui.Components.RLottieImageView;
 import org.telegram.ui.Stories.recorder.ButtonWithCounterView;
 
 import static org.telegram.messenger.AndroidUtilities.dp;
 
 /**
- * AlfaGram — birinchi ochilishda bir marta chiqadigan 3 ta slayd: Ghost rejim, o'chirilgan xabarlar,
- * APK himoyasi. Har slaydda Telegram'ning animatsiyali (qimirlaydigan) emojisi; emoji to'plami hali
- * yuklanmagan bo'lsa — oddiy katta emoji. "Keyingi" tugmasi yoki barmoq bilan surib almashtiriladi.
+ * AlfaGram — birinchi ochilishda bir marta chiqadigan «AlfaGram imkoniyatlari» ro'yxati (iOS bilan bir xil):
+ * har qatorda ko'k plitkadagi oq ikonka, sarlavha va izoh, pastda «Tushunarli!».
  */
 public class AlfaOnboardingSheet extends BottomSheet {
 
-    private static final String PREF_KEY = "alfaOnboardingV1";
+    private static final String PREF_KEY = "alfaOnboardingV2";
     private static boolean checkedThisSession;
 
-    /** emoji nomzodlari ("|" bilan, birinchi animatsiyalisi olinadi), sarlavha, matn */
-    private static final String[][] SLIDES = {
-            {"👻|🙈|🫥", "Ghost rejim",
-                    "Onlayn ko'rinmasdan o'qing: «yozyapti» va «o'qildi» belgilari yuborilmaydi. Chatlar ro'yxati tepasidagi 👻 tugmasi bilan bir bosishda yoqiladi."},
-            {"🗑|👀|🤫", "Hech narsa yo'qolmaydi",
-                    "Suhbatdoshingiz xabarni o'chirsa ham, u sizda 🗑 belgisi bilan qoladi. Tahrirlangan xabarning eski matnini ko'rish uchun xabarni bosib turing."},
-            {"👮|🛡|🔒", "APK himoyasi",
-                    "Chatlarda tarqalayotgan virus dasturlar (APK) o'rnatilmaydi, shubhali havolalar haqida ogohlantiramiz. Hammasi faqat telefoningizda ishlaydi."},
+    /** ikonka, sarlavha, izoh */
+    private static final Object[][] FEATURES = {
+            {R.drawable.alfa_ic_ghost, "Ghost rejim", "Onlayn ko'rinmasdan o'qing: «yozyapti» va «o'qildi» yuborilmaydi. Chatlar ro'yxati tepasidagi 👻 tugmasi bilan bir bosishda yoqing."},
+            {R.drawable.alfa_ic_deleted, "O'chirilgan xabarlar qoladi", "Suhbatdoshingiz xabarni o'chirsa ham, u sizda 🗑 belgisi bilan saqlanib qoladi."},
+            {R.drawable.alfa_ic_edited, "Tahrir tarixi", "Tahrirlangan xabarni bosib turing → «Tahrir tarixi» — barcha oldingi matnlarni ko'rasiz."},
+            {R.drawable.alfa_ic_lock, "Chat qulfi", "Chatni bosib turing → «Chatni qulflash». U barmoq izi yoki PIN bilan ochiladi, xabarlari ro'yxatda va bildirishnomada ko'rinmaydi."},
+            {R.drawable.alfa_ic_stealth, "Story'larni anonim ko'rish", "Story'larni muallifga bildirmasdan ko'ring."},
+            {R.drawable.alfa_ic_contacts, "10 ta akkaunt", "10 tagacha akkauntni bitta ilovada ishlating. Keraklisini maxfiy qilib yashiring yoki vaqtincha to'xtating."},
+            {R.drawable.alfa_ic_calls, "Qo'ng'iroqdan oldin so'rash", "Tasodifan bosib, qo'ng'iroq qilib yubormaysiz — avval «Qo'ng'iroq qilinsinmi?» deb so'raladi."},
+            {R.drawable.alfa_ic_privacy, "Havola himoyasi", "Soxta bank, Click, Payme yoki Telegram saytlari va «sovg'a» va'da qiluvchi havolalarni ochishdan oldin ogohlantiramiz."},
+            {R.drawable.alfa_ic_language, "O'zbekcha va kirillcha", "Ilova o'zbek tilida, xohlasangiz kirillda. Lotincha yozganingizni kirillda yuborish ham mumkin."},
+            {R.drawable.alfa_ic_settings, "Hammasi bir joyda", "Barcha imkoniyatlarni Sozlamalar → AlfaGram bo'limida yoqib-o'chirasiz."},
     };
 
     /** Chatlar ro'yxati ochilganda (DialogsActivity.onResume): hali ko'rilmagan bo'lsa bir marta. */
@@ -72,17 +74,6 @@ public class AlfaOnboardingSheet extends BottomSheet {
         }, 900);
     }
 
-    private final LinearLayout content;
-    private final RLottieImageView emojiView;
-    private final TextView emojiFallbackView;
-    private final TextView titleView;
-    private final TextView textView;
-    private final View[] dots = new View[SLIDES.length];
-    private final ButtonWithCounterView button;
-    private int page;
-    private boolean switching;
-
-    @SuppressLint("ClickableViewAccessibility")
     public AlfaOnboardingSheet(BaseFragment fragment) {
         super(fragment.getParentActivity(), false, fragment.getResourceProvider());
         Context context = fragment.getParentActivity();
@@ -92,143 +83,74 @@ public class AlfaOnboardingSheet extends BottomSheet {
         root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(dp(20), dp(20), dp(20), dp(12));
 
-        content = new LinearLayout(context);
-        content.setOrientation(LinearLayout.VERTICAL);
-        content.setGravity(Gravity.CENTER_HORIZONTAL);
-        root.addView(content, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
-
-        FrameLayout emojiFrame = new FrameLayout(context);
-        emojiView = new RLottieImageView(context);
-        emojiFrame.addView(emojiView, LayoutHelper.createFrame(140, 140, Gravity.CENTER));
-        emojiFallbackView = new TextView(context);
-        emojiFallbackView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 84);
-        emojiFallbackView.setGravity(Gravity.CENTER);
-        emojiFrame.addView(emojiFallbackView, LayoutHelper.createFrame(140, 140, Gravity.CENTER));
-        content.addView(emojiFrame, LayoutHelper.createLinear(140, 140, Gravity.CENTER_HORIZONTAL));
-
-        titleView = new TextView(context);
-        titleView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 22);
+        TextView titleView = new TextView(context);
+        titleView.setText(AlfaCyrillic.ui("AlfaGram imkoniyatlari"));
+        titleView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 24);
         titleView.setTypeface(AndroidUtilities.bold());
-        titleView.setGravity(Gravity.CENTER);
         titleView.setTextColor(getThemedColor(Theme.key_dialogTextBlack));
-        content.addView(titleView, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 14, 0, 0));
+        root.addView(titleView, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 4, 0, 4, 10));
 
-        textView = new TextView(context);
-        textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
-        textView.setGravity(Gravity.CENTER);
-        textView.setLineSpacing(dp(2), 1f);
-        textView.setTextColor(getThemedColor(Theme.key_windowBackgroundWhiteGrayText));
-        textView.setMinLines(4);
-        content.addView(textView, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 8, 10, 8, 0));
+        ScrollView scrollView = new ScrollView(context);
+        LinearLayout list = new LinearLayout(context);
+        list.setOrientation(LinearLayout.VERTICAL);
+        scrollView.addView(list, new ScrollView.LayoutParams(ScrollView.LayoutParams.MATCH_PARENT, ScrollView.LayoutParams.WRAP_CONTENT));
 
-        LinearLayout dotsLayout = new LinearLayout(context);
-        dotsLayout.setOrientation(LinearLayout.HORIZONTAL);
-        dotsLayout.setGravity(Gravity.CENTER);
-        for (int i = 0; i < dots.length; i++) {
-            View dot = new View(context);
-            GradientDrawable circle = new GradientDrawable();
-            circle.setShape(GradientDrawable.OVAL);
-            circle.setColor(getThemedColor(Theme.key_featuredStickers_addButton));
-            dot.setBackground(circle);
-            dots[i] = dot;
-            dotsLayout.addView(dot, LayoutHelper.createLinear(7, 7, 4, 0, 4, 0));
+        for (int i = 0; i < FEATURES.length; i++) {
+            list.addView(makeRow(context, (Integer) FEATURES[i][0], (String) FEATURES[i][1], (String) FEATURES[i][2], i != FEATURES.length - 1));
         }
-        root.addView(dotsLayout, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 18, 0, 0));
+        int heightDp = (int) (AndroidUtilities.displaySize.y * 0.62f / AndroidUtilities.density);
+        root.addView(scrollView, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, Math.max(240, heightDp)));
 
-        button = new ButtonWithCounterView(context, resourcesProvider);
-        button.setOnClickListener(v -> next());
-        root.addView(button, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 48, 0, 18, 0, 4));
-
-        // barmoq bilan chapga/o'ngga surish
-        GestureDetector detector = new GestureDetector(context, new GestureDetector.SimpleOnGestureListener() {
-            @Override
-            public boolean onDown(MotionEvent e) {
-                return true;
-            }
-
-            @Override
-            public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-                if (Math.abs(velocityX) > Math.abs(velocityY) && Math.abs(velocityX) > dp(300)) {
-                    if (velocityX < 0) {
-                        next();
-                    } else {
-                        previous();
-                    }
-                    return true;
-                }
-                return false;
-            }
-        });
-        content.setOnTouchListener((v, event) -> detector.onTouchEvent(event));
+        ButtonWithCounterView button = new ButtonWithCounterView(context, resourcesProvider);
+        button.setText(AlfaCyrillic.ui("Tushunarli!"), false);
+        button.setOnClickListener(v -> dismiss());
+        root.addView(button, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 48, 0, 14, 0, 4));
 
         setCustomView(root);
-        bind(0, 0);
     }
 
-    private void next() {
-        if (switching) {
-            return;
-        }
-        if (page >= SLIDES.length - 1) {
-            dismiss();
-            return;
-        }
-        bind(page + 1, 1);
-    }
+    /** Bitta funksiya: ko'k plitkada oq ikonka, sarlavha, izoh va pastida ingichka chiziq. */
+    private View makeRow(Context context, int icon, String title, String text, boolean divider) {
+        LinearLayout row = new LinearLayout(context);
+        row.setOrientation(LinearLayout.VERTICAL);
 
-    private void previous() {
-        if (switching || page <= 0) {
-            return;
-        }
-        bind(page - 1, -1);
-    }
+        LinearLayout line = new LinearLayout(context);
+        line.setOrientation(LinearLayout.HORIZONTAL);
+        line.setGravity(Gravity.CENTER_VERTICAL);
 
-    /** direction: 0 — animatsiyasiz, 1 — oldinga, -1 — orqaga. */
-    private void bind(int newPage, int direction) {
-        if (direction == 0) {
-            page = newPage;
-            applyContent();
-            return;
-        }
-        switching = true;
-        content.animate().alpha(0f).translationX(-dp(36) * direction).setDuration(140).withEndAction(() -> {
-            page = newPage;
-            applyContent();
-            content.setTranslationX(dp(36) * direction);
-            content.animate().alpha(1f).translationX(0).setDuration(220).withEndAction(() -> switching = false).start();
-        }).start();
-    }
+        FrameLayout tile = new FrameLayout(context);
+        GradientDrawable tileBackground = new GradientDrawable(GradientDrawable.Orientation.TL_BR, new int[]{0xFF2563EB, 0xFF0034B6});
+        tileBackground.setCornerRadius(dp(14));
+        tile.setBackground(tileBackground);
+        ImageView iconView = new ImageView(context);
+        iconView.setImageResource(icon);
+        iconView.setColorFilter(new PorterDuffColorFilter(0xFFFFFFFF, PorterDuff.Mode.SRC_IN));
+        iconView.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+        tile.addView(iconView, LayoutHelper.createFrame(28, 28, Gravity.CENTER));
+        line.addView(tile, LayoutHelper.createLinear(52, 52));
 
-    private void applyContent() {
-        String[] slide = SLIDES[page];
-        String[] candidates = slide[0].split("\\|");
-        TLRPC.Document document = null;
-        try {
-            MediaDataController mdc = MediaDataController.getInstance(currentAccount);
-            for (String emoji : candidates) {
-                document = mdc.getEmojiAnimatedSticker(emoji);
-                if (document != null) {
-                    break;
-                }
-            }
-        } catch (Throwable ignore) {
+        LinearLayout texts = new LinearLayout(context);
+        texts.setOrientation(LinearLayout.VERTICAL);
+        TextView titleView = new TextView(context);
+        titleView.setText(AlfaCyrillic.ui(title));
+        titleView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 17);
+        titleView.setTypeface(AndroidUtilities.bold());
+        titleView.setTextColor(getThemedColor(Theme.key_dialogTextBlack));
+        texts.addView(titleView, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
+        TextView textView = new TextView(context);
+        textView.setText(AlfaCyrillic.ui(text));
+        textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
+        textView.setLineSpacing(dp(1), 1f);
+        textView.setTextColor(getThemedColor(Theme.key_windowBackgroundWhiteGrayText));
+        texts.addView(textView, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 3, 0, 0));
+        line.addView(texts, LayoutHelper.createLinear(0, LayoutHelper.WRAP_CONTENT, 1f, 14, 0, 0, 0));
+
+        row.addView(line, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 12, 0, 12));
+        if (divider) {
+            View separator = new View(context);
+            separator.setBackgroundColor(getThemedColor(Theme.key_divider));
+            row.addView(separator, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 1, 66, 0, 0, 0));
         }
-        if (document != null) {
-            emojiView.setVisibility(View.VISIBLE);
-            emojiFallbackView.setVisibility(View.GONE);
-            emojiView.setAutoRepeat(true);
-            emojiView.setAnimation(document, 140, 140);
-            emojiView.playAnimation();
-        } else {
-            emojiView.setVisibility(View.GONE);
-            emojiFallbackView.setVisibility(View.VISIBLE);
-            emojiFallbackView.setText(candidates[0]);
-        }
-        titleView.setText(AlfaCyrillic.ui(slide[1]));
-        textView.setText(AlfaCyrillic.ui(slide[2]));
-        for (int i = 0; i < dots.length; i++) {
-            dots[i].setAlpha(i == page ? 1f : 0.3f);
-        }
-        button.setText(AlfaCyrillic.ui(page >= SLIDES.length - 1 ? "Boshlash" : "Keyingi"), page > 0);
+        return row;
     }
 }

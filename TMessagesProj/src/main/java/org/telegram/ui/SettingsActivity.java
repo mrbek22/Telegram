@@ -917,8 +917,8 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
                 FileLog.cleanupLogs();
                 break;
             case 23: {
-                // AlfaGram: «AlfaGram funksiyalari» — AlfaGram sozlamalari
-                presentSettingFragment(new AlfaSettingsActivity());
+                // AlfaGram: «AlfaGram funksiyalari» — AlfaGram qo'llanmasi
+                presentSettingFragment(new AlfaAboutActivity());
                 break;
             }
         }
