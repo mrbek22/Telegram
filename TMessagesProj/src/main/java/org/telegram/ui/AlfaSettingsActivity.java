@@ -247,6 +247,9 @@ public class AlfaSettingsActivity extends BaseFragment {
                 out.add(Row.header("Telefoningizda"));
                 out.add(Row.toggle("hidePhoneInSettings", "Sozlamalarda telefonni yashirish"));
                 out.add(Row.toggle("blurAppInRecents", "Recent apps'da ilovani yashirish"));
+                out.add(Row.action("Yashirin chatlar", () -> AlfaHiddenChatsUi.manage(this, () -> {
+                    if (listAdapter != null) listAdapter.notifyDataSetChanged();
+                })));
                 out.add(Row.action("Maxfiy akkauntlar", () -> {
                     if (LaunchActivity.instance != null) {
                         org.telegram.messenger.AlfaChatLock.authenticate(LaunchActivity.instance, org.telegram.messenger.AlfaCyrillic.ui("Maxfiy akkauntlarni ochish"), () -> presentFragment(new AlfaHiddenAccountsActivity()));

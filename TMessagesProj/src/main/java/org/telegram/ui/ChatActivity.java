@@ -1677,6 +1677,7 @@ public class ChatActivity extends BaseFragment implements
     private final static int alfa_stats = 804;
     private final static int alfa_export_chat = 805;
     private final static int alfa_lock_chat = 806;
+    private final static int alfa_hide_chat = 807;
 
     private final static int id_chat_compose_panel = 1000;
 
@@ -3789,6 +3790,10 @@ public class ChatActivity extends BaseFragment implements
                     } else {
                         alfaApply.run();
                     }
+                } else if (id == alfa_hide_chat) {
+                    final boolean alfaWasHidden = org.telegram.messenger.AlfaHiddenChats.isHidden(currentAccount, dialog_id);
+                    org.telegram.messenger.AlfaHiddenChats.setHidden(currentAccount, dialog_id, !alfaWasHidden);
+                    BulletinFactory.of(ChatActivity.this).createSimpleBulletin(R.raw.passcode_lock_close, org.telegram.messenger.AlfaCyrillic.ui(alfaWasHidden ? "Chat yana ro'yxatda" : "Chat yashirildi. Ko'rish uchun «AlfaGram» sarlavhasini bosib turing")).show();
                 } else if (id == alfa_export_chat) {
                     String alfaTitle = currentUser != null ? UserObject.getUserName(currentUser) : (currentChat != null ? currentChat.title : "chat");
                     org.telegram.ui.Components.AlfaChatExport.show(ChatActivity.this, dialog_id, alfaTitle);
@@ -4492,6 +4497,10 @@ public class ChatActivity extends BaseFragment implements
             // AlfaGram: chat qulfi
             if (!DialogObject.isEncryptedDialog(dialog_id) && dialog_id != getUserConfig().getClientUserId()) {
                 headerItem.lazilyAddSubItem(alfa_lock_chat, R.drawable.msg_secret, org.telegram.messenger.AlfaCyrillic.ui(org.telegram.messenger.AlfaChatLock.isLocked(currentAccount, dialog_id) ? "Qulfni olib tashlash" : "Chatni qulflash"));
+            }
+            // AlfaGram: yashirin chatlar (kod o'rnatilgan bo'lsa)
+            if (org.telegram.messenger.AlfaHiddenChats.isEnabled() && !DialogObject.isEncryptedDialog(dialog_id) && dialog_id != getUserConfig().getClientUserId()) {
+                headerItem.lazilyAddSubItem(alfa_hide_chat, R.drawable.msg_archive_hide, org.telegram.messenger.AlfaCyrillic.ui(org.telegram.messenger.AlfaHiddenChats.isHidden(currentAccount, dialog_id) ? "Yashirishdan chiqarish" : "Chatni yashirish"));
             }
             // AlfaGram: chatni HTML / TXT qilib eksport qilish (iOS bilan bir xil)
             if (!DialogObject.isEncryptedDialog(dialog_id)) {

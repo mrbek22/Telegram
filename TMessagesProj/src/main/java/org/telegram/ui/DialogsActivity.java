@@ -3570,6 +3570,13 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 ssb.setSpan(new android.text.style.StyleSpan(android.graphics.Typeface.BOLD), 0, ssb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
                 actionBar.setTitle(ssb, statusDrawable);
                 updateStatus(UserConfig.getInstance(currentAccount).getCurrentUser(), false);
+                // AlfaGram: sarlavhani bosib turish — yashirin chatlarni ko'rsatish / yana yashirish
+                if (!onlySelect && folderId == 0 && actionBar.getTitleTextView() != null) {
+                    actionBar.getTitleTextView().setOnLongClickListener(v -> {
+                        AlfaHiddenChatsUi.toggleReveal(DialogsActivity.this);
+                        return true;
+                    });
+                }
             }
             if (folderId == 0) {
                 actionBar.setSupportsHolidayImage(true);
