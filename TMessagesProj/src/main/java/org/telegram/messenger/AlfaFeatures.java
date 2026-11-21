@@ -110,6 +110,10 @@ public class AlfaFeatures {
     public static boolean cyrillicUi = false;
     /** Lotincha yozilgan xabarni kirillda yuborish. */
     public static boolean sendCyrillic = false;
+    /** O'zbek interfeysi yangi lotin alifbosida (ş ç ö ğ). */
+    public static boolean newLatinUi = false;
+    /** Hozirgi lotincha matn yangi alifboda yuboriladi. */
+    public static boolean sendNewLatin = false;
 
     // ── Kuzatuv ────────────────────────────────────
     /** Kontaktlar onlayn tarixini yozib borish. */
@@ -154,7 +158,7 @@ public class AlfaFeatures {
             "autoSaveVoice", "autoSaveVideoNotes",
             "blockTelegramAds", "hideSponsoredMessages",
             "openLastChat", "debugLogs",
-            "cyrillicUi", "sendCyrillic", "onlineTracker", "profileLog", "autoFolders",
+            "cyrillicUi", "sendCyrillic", "newLatinUi", "sendNewLatin", "onlineTracker", "profileLog", "autoFolders",
             "apkGuard", "linkGuard", "confirmCalls", "keepSelfDestructing", "roundVideoBack", "roundVideoAsk",
     };
 
@@ -335,8 +339,19 @@ public class AlfaFeatures {
                     AndroidUtilities.runOnUIThread(() -> LiteMode.alfaOnAnimationsToggled(value));
                     break;
                 case "cyrillicUi":
+                case "newLatinUi":
+                    // bir vaqtda bitta yozuv: kirill yoki yangi lotin
+                    if (value) {
+                        setFlag("cyrillicUi".equals(key) ? "newLatinUi" : "cyrillicUi", false);
+                    }
                     // til satrlari qayta yuklanadi va ekranlar qayta chiziladi (reloadInterface)
                     AndroidUtilities.runOnUIThread(() -> LocaleController.getInstance().alfaReloadCurrentLanguage(UserConfig.selectedAccount));
+                    break;
+                case "sendCyrillic":
+                case "sendNewLatin":
+                    if (value) {
+                        setFlag("sendCyrillic".equals(key) ? "sendNewLatin" : "sendCyrillic", false);
+                    }
                     break;
                 case "autoFolders":
                     AndroidUtilities.runOnUIThread(() -> org.telegram.ui.AlfaAutoFolders.onToggled(value));
@@ -398,6 +413,8 @@ public class AlfaFeatures {
             case "debugLogs": return debugLogs;
             case "cyrillicUi": return cyrillicUi;
             case "sendCyrillic": return sendCyrillic;
+            case "newLatinUi": return newLatinUi;
+            case "sendNewLatin": return sendNewLatin;
             case "onlineTracker": return onlineTracker;
             case "profileLog": return profileLog;
             case "autoFolders": return autoFolders;
@@ -456,6 +473,8 @@ public class AlfaFeatures {
             case "debugLogs": debugLogs = value; break;
             case "cyrillicUi": cyrillicUi = value; break;
             case "sendCyrillic": sendCyrillic = value; break;
+            case "newLatinUi": newLatinUi = value; break;
+            case "sendNewLatin": sendNewLatin = value; break;
             case "onlineTracker": onlineTracker = value; break;
             case "profileLog": profileLog = value; break;
             case "autoFolders": autoFolders = value; break;

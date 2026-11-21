@@ -7763,7 +7763,7 @@ public class ChatActivityEnterView extends FrameLayout implements
             text = AndroidUtilities.getTrimmedString(text);
         }
         // AlfaGram — lotincha yozilganni kirillda yuborish (formatlash/mention bo'lmasa)
-        if (org.telegram.messenger.AlfaFeatures.sendCyrillic && !hasOnlyEmoji && org.telegram.messenger.AlfaCyrillic.hasLatinLetters(text)) {
+        if ((org.telegram.messenger.AlfaFeatures.sendCyrillic || org.telegram.messenger.AlfaFeatures.sendNewLatin) && !hasOnlyEmoji && org.telegram.messenger.AlfaCyrillic.hasLatinLetters(text)) {
             boolean plain = true;
             if (text instanceof android.text.Spanned) {
                 Object[] spans = ((android.text.Spanned) text).getSpans(0, text.length(), Object.class);
@@ -7780,7 +7780,9 @@ public class ChatActivityEnterView extends FrameLayout implements
                 }
             }
             if (plain) {
-                text = org.telegram.messenger.AlfaCyrillic.toCyrillic(text.toString());
+                text = org.telegram.messenger.AlfaFeatures.sendCyrillic
+                        ? org.telegram.messenger.AlfaCyrillic.toCyrillic(text.toString())
+                        : org.telegram.messenger.AlfaCyrillic.toNewLatin(text.toString());
             }
         }
         boolean supportsNewEntities = supportsSendingNewEntities();

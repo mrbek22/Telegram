@@ -1438,6 +1438,9 @@ public class LocaleController {
             if (currentLocaleInfo != null && currentLocaleInfo.shortName != null
                     && currentLocaleInfo.shortName.toLowerCase().startsWith("uz") && AlfaCyrillic.isUiEnabled()) {
                 AlfaCyrillic.convertLocaleValues(localeValues);
+            } else if (currentLocaleInfo != null && currentLocaleInfo.shortName != null
+                    && currentLocaleInfo.shortName.toLowerCase().startsWith("uz") && AlfaCyrillic.isNewLatinUiEnabled()) {
+                AlfaCyrillic.convertLocaleValuesNewLatin(localeValues);
             }
         } catch (Throwable ignore) {
         }

@@ -28,9 +28,93 @@ public class AlfaCyrillic {
         }
     }
 
-    /** AlfaGram'ning o'z (kodda yozilgan) matnlari uchun: kirill yoqilgan bo'lsa o'giradi. */
+    /** AlfaGram'ning o'z (kodda yozilgan) matnlari uchun: kirill yoki yangi lotin yoqilgan bo'lsa o'giradi. */
     public static String ui(String s) {
-        return AlfaFeatures.cyrillicUi && s != null ? toCyrillic(s) : s;
+        if (s == null) return null;
+        if (AlfaFeatures.cyrillicUi) return toCyrillic(s);
+        if (AlfaFeatures.newLatinUi) return toNewLatin(s);
+        return s;
+    }
+
+    /** Til yuklanayotganda (AlfaFeatures hali o'qilmagan bo'lishi mumkin) — to'g'ridan-to'g'ri sozlamadan. */
+    public static boolean isNewLatinUiEnabled() {
+        try {
+            return ApplicationLoader.applicationContext
+                    .getSharedPreferences("alfa_features", 0).getBoolean("newLatinUi", false);
+        } catch (Throwable ignore) {
+            return false;
+        }
+    }
+
+    // ── Yangi o'zbek lotin alifbosi: sh → ş, ch → ç, o' → ö, g' → ğ (s'h — eski ajratilgan s+h — → sh) ──
+
+    public static String toNewLatin(String s) {
+        if (s == null || s.isEmpty()) return s;
+        StringBuilder out = new StringBuilder(s.length());
+        Matcher m = PROTECTED.matcher(s);
+        int last = 0;
+        while (m.find()) {
+            out.append(newLatinChunk(s.substring(last, m.start())));
+            out.append(m.group());
+            last = m.end();
+        }
+        out.append(newLatinChunk(s.substring(last)));
+        return out.toString();
+    }
+
+    private static String newLatinChunk(String s) {
+        StringBuilder out = new StringBuilder(s.length());
+        int n = s.length();
+        int i = 0;
+        while (i < n) {
+            char c = s.charAt(i);
+            char lc = Character.toLowerCase(c);
+            boolean upper = c != lc;
+            char next = i + 1 < n ? s.charAt(i + 1) : 0;
+            char nextLower = Character.toLowerCase(next);
+            if (lc == 's' && next != 0 && isApos(next) && i + 2 < n && Character.toLowerCase(s.charAt(i + 2)) == 'h') {
+                // Is'hoq: apostrof faqat s va h ni ajratgan — yangi alifboda oddiy "sh"
+                out.append(c).append(s.charAt(i + 2));
+                i += 3;
+                continue;
+            }
+            if (lc == 's' && nextLower == 'h') {
+                out.append(upper ? 'Ş' : 'ş');
+                i += 2;
+                continue;
+            }
+            if (lc == 'c' && nextLower == 'h') {
+                out.append(upper ? 'Ç' : 'ç');
+                i += 2;
+                continue;
+            }
+            if ((lc == 'o' || lc == 'g') && next != 0 && isApos(next)) {
+                if (lc == 'o') {
+                    out.append(upper ? 'Ö' : 'ö');
+                } else {
+                    out.append(upper ? 'Ğ' : 'ğ');
+                }
+                i += 2;
+                continue;
+            }
+            out.append(c);
+            i++;
+        }
+        return out.toString();
+    }
+
+    /** Til jadvalini yangi lotinga o'giradi (sana andozalari o'zgarmaydi). */
+    public static void convertLocaleValuesNewLatin(Map<String, String> values) {
+        if (values == null) return;
+        try {
+            for (Map.Entry<String, String> e : values.entrySet()) {
+                String v = e.getValue();
+                if (v != null && !v.isEmpty() && !isDatePatternKey(e.getKey())) {
+                    e.setValue(toNewLatin(v));
+                }
+            }
+        } catch (Throwable ignore) {
+        }
     }
 
     /** Til jadvalidagi barcha qiymatlarni kirillga o'giradi (joyida). */

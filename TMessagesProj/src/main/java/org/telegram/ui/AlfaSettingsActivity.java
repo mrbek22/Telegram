@@ -119,6 +119,8 @@ public class AlfaSettingsActivity extends BaseFragment {
             case "blockTelegramAds": return "Kanallardagi homiylik xabarlari ko'rinmaydi";
             case "cyrillicUi": return "O'zbek tili tanlanganda ilova kirillda";
             case "sendCyrillic": return "Lotincha matn kirillga o'girib yuboriladi";
+            case "newLatinUi": return "O'zbek tili tanlanganda ilova yangi lotin alifbosida";
+            case "sendNewLatin": return "sh, ch, o', g' → ş, ç, ö, ğ bo'lib ketadi";
             case "showIdInProfile": return "Profil sahifasida foydalanuvchi ID'si";
             case "hideSeenTicks": return "Chatlar ro'yxatida ✓✓ belgilari ko'rinmaydi";
             case "disableAnimations": return "Ilova tezroq, animatsiyalarsiz ishlaydi";
@@ -331,6 +333,8 @@ public class AlfaSettingsActivity extends BaseFragment {
                 out.add(Row.header("Til"));
                 out.add(Row.toggle("cyrillicUi", "Kirill alifbosi (Ўзбекча)"));
                 out.add(Row.toggle("sendCyrillic", "Lotincha yozsam, kirillda yuborilsin"));
+                out.add(Row.toggle("newLatinUi", "Yangi alifbo (Ş Ç Ö Ğ)"));
+                out.add(Row.toggle("sendNewLatin", "Yangi alifboda yuborilsin"));
                 out.add(Row.info("Kirillni Sozlamalar → Til → «Ўзбекча (кирилл)» orqali ham tanlash mumkin. Xabarni bosib ushlab, matnni kirill ↔ lotinga o'girish ham mumkin."));
 
                 out.add(Row.header("Ko'rinish"));
@@ -477,7 +481,7 @@ public class AlfaSettingsActivity extends BaseFragment {
             if (view instanceof TextCheckCell) {
                 ((TextCheckCell) view).setChecked(currentValue(row.key));
             }
-            if ("cyrillicUi".equals(row.key)) {
+            if ("cyrillicUi".equals(row.key) || "newLatinUi".equals(row.key) || "sendCyrillic".equals(row.key) || "sendNewLatin".equals(row.key)) {
                 // alifbo almashdi — shu ekran matnlari ham darhol yangilansin
                 AndroidUtilities.runOnUIThread(() -> {
                     buildRows();
