@@ -73,6 +73,8 @@ public class AlfaOnlineLog extends SQLiteOpenHelper {
     public static void maybePoll(int account) {
         if (!AlfaFeatures.onlineTracker || account < 0 || account >= lastPoll.length) return;
         final long now = System.currentTimeMillis();
+        // Ilova ochiq va Ghost o'chiq bo'lsa, server holatlarni o'zi yuboradi — so'rov ortiqcha (batareya, qayta chizish).
+        if (!ApplicationLoader.mainInterfacePaused && !AlfaFeatures.ghostMode) return;
         final long interval = ApplicationLoader.mainInterfacePaused ? POLL_BACKGROUND_MS : POLL_FOREGROUND_MS;
         synchronized (lastPoll) {
             if (polling[account] || now - lastPoll[account] < interval) return;
