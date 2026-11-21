@@ -57,7 +57,7 @@ public class AlfaAboutActivity extends UniversalFragment {
                     "O'sha bandlarni o'chiring."},
             {R.drawable.alfa_ic_stealth, IconBackgroundColors.ORANGE_DEEP, "Galereyadan dumaloq video",
                     "Chatda 📎 → «Dumaloq video» → videoni tanlang.",
-                    "Oddiy video o'rtasidan kvadrat qilib kesiladi, 1 daqiqagacha olinadi va xuddi kamerada yozilgandek dumaloq video bo'lib ketadi.",
+                    "1 daqiqagacha bo'lgan video o'rtasidan kvadrat qilib kesiladi va xuddi kamerada yozilgandek dumaloq video bo'lib ketadi. Uzunroq video qabul qilinmaydi.",
                     null},
             {R.drawable.alfa_ic_settings, IconBackgroundColors.PURPLE, "Bot token bilan kirish",
                     "Kirish ekranida (telefon raqami so'raladigan joy) o'ng tepadagi robot tugmasini bosing: ochilgan oynaga @BotFather bergan tokenni kiriting va «Tizimga kirish»ni bosing.",

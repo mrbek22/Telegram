@@ -14,7 +14,8 @@ import org.telegram.ui.ChatActivity;
 
 /**
  * AlfaGram — galereyadagi oddiy videoni dumaloq video xabar qilib yuborish (iOS'dagi 📎 → «Dumaloq video»).
- * Video o'rtasidan kvadrat qilib kesiladi (Telegram konvertorining cropState'i bilan), 1 daqiqagacha olinadi.
+ * Video o'rtasidan kvadrat qilib kesiladi (Telegram konvertorining cropState'i bilan). Faqat 1 daqiqagacha bo'lgan
+ * video qabul qilinadi — uzunrog'i qisqartirilmaydi, rad etiladi (user 2026-11-21).
  */
 public class AlfaRoundVideoFromGallery {
 
@@ -50,20 +51,28 @@ public class AlfaRoundVideoFromGallery {
         Utilities.globalQueue.postRunnable(() -> {
             String path = null;
             VideoEditedInfo info = null;
+            boolean tooLong = false;
             try {
                 path = MediaController.copyFileToCache(uri, "mp4");
                 if (path != null) {
                     info = build(path);
                 }
+            } catch (TooLongException e) {
+                tooLong = true;
             } catch (Throwable e) {
                 FileLog.e(e);
             }
             final String finalPath = path;
             final VideoEditedInfo finalInfo = info;
+            final boolean finalTooLong = tooLong;
             AndroidUtilities.runOnUIThread(() -> {
                 try {
                     progress.dismiss();
                 } catch (Throwable ignore) {
+                }
+                if (finalTooLong) {
+                    BulletinFactory.of(fragment).createErrorBulletin(AlfaCyrillic.ui("Video 1 daqiqadan uzun. Dumaloq video faqat 1 daqiqagacha bo'lgan videodan qilinadi.")).show();
+                    return;
                 }
                 if (finalPath == null || finalInfo == null) {
                     BulletinFactory.of(fragment).createErrorBulletin(AlfaCyrillic.ui("Bu videoni dumaloq qilib bo'lmadi")).show();
@@ -75,7 +84,10 @@ public class AlfaRoundVideoFromGallery {
     }
 
     /** Kvadrat kesish: kadr «xom» (aylantirilmagan) holatda qayta ishlanadi, aylantirish belgisi faylda qoladi. */
-    private static VideoEditedInfo build(String path) {
+    private static class TooLongException extends Exception {
+    }
+
+    private static VideoEditedInfo build(String path) throws TooLongException {
         int[] params = new int[AnimatedFileDrawable.PARAM_NUM_COUNT];
         AnimatedFileDrawable.getVideoInfo(path, params, 0);
         if (params[AnimatedFileDrawable.PARAM_NUM_SUPPORTED_VIDEO_CODEC] == 0) {
@@ -86,6 +98,9 @@ public class AlfaRoundVideoFromGallery {
         final float durationMs = params[AnimatedFileDrawable.PARAM_NUM_DURATION];
         if (width <= 0 || height <= 0 || durationMs <= 0) {
             return null;
+        }
+        if (durationMs > MAX_MS + 500) {
+            throw new TooLongException();
         }
         final long duration = (long) Math.min(durationMs, MAX_MS);
         final int framerate = params[AnimatedFileDrawable.PARAM_NUM_FRAMERATE];
@@ -102,7 +117,7 @@ public class AlfaRoundVideoFromGallery {
         info.bitrate = BITRATE;
         info.startTime = -1;
         // konvertor vaqtni mikrosekundda oladi
-        info.endTime = durationMs > MAX_MS ? MAX_MS * 1000L : -1;
+        info.endTime = -1;
         info.estimatedDuration = duration;
         info.originalDuration = (long) (durationMs * 1000);
         info.estimatedSize = Math.max(1, (long) (duration / 1000f * (BITRATE + 64_000) / 8f));
