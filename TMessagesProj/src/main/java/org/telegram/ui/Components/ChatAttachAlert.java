@@ -201,6 +201,8 @@ public class ChatAttachAlert extends BottomSheet implements NotificationCenter.N
     public static final int LAYOUT_TYPE_EMOJI = 14;
     public static final int LAYOUT_TYPE_LINK = 15;
     public static final int LAYOUT_TYPE_RICH = 16;
+    /** AlfaGram: 📎 → «Dumaloq video» (layout emas, faqat tugma). */
+    public static final int ALFA_ROUND_VIDEO_BUTTON = 40;
 
     private static final int ANIMATOR_ID_CAPTION_ABOVE = 0;
     private static final int ANIMATOR_ID_CAPTION_VISIBLE = 1;
@@ -2822,6 +2824,12 @@ public class ChatAttachAlert extends BottomSheet implements NotificationCenter.N
                         showLayout(restrictedLayout);
                     } else {
                         showPollLayout(true, null);
+                    }
+                } else if (num == ALFA_ROUND_VIDEO_BUTTON) {
+                    if (baseFragment instanceof ChatActivity) {
+                        final ChatActivity alfaChat = (ChatActivity) baseFragment;
+                        dismiss(true);
+                        AndroidUtilities.runOnUIThread(() -> AlfaRoundVideoFromGallery.pick(alfaChat), 250);
                     }
                 } else if (num == 11) {
                     openQuickRepliesLayout();
@@ -6475,6 +6483,7 @@ public class ChatAttachAlert extends BottomSheet implements NotificationCenter.N
         private int emojiButton;
         private int linksButton;
         private int richButton;
+        private int alfaRoundVideoButton;
         private int buttonsCount;
 
         public ButtonsAdapter(Context context) {
@@ -6547,6 +6556,9 @@ public class ChatAttachAlert extends BottomSheet implements NotificationCenter.N
                     } else if (position == emojiButton) {
                         attachButton.setTextAndIcon(LAYOUT_TYPE_EMOJI, getString(R.string.ChatEmoji), GlassTabView.TabAnimation.EMOJI);
                         attachButton.setTag(LAYOUT_TYPE_EMOJI);
+                    } else if (position == alfaRoundVideoButton) {
+                        attachButton.setTextAndIcon(ALFA_ROUND_VIDEO_BUTTON, org.telegram.messenger.AlfaCyrillic.ui("Dumaloq video"), GlassTabView.TabAnimation.ROUND_VIDEO);
+                        attachButton.setTag(ALFA_ROUND_VIDEO_BUTTON);
                     } else if (position == richButton) {
                         attachButton.setTextAndIcon(LAYOUT_TYPE_RICH, getString(R.string.AttachArticle), GlassTabView.TabAnimation.ARTICLE);
                         attachButton.setTag(LAYOUT_TYPE_RICH);
@@ -6606,6 +6618,7 @@ public class ChatAttachAlert extends BottomSheet implements NotificationCenter.N
             stickerButton = -1;
             linksButton = -1;
             richButton = -1;
+            alfaRoundVideoButton = -1;
             emojiButton = -1;
             attachBotsStartRow = -1;
             attachBotsEndRow = -1;
@@ -6657,6 +6670,10 @@ public class ChatAttachAlert extends BottomSheet implements NotificationCenter.N
                 TLRPC.Chat chat = baseFragment instanceof ChatActivity ? ((ChatActivity) baseFragment).getCurrentChat() : null;
                 final boolean paidUser = user != null && ((ChatActivity) baseFragment).getMessagesController().getSendPaidMessagesStars(user.id) > 0;
                 galleryButton = buttonsCount++;
+                // AlfaGram: galereyadagi videoni dumaloq qilib yuborish (galereyadan keyin)
+                if (videosEnabled && !((ChatActivity) baseFragment).isSecretChat() && ((ChatActivity) baseFragment).getChatMode() != ChatActivity.MODE_QUICK_REPLIES) {
+                    alfaRoundVideoButton = buttonsCount++;
+                }
                 if ((photosEnabled || videosEnabled) && !paidUser && (chat == null || !ChatObject.isMonoForum(chat))) {
                     if (baseFragment instanceof ChatActivity && !((ChatActivity) baseFragment).isInScheduleMode() && !((ChatActivity) baseFragment).isSecretChat() && ((ChatActivity) baseFragment).getChatMode() != ChatActivity.MODE_QUICK_REPLIES) {
                         ChatActivity chatActivity = (ChatActivity) baseFragment;

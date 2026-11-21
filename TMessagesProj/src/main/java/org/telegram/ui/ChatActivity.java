@@ -20306,6 +20306,13 @@ public class ChatActivity extends BaseFragment implements
 
     @Override
     public void onActivityResultFragment(int requestCode, int resultCode, Intent data) {
+        // AlfaGram: 📎 → «Dumaloq video» — tanlangan video dumaloq bo'lib ketadi
+        if (requestCode == org.telegram.ui.Components.AlfaRoundVideoFromGallery.REQUEST_CODE) {
+            if (resultCode == Activity.RESULT_OK) {
+                org.telegram.ui.Components.AlfaRoundVideoFromGallery.onResult(this, data);
+            }
+            return;
+        }
         if (resultCode == Activity.RESULT_OK) {
             if (requestCode == 0 || requestCode == 2) {
                 createChatAttachView();
@@ -35560,6 +35567,17 @@ public class ChatActivity extends BaseFragment implements
             getSendMessagesHelper().sendMessage(params2);
             afterMessageSend();
         }
+    }
+
+    /** AlfaGram: galereyadan tayyorlangan dumaloq videoni yuboradi (javob, mavzu va pullik xabar tasdig'i bilan). */
+    public void alfaSendRoundVideo(String path, VideoEditedInfo videoEditedInfo) {
+        if (path == null || videoEditedInfo == null) {
+            return;
+        }
+        AlertsCreator.ensurePaidMessageConfirmation(currentAccount, getDialogId(), 1, payStars -> {
+            SendMessagesHelper.prepareSendingVideo(getAccountInstance(), path, videoEditedInfo, null, null, dialog_id, replyingMessageObject, getThreadMessage(), null, replyingQuote, null, 0, null, true, 0, 0, false, false, null, quickReplyShortcut, getQuickReplyId(), 0, payStars, getSendMonoForumPeerId(), getSendMessageSuggestionParams());
+            afterMessageSend();
+        }, 0);
     }
 
     public void sendMedia(MediaController.PhotoEntry photoEntry, VideoEditedInfo videoEditedInfo, boolean notify, int scheduleDate, int scheduleRepeatPeriod, boolean forceDocument, long stars) {
