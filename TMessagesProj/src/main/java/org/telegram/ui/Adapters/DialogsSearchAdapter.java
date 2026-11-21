@@ -642,6 +642,9 @@ public class DialogsSearchAdapter extends RecyclerListView.SelectionAdapter {
                                     continue;
                                 }
                             }
+                            if (msg != null && org.telegram.messenger.AlfaHiddenChats.isHiddenNow(currentAccount, msg.getDialogId())) {
+                                continue;
+                            }
                             searchResultMessages.add(msg);
                             long dialog_id = MessageObject.getDialogId(message);
                             ConcurrentHashMap<Long, Integer> read_max = message.out ? MessagesController.getInstance(currentAccount).dialogs_read_outbox_max : MessagesController.getInstance(currentAccount).dialogs_read_inbox_max;
@@ -926,7 +929,31 @@ public class DialogsSearchAdapter extends RecyclerListView.SelectionAdapter {
         searchAdapterHelper.addHashtagsFromMessage(message);
     }
 
+    /** AlfaGram: qidiruv natijasidagi obyektning dialog id'si (0 — noma'lum). */
+    private static long alfaDialogIdOf(Object o) {
+        if (o instanceof TLRPC.User) {
+            return ((TLRPC.User) o).id;
+        } else if (o instanceof TLRPC.Chat) {
+            return -((TLRPC.Chat) o).id;
+        } else if (o instanceof TLRPC.EncryptedChat) {
+            return DialogObject.makeEncryptedDialogId(((TLRPC.EncryptedChat) o).id);
+        }
+        return 0;
+    }
+
     private void setRecentSearch(ArrayList<RecentSearchObject> arrayList, LongSparseArray<RecentSearchObject> hashMap) {
+        // AlfaGram: yashirin chatlar oxirgi qidiruvlarda ham chiqmaydi
+        if (arrayList != null) {
+            for (int a = arrayList.size() - 1; a >= 0; a--) {
+                RecentSearchObject o = arrayList.get(a);
+                if (o != null && org.telegram.messenger.AlfaHiddenChats.isHiddenNow(currentAccount, o.did)) {
+                    arrayList.remove(a);
+                    if (hashMap != null) {
+                        hashMap.remove(o.did);
+                    }
+                }
+            }
+        }
         recentSearchObjects = arrayList;
         recentSearchObjectsById = hashMap;
         for (int a = 0; a < recentSearchObjects.size(); a++) {
@@ -1053,6 +1080,15 @@ public class DialogsSearchAdapter extends RecyclerListView.SelectionAdapter {
                 }
             }
             MessagesController.getInstance(currentAccount).putUsers(encUsers, true);
+            // AlfaGram: yashirin chatlar qidiruvda chiqmaydi (kod bilan ko'rsatilmaguncha)
+            for (int a = result.size() - 1; a >= 0; a--) {
+                if (org.telegram.messenger.AlfaHiddenChats.isHiddenNow(currentAccount, alfaDialogIdOf(result.get(a)))) {
+                    result.remove(a);
+                    if (a < names.size()) {
+                        names.remove(a);
+                    }
+                }
+            }
             searchResult = result;
             searchResultNames = names;
          //   searchContacts = contacts;
