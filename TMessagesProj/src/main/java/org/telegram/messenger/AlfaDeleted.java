@@ -79,9 +79,16 @@ public class AlfaDeleted extends SQLiteOpenHelper {
             return;
         }
         keptKeys.add(account + "_" + dialogId + "_" + msg.id);
+        final long now = System.currentTimeMillis();
+        // Telegram'ning storage oqimi (chatlarni yuklash) bizning bazamizni kutmasin
+        SAVE_QUEUE.postRunnable(() -> saveSync(account, dialogId, msg, now));
+    }
+
+    private static final DispatchQueue SAVE_QUEUE = new DispatchQueue("alfaDeleted");
+
+    private void saveSync(int account, long dialogId, TLRPC.Message msg, long now) {
         try {
             SQLiteDatabase db = getWritableDatabase();
-            long now = System.currentTimeMillis();
             long fromId = 0;
             if (msg.from_id != null) {
                 fromId = msg.from_id.user_id != 0 ? msg.from_id.user_id

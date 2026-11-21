@@ -84,10 +84,17 @@ public class AlfaEdits extends SQLiteOpenHelper {
         if (oldMessage == null || oldMessage.id == 0) {
             return;
         }
-        String text = oldMessage.message;
+        final String text = oldMessage.message;
         if (text == null || text.length() == 0) {
             return;
         }
+        // Telegram'ning storage oqimi bizning bazamizni kutmasin
+        SAVE_QUEUE.postRunnable(() -> saveBeforeEditSync(account, dialogId, oldMessage, text));
+    }
+
+    private static final DispatchQueue SAVE_QUEUE = new DispatchQueue("alfaEdits");
+
+    private void saveBeforeEditSync(int account, long dialogId, TLRPC.Message oldMessage, String text) {
         try {
             SQLiteDatabase db = getWritableDatabase();
             long fromId = 0;
