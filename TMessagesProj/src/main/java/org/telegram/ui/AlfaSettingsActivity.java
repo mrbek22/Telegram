@@ -96,6 +96,7 @@ public class AlfaSettingsActivity extends BaseFragment {
             case "confirmSend": return "Yuborishdan oldin tasdiq so'raladi, tasodifan ketmaydi";
             case "confirmCalls": return "Tasodifan bosib, qo'ng'iroq qilib yubormaysiz";
             case "roundVideoBack": return "Dumaloq video old emas, orqa kamerada boshlanadi";
+            case "roundVideoAsk": return "Kamera rejimiga o'tganda old yoki orqa kamerani tanlaysiz";
             case "keepSelfDestructing": return "Bir martalik rasm, video va ovoz chatda qoladi";
             case "sendByEnter": return "Klaviaturadagi Enter xabarni yuboradi";
             case "silentByDefault": return "Xabarlaringiz qabul qiluvchida tovushsiz keladi";
@@ -274,6 +275,7 @@ public class AlfaSettingsActivity extends BaseFragment {
                 out.add(Row.header("Xabar yuborish"));
                 out.add(Row.toggle("confirmSend", "Yuborishdan oldin tasdiq"));
                 out.add(Row.toggle("confirmCalls", "Qo'ng'iroqdan oldin so'rash"));
+                out.add(Row.toggle("roundVideoAsk", "Dumaloq video: har safar kamerani so'rash"));
                 out.add(Row.toggle("roundVideoBack", "Dumaloq video orqa kamerada"));
                 out.add(Row.toggle("sendByEnter", "Enter tugmasi bilan yuborish"));
                 out.add(Row.toggle("silentByDefault", "Sukut (silent) rejimda"));

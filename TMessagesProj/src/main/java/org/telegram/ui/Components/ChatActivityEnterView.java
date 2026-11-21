@@ -3066,6 +3066,9 @@ public class ChatActivityEnterView extends FrameLayout implements
                             if (sendVoiceEnabled && sendRoundEnabled) {
                                 delegate.onSwitchRecordMode(!isInVideoMode());
                                 setRecordVideoButtonVisible(!isInVideoMode(), true);
+                                if (isInVideoMode()) {
+                                    alfaAskRoundVideoCamera();
+                                }
                             } else {
                                 delegate.needShowMediaBanHint();
                             }
@@ -6137,6 +6140,17 @@ public class ChatActivityEnterView extends FrameLayout implements
 
     public boolean isSendButtonVisible() {
         return sendButton.getVisibility() == VISIBLE;
+    }
+
+    /** AlfaGram: «har safar so'rash» — kamera rejimiga o'tganda old yoki orqa kamerani tanlash. */
+    private void alfaAskRoundVideoCamera() {
+        if (!org.telegram.messenger.AlfaFeatures.roundVideoAsk || parentFragment == null || audioVideoSendButton == null) {
+            return;
+        }
+        ItemOptions.makeOptions(parentFragment, audioVideoSendButton)
+            .add(R.drawable.msg_camera, org.telegram.messenger.AlfaCyrillic.ui("Old kamera"), () -> org.telegram.messenger.AlfaFeatures.roundVideoAskedBack = false)
+            .add(R.drawable.msg_retry, org.telegram.messenger.AlfaCyrillic.ui("Orqa kamera"), () -> org.telegram.messenger.AlfaFeatures.roundVideoAskedBack = true)
+            .show();
     }
 
     private void setRecordVideoButtonVisible(boolean visible, boolean animated) {

@@ -1659,35 +1659,172 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
     }
 
     /** AlfaGram: @BotFather tokenini so'rab, shu bot nomidan kiradi. */
+    /** AlfaGram: «Bot token bilan kirish» — iOS'dagidek to'liq ekran: robot, sarlavha, izoh, yumaloq token maydoni, keng tugma. */
     private void alfaShowBotLogin() {
         Context context = getParentActivity();
         if (context == null) {
             return;
         }
+        final int bg = Theme.getColor(Theme.key_windowBackgroundWhite);
+        final int textColor = Theme.getColor(Theme.key_windowBackgroundWhiteBlackText);
+        final int grayColor = Theme.getColor(Theme.key_windowBackgroundWhiteGrayText);
+        final Dialog dialog = new Dialog(context, android.R.style.Theme_DeviceDefault_NoActionBar);
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(bg));
+            dialog.getWindow().setStatusBarColor(bg);
+            dialog.getWindow().setNavigationBarColor(bg);
+            dialog.getWindow().setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE | android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
+            if (AndroidUtilities.computePerceivedBrightness(bg) > 0.721f) {
+                dialog.getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+            }
+        }
+
+        FrameLayout root = new FrameLayout(context);
+        root.setBackgroundColor(bg);
+
+        TextView back = new TextView(context);
+        back.setText(org.telegram.messenger.AlfaCyrillic.ui("Orqaga"));
+        back.setTextColor(textColor);
+        back.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 16);
+        back.setGravity(Gravity.CENTER);
+        back.setPadding(AndroidUtilities.dp(18), 0, AndroidUtilities.dp(18), 0);
+        back.setBackground(Theme.createSimpleSelectorRoundRectDrawable(AndroidUtilities.dp(22), Theme.getColor(Theme.key_windowBackgroundGray), Theme.getColor(Theme.key_listSelector)));
+        root.addView(back, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, 44, Gravity.LEFT | Gravity.TOP, 16, 12, 0, 0));
+
+        ScrollView scroll = new ScrollView(context);
+        scroll.setFillViewport(true);
+        root.addView(scroll, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, Gravity.TOP, 0, 64, 0, 0));
+        LinearLayout column = new LinearLayout(context);
+        column.setOrientation(LinearLayout.VERTICAL);
+        column.setGravity(Gravity.CENTER_HORIZONTAL);
+        column.setPadding(AndroidUtilities.dp(24), AndroidUtilities.dp(24), AndroidUtilities.dp(24), AndroidUtilities.dp(24));
+        scroll.addView(column, new ScrollView.LayoutParams(ScrollView.LayoutParams.MATCH_PARENT, ScrollView.LayoutParams.WRAP_CONTENT));
+
+        TextView robot = new TextView(context);
+        robot.setText("\uD83E\uDD16");
+        robot.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 80);
+        robot.setGravity(Gravity.CENTER);
+        column.addView(robot, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER_HORIZONTAL));
+
+        TextView title = new TextView(context);
+        title.setText(org.telegram.messenger.AlfaCyrillic.ui("Bot token bilan kirish"));
+        title.setTextColor(textColor);
+        title.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 26);
+        title.setTypeface(AndroidUtilities.bold());
+        title.setGravity(Gravity.CENTER);
+        column.addView(title, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 20, 0, 0));
+
+        TextView note = new TextView(context);
+        note.setText(org.telegram.messenger.AlfaCyrillic.ui("Bot rejimi cheklangan: chatlar ro'yxati va eski xabarlar ko'rinmaydi"));
+        note.setTextColor(grayColor);
+        note.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
+        note.setGravity(Gravity.CENTER);
+        column.addView(note, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 10, 0, 0));
+
         EditTextBoldCursor field = new EditTextBoldCursor(context);
-        field.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 16);
+        field.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 17);
+        field.setTypeface(android.graphics.Typeface.MONOSPACE);
         field.setHint("123456789:ABCdef...");
         field.setSingleLine(true);
+        field.setImeOptions(EditorInfo.IME_ACTION_DONE);
         field.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS | InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
-        field.setTextColor(Theme.getColor(Theme.key_dialogTextBlack));
-        field.setHintTextColor(Theme.getColor(Theme.key_dialogTextHint));
-        field.setCursorColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
-        field.setLineColors(Theme.getColor(Theme.key_windowBackgroundWhiteInputField), Theme.getColor(Theme.key_windowBackgroundWhiteInputFieldActivated), Theme.getColor(Theme.key_text_RedRegular));
-        FrameLayout container = new FrameLayout(context);
-        container.addView(field, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 36, Gravity.TOP, 24, 6, 24, 0));
+        field.setTextColor(textColor);
+        field.setHintTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteHintText));
+        field.setCursorColor(textColor);
+        field.setCursorSize(AndroidUtilities.dp(20));
+        field.setPadding(AndroidUtilities.dp(18), 0, AndroidUtilities.dp(18), 0);
+        android.graphics.drawable.GradientDrawable fieldBg = new android.graphics.drawable.GradientDrawable();
+        fieldBg.setCornerRadius(AndroidUtilities.dp(16));
+        fieldBg.setColor(Theme.getColor(Theme.key_windowBackgroundGray));
+        fieldBg.setStroke(AndroidUtilities.dp(1), Theme.getColor(Theme.key_windowBackgroundWhiteInputField));
+        field.setBackground(fieldBg);
+        column.addView(field, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 56, 0, 36, 0, 0));
 
-        new AlertDialog.Builder(context)
-                .setTitle(org.telegram.messenger.AlfaCyrillic.ui("Bot token bilan kirish"))
-                .setMessage(org.telegram.messenger.AlfaCyrillic.ui("Tokenni @BotFather beradi. Bot rejimi cheklangan: chatlar ro'yxati va eski xabarlar ko'rinmaydi, faqat kirgandan keyingi yangi xabarlar keladi."))
-                .setView(container)
-                .setPositiveButton(org.telegram.messenger.AlfaCyrillic.ui("Kirish"), (dialog, which) -> alfaLoginWithBotToken(field.getText() == null ? "" : field.getText().toString().trim()))
-                .setNegativeButton(LocaleController.getString(R.string.Cancel), null)
-                .show();
+        TextView error = new TextView(context);
+        error.setTextColor(Theme.getColor(Theme.key_text_RedRegular));
+        error.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
+        error.setGravity(Gravity.CENTER);
+        error.setVisibility(View.GONE);
+        column.addView(error, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 10, 0, 0));
+
+        FrameLayout button = new FrameLayout(context);
+        button.setBackground(Theme.createSimpleSelectorRoundRectDrawable(AndroidUtilities.dp(27), Theme.getColor(Theme.key_featuredStickers_addButton), Theme.getColor(Theme.key_featuredStickers_addButtonPressed)));
+        TextView buttonText = new TextView(context);
+        buttonText.setText(org.telegram.messenger.AlfaCyrillic.ui("Tizimga kirish"));
+        buttonText.setTextColor(Theme.getColor(Theme.key_featuredStickers_buttonText));
+        buttonText.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 16);
+        buttonText.setTypeface(AndroidUtilities.bold());
+        button.addView(buttonText, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER));
+        RadialProgressView progress = new RadialProgressView(context);
+        progress.setSize(AndroidUtilities.dp(22));
+        progress.setProgressColor(Theme.getColor(Theme.key_featuredStickers_buttonText));
+        progress.setVisibility(View.GONE);
+        button.addView(progress, LayoutHelper.createFrame(32, 32, Gravity.CENTER));
+        column.addView(button, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 54, 0, 24, 0, 0));
+
+        TextView footer = new TextView(context);
+        footer.setText(org.telegram.messenger.AlfaCyrillic.ui("Tokenni @BotFather beradi: /newbot yoki /token buyrug'i."));
+        footer.setTextColor(grayColor);
+        footer.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13);
+        footer.setGravity(Gravity.CENTER);
+        column.addView(footer, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 16, 0, 0));
+
+        final boolean[] inProgress = {false};
+        final Runnable submit = () -> {
+            if (inProgress[0]) {
+                return;
+            }
+            String token = field.getText() == null ? "" : field.getText().toString().trim();
+            if (token.isEmpty()) {
+                AndroidUtilities.shakeViewSpring(field, 3.5f);
+                return;
+            }
+            inProgress[0] = true;
+            error.setVisibility(View.GONE);
+            buttonText.setVisibility(View.INVISIBLE);
+            progress.setVisibility(View.VISIBLE);
+            field.setEnabled(false);
+            alfaLoginWithBotToken(token, errorText -> {
+                inProgress[0] = false;
+                buttonText.setVisibility(View.VISIBLE);
+                progress.setVisibility(View.GONE);
+                field.setEnabled(true);
+                if (errorText == null) {
+                    AndroidUtilities.hideKeyboard(field);
+                    dialog.dismiss();
+                } else {
+                    error.setText(errorText);
+                    error.setVisibility(View.VISIBLE);
+                    AndroidUtilities.shakeViewSpring(field, 3.5f);
+                }
+            });
+        };
+        button.setOnClickListener(v -> submit.run());
+        field.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
+                submit.run();
+                return true;
+            }
+            return false;
+        });
+        back.setOnClickListener(v -> {
+            if (!inProgress[0]) {
+                AndroidUtilities.hideKeyboard(field);
+                dialog.dismiss();
+            }
+        });
+        dialog.setOnKeyListener((d, keyCode, event) -> inProgress[0] && keyCode == android.view.KeyEvent.KEYCODE_BACK);
+
+        dialog.setContentView(root);
+        dialog.show();
+        field.requestFocus();
+        AndroidUtilities.runOnUIThread(() -> AndroidUtilities.showKeyboard(field), 200);
     }
 
-    private void alfaLoginWithBotToken(String token) {
+    /** Kirildi — callback'ga null, xato — xato matni. */
+    private void alfaLoginWithBotToken(String token, org.telegram.messenger.Utilities.Callback<String> done) {
         if (!org.telegram.messenger.AlfaBotLogin.looksLikeToken(token)) {
-            needShowAlert(org.telegram.messenger.AlfaCyrillic.ui("Bot token bilan kirish"), org.telegram.messenger.AlfaCyrillic.ui("Token noto'g'ri. U 123456789:ABCdef... ko'rinishida bo'ladi."));
+            done.run(org.telegram.messenger.AlfaCyrillic.ui("Token noto'g'ri. U 123456789:ABCdef... ko'rinishida bo'ladi."));
             return;
         }
         org.telegram.messenger.AlfaBotLogin.TL_auth_importBotAuthorization req = new org.telegram.messenger.AlfaBotLogin.TL_auth_importBotAuthorization();
@@ -1695,13 +1832,12 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
         req.api_id = BuildVars.APP_ID;
         req.api_hash = BuildVars.APP_HASH;
         req.bot_auth_token = token;
-        needShowProgress(0);
         ConnectionsManager.getInstance(currentAccount).sendRequest(req, (response, error) -> AndroidUtilities.runOnUIThread(() -> {
-            needHideProgress(false);
             if (response instanceof TLRPC.TL_auth_authorization) {
+                done.run(null);
                 onAuthSuccess((TLRPC.TL_auth_authorization) response);
             } else {
-                needShowAlert(org.telegram.messenger.AlfaCyrillic.ui("Bot token bilan kirish"), org.telegram.messenger.AlfaBotLogin.errorText(error));
+                done.run(org.telegram.messenger.AlfaBotLogin.errorText(error));
             }
         }), ConnectionsManager.RequestFlagFailOnServerErrors | ConnectionsManager.RequestFlagWithoutLogin | ConnectionsManager.RequestFlagTryDifferentDc | ConnectionsManager.RequestFlagEnableUnauthorized);
     }

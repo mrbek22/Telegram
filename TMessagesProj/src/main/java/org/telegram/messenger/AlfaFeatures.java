@@ -132,6 +132,15 @@ public class AlfaFeatures {
     public static boolean keepSelfDestructing = true;
     /** Dumaloq video orqa kamerada boshlanadi (o'chiq — old kamera). */
     public static boolean roundVideoBack = false;
+    /** Kamera rejimiga o'tganda har safar «Old / Orqa kamera» so'raladi (iOS roundVideoAsk). */
+    public static boolean roundVideoAsk = false;
+    /** «Har safar so'rash»da oxirgi tanlov (saqlanmaydi). */
+    public static boolean roundVideoAskedBack = false;
+
+    /** Dumaloq video qaysi kamerada boshlanadi. */
+    public static boolean roundVideoStartsBack() {
+        return roundVideoAsk ? roundVideoAskedBack : roundVideoBack;
+    }
 
     /** Barcha bayroq kalitlari (SharedPreferences kaliti = maydon nomi). */
     private static final String[] KEYS = {
@@ -146,7 +155,7 @@ public class AlfaFeatures {
             "blockTelegramAds", "hideSponsoredMessages",
             "openLastChat", "debugLogs",
             "cyrillicUi", "sendCyrillic", "onlineTracker", "profileLog", "autoFolders",
-            "apkGuard", "linkGuard", "confirmCalls", "keepSelfDestructing", "roundVideoBack",
+            "apkGuard", "linkGuard", "confirmCalls", "keepSelfDestructing", "roundVideoBack", "roundVideoAsk",
     };
 
     /** Foydalanuvchi tanlovi (server ta'sirisiz) — sozlamalar switch'i shuni ko'rsatadi. */
@@ -397,6 +406,7 @@ public class AlfaFeatures {
             case "confirmCalls": return confirmCalls;
             case "keepSelfDestructing": return keepSelfDestructing;
             case "roundVideoBack": return roundVideoBack;
+            case "roundVideoAsk": return roundVideoAsk;
             default: return false;
         }
     }
@@ -454,6 +464,7 @@ public class AlfaFeatures {
             case "confirmCalls": confirmCalls = value; break;
             case "keepSelfDestructing": keepSelfDestructing = value; break;
             case "roundVideoBack": roundVideoBack = value; break;
+            case "roundVideoAsk": roundVideoAsk = value; break;
         }
     }
 }

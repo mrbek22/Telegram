@@ -731,7 +731,7 @@ public class InstantCameraView extends FrameLayout implements NotificationCenter
         selectedCamera = null;
         if (!fromPaused) {
             // AlfaGram: sozlamada tanlangan kamera (sukut — old)
-            isFrontface = !org.telegram.messenger.AlfaFeatures.roundVideoBack;
+            isFrontface = !org.telegram.messenger.AlfaFeatures.roundVideoStartsBack();
             updateFlash();
             recordedTime = 0;
             progress = 0;
