@@ -12546,6 +12546,16 @@ public class MessagesController extends BaseController implements NotificationCe
                     if (onEmptyCallback != null && dialogsRes.dialogs.isEmpty()) {
                         AndroidUtilities.runOnUIThread(onEmptyCallback);
                     }
+                } else if ("BOT_METHOD_INVALID".equals(error.text)) {
+                    // AlfaGram: bot akkaunti (bot token bilan kirish) chatlar ro'yxatini ola olmaydi — ro'yxat
+                    // yuklangan deb belgilanadi (aks holda «yuklanmoqda» abadiy aylanadi); chatlar yangi
+                    // xabarlardan mahalliy yaratiladi (updateInterfaceWithMessages).
+                    AndroidUtilities.runOnUIThread(() -> {
+                        dialogsEndReached.put(folderId, true);
+                        serverDialogsEndReached.put(folderId, true);
+                        loadingDialogs.put(folderId, false);
+                        getNotificationCenter().postNotificationName(NotificationCenter.dialogsNeedReload);
+                    });
                 }
             });
         }
