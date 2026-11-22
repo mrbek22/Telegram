@@ -2434,6 +2434,8 @@ public class PeerStoriesView extends SizeNotifierFrameLayout implements Notifica
 
     private void createStealthModeItem(ActionBarPopupWindow.ActionBarPopupWindowLayout popupLayout) {
         if (isBotsPreview() || currentStory.isLive) return;
+        // AlfaGram: anonim ko'rish o'zi ishlaydi — Telegram'ning Stealth bandi kerak emas
+        if (org.telegram.messenger.AlfaFeatures.stealthStories) return;
         if (UserConfig.getInstance(currentAccount).isPremium()) {
             ActionBarMenuItem.addItem(popupLayout, R.drawable.msg_stories_stealth2, getString(R.string.StealthModeButton), false, resourcesProvider).setOnClickListener(v -> {
                 if (stealthModeIsActive) {

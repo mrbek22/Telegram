@@ -72,7 +72,8 @@ public class AlfaFeatures {
 
     // ── Maxfiylik ──────────────────────────────────
     public static boolean ghostMode = false;
-    public static boolean stealthStories = false;
+    /** Story'larni anonim ko'rish — sukut YOQIQ (iOS bilan bir xil; eski userlarga bir martalik migratsiya). */
+    public static boolean stealthStories = true;
     /** Sozlamalarda telefon raqamni yashirish. */
     public static boolean hidePhoneInSettings = false;
     /** Recent apps ekranida ilovani xiralashtirish (blur). */
@@ -218,6 +219,10 @@ public class AlfaFeatures {
             loaded = true;
             try {
                 SharedPreferences p = prefs();
+                // AlfaGram: anonim story sukut yoqiq — avval o'chiq bo'lgan userlarga bir marta yoqiladi (iOS 44-band)
+                if (!p.getBoolean("alfaStealthDefaultV1", false)) {
+                    p.edit().putBoolean("alfaStealthDefaultV1", true).putBoolean("stealthStories", true).apply();
+                }
                 for (String k : KEYS) {
                     try {
                         if (p.contains(k)) {

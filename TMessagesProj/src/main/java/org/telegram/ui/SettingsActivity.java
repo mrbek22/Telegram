@@ -925,6 +925,11 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
     }
 
     private boolean onLongClick(UItem item, View view, int position, float x, float y) {
+        // AlfaGram: «Akkaunt qo'shish»ni bosib turish → barmoq izi/PIN → Maxfiy akkauntlar (iOS bilan bir xil)
+        if (item.id == 102) {
+            alfaOpenHiddenAccounts();
+            return true;
+        }
         // AlfaGram: akkaunt menyusi — vaqtincha to'xtatish, yashirish, maxfiy akkauntlar
         if (item.instanceOf(AccountCell.Factory.class) && item.intValue != currentAccount) {
             final int alfaAccount = item.intValue;

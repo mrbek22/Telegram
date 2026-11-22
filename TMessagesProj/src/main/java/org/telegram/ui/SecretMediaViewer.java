@@ -79,6 +79,7 @@ import org.telegram.messenger.Emoji;
 import org.telegram.messenger.ImageLocation;
 import org.telegram.messenger.ImageReceiver;
 import org.telegram.messenger.LocaleController;
+import org.telegram.messenger.MediaController;
 import org.telegram.messenger.MessageObject;
 import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.NotificationCenter;
@@ -382,6 +383,37 @@ public class SecretMediaViewer implements NotificationCenter.NotificationCenterD
     private Object lastInsets;
 
     private MessageObject currentMessageObject;
+    private static final int ALFA_SAVE_ITEM = 1;
+    private org.telegram.ui.ActionBar.ActionBarMenuItem alfaSaveItem;
+
+    private void alfaSaveCurrent() {
+        if (currentMessageObject == null || parentActivity == null) {
+            return;
+        }
+        try {
+            java.io.File f = null;
+            String attach = currentMessageObject.messageOwner.attachPath;
+            if (attach != null && attach.length() > 0) {
+                f = new java.io.File(attach);
+                if (!f.exists()) f = null;
+            }
+            if (f == null) {
+                f = FileLoader.getInstance(currentAccount).getPathToMessage(currentMessageObject.messageOwner);
+            }
+            if (f == null || !f.exists()) {
+                android.widget.Toast.makeText(parentActivity, org.telegram.messenger.AlfaCyrillic.ui("Fayl hali yuklanmagan"), android.widget.Toast.LENGTH_SHORT).show();
+                return;
+            }
+            boolean video = currentMessageObject.isVideo() || currentMessageObject.isRoundVideo() || currentMessageObject.isGif();
+            MediaController.saveFile(f.toString(), parentActivity, video ? 1 : 0, null, null, uri -> AndroidUtilities.runOnUIThread(() -> {
+                if (parentActivity != null) {
+                    android.widget.Toast.makeText(parentActivity, org.telegram.messenger.AlfaCyrillic.ui("Galereyaga saqlandi"), android.widget.Toast.LENGTH_SHORT).show();
+                }
+            }));
+        } catch (Throwable e) {
+            FileLog.e(e);
+        }
+    }
     private ImageReceiver.BitmapHolder currentThumb;
 
     private int[] coords = new int[2];
@@ -882,9 +914,14 @@ public class SecretMediaViewer implements NotificationCenter.NotificationCenterD
             public void onItemClick(int id) {
                 if (id == -1) {
                     closePhoto(true, false);
+                } else if (id == ALFA_SAVE_ITEM) {
+                    alfaSaveCurrent();
                 }
             }
         });
+        // AlfaGram: bir martalik / soniyali media — galereyaga saqlash (Cheklovsiz saqlash yoqiq bo'lsa; iOS bilan bir xil)
+        alfaSaveItem = actionBar.createMenu().addItem(ALFA_SAVE_ITEM, R.drawable.msg_download);
+        alfaSaveItem.setContentDescription(org.telegram.messenger.AlfaCyrillic.ui("Galereyaga saqlash"));
 
         secretHint = new HintView2(activity, HintView2.DIRECTION_TOP);
         secretHint.setJoint(1, -26);
@@ -1496,6 +1533,9 @@ public class SecretMediaViewer implements NotificationCenter.NotificationCenterD
         NotificationCenter.getInstance(currentAccount).addObserver(this, NotificationCenter.didCreatedNewDeleteTask);
         currentDialogId = MessageObject.getPeerId(messageObject.messageOwner.peer_id);
         currentMessageObject = messageObject;
+        if (alfaSaveItem != null) {
+            alfaSaveItem.setVisibility(org.telegram.messenger.AlfaFeatures.unrestrictedSave ? View.VISIBLE : View.GONE);
+        }
         TLRPC.Document document = messageObject.getDocument();
         if (currentThumb != null) {
             currentThumb.release();
