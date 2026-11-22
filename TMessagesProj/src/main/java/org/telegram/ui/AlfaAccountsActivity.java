@@ -82,7 +82,7 @@ public class AlfaAccountsActivity extends UniversalFragment {
         if (UserConfig.getActivatedAccountsCount() < UserConfig.MAX_ACCOUNT_COUNT) {
             items.add(SettingsActivity.SettingCell.Factory.of(BUTTON_ADD_ACCOUNT, IconBackgroundColors.GREEN.top, IconBackgroundColors.GREEN.bottom, org.telegram.messenger.R.drawable.settings_invite, AlfaCyrillic.ui("Akkaunt qo'shish")));
         }
-        items.add(UItem.asShadow(AlfaCyrillic.ui("AlfaGram'da " + UserConfig.MAX_ACCOUNT_COUNT + " tagacha akkaunt qo'shish mumkin.")));
+        items.add(UItem.asShadow(AlfaCyrillic.uiFormat("AlfaGram'da %d tagacha akkaunt qo'shish mumkin.", UserConfig.MAX_ACCOUNT_COUNT)));
     }
 
     @Override

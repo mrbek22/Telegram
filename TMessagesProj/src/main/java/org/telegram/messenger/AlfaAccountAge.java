@@ -64,6 +64,7 @@ public class AlfaAccountAge {
         Date d = new Date(t * 1000L);
         int month = Integer.parseInt(new SimpleDateFormat("M", Locale.US).format(d)) - 1;
         String year = new SimpleDateFormat("yyyy", Locale.US).format(d);
-        return AlfaCyrillic.ui("~ " + year + "-yil " + months[Math.max(0, Math.min(11, month))]);
+        // oy nomi lug'atda "month::yanvar" kaliti; tartib (yil/oy) tilga qarab format satrida
+        return AlfaCyrillic.uiFormat("~ %1$s-yil %2$s", year, AlfaCyrillic.ui(months[Math.max(0, Math.min(11, month))], "month"));
     }
 }

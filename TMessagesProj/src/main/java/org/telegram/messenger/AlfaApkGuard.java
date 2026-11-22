@@ -66,7 +66,7 @@ public final class AlfaApkGuard {
     public static CharSequence bubbleLabel(TLRPC.Document document) {
         if (!isApkDocument(document)) return null;
         String text = "⚠ APK · " + AndroidUtilities.formatFileSize(document.size) + " · "
-                + (AlfaFeatures.apkGuard ? "o'rnatish bloklangan" : "virus bo'lishi mumkin");
+                + AlfaCyrillic.ui(AlfaFeatures.apkGuard ? "o'rnatish bloklangan" : "virus bo'lishi mumkin");
         SpannableString s = new SpannableString(AlfaCyrillic.ui(text));
         s.setSpan(new ForegroundColorSpan(RED), 0, s.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         return s;
@@ -174,16 +174,16 @@ public final class AlfaApkGuard {
 
         // 1) fayl nomi
         if (DOUBLE_EXT.matcher(lower).find()) {
-            r.hi("Fayl nomi niqoblangan («" + fileName + "») — rasm yoki video ko'rinishida, aslida dastur");
+            r.hi(AlfaCyrillic.uiFormat("Fayl nomi niqoblangan («%s») — rasm yoki video ko'rinishida, aslida dastur", fileName));
         } else {
             String base = lower.replaceAll("\\.(apk|xapk|apks|apkm)$", "");
             if (LURE_NAME.matcher(base).find()) {
-                r.hi("Fayl nomi aldovchi: rasm, video, sovg'a yoki hujjat deb ko'rsatilgan — aslida dastur");
+                r.hi(AlfaCyrillic.ui("Fayl nomi aldovchi: rasm, video, sovg'a yoki hujjat deb ko'rsatilgan — aslida dastur"));
             }
         }
         String brandByName = findBrand(lower);
         if (brandByName != null) {
-            r.hi("O'zini «" + brandByName + "» deb ko'rsatyapti. Rasmiy ilovalar faqat Play Market'dan o'rnatiladi — Telegram orqali kelgan bunday fayl deyarli har doim soxta");
+            r.hi(AlfaCyrillic.uiFormat("O'zini «%s» deb ko'rsatyapti. Rasmiy ilovalar faqat Play Market'dan o'rnatiladi — Telegram orqali kelgan bunday fayl deyarli har doim soxta", brandByName));
         }
 
         // 2) APK ichi
@@ -224,7 +224,7 @@ public final class AlfaApkGuard {
             pi = pm.getPackageArchiveInfo(file.getAbsolutePath(), PackageManager.GET_PERMISSIONS);
         }
         if (pi == null) {
-            r.med("Faylni tekshirib bo'lmadi — buzilgan yoki ataylab yashirilgan dastur");
+            r.med(AlfaCyrillic.ui("Faylni tekshirib bo'lmadi — buzilgan yoki ataylab yashirilgan dastur"));
             return;
         }
         r.packageName = pi.packageName;
@@ -241,12 +241,12 @@ public final class AlfaApkGuard {
 
         String self = ApplicationLoader.applicationContext.getPackageName();
         if (self.equals(pi.packageName)) {
-            r.hi("Bu fayl o'zini AlfaGram deb ko'rsatyapti. AlfaGram faqat Play Market orqali yangilanadi");
+            r.hi(AlfaCyrillic.ui("Bu fayl o'zini AlfaGram deb ko'rsatyapti. AlfaGram faqat Play Market orqali yangilanadi"));
         }
         String brand = findBrand(r.appLabel);
         if (brand == null) brand = findBrand(pi.packageName);
         if (brand != null) {
-            r.hi("Dastur o'zini «" + brand + "» deb atagan. Rasmiy bank va Telegram ilovalari APK fayl qilib yuborilmaydi — bu soxta");
+            r.hi(AlfaCyrillic.uiFormat("Dastur o'zini «%s» deb atagan. Rasmiy bank va Telegram ilovalari APK fayl qilib yuborilmaydi — bu soxta", brand));
         }
 
         String[] perms = pi.requestedPermissions;
@@ -256,28 +256,28 @@ public final class AlfaApkGuard {
                 switch (p) {
                     case "android.permission.READ_SMS":
                     case "android.permission.RECEIVE_SMS":
-                        r.hi("SMS xabarlaringizni o'qiy oladi — bank va Telegram kodlarini o'g'irlaydi");
+                        r.hi(AlfaCyrillic.ui("SMS xabarlaringizni o'qiy oladi — bank va Telegram kodlarini o'g'irlaydi"));
                         break;
                     case "android.permission.SEND_SMS":
-                        r.hi("Sizning nomingizdan SMS yubora oladi");
+                        r.hi(AlfaCyrillic.ui("Sizning nomingizdan SMS yubora oladi"));
                         break;
                     case "android.permission.SYSTEM_ALERT_WINDOW":
-                        r.med("Boshqa ilovalar ustida oyna ocha oladi (soxta bank oynasi)");
+                        r.med(AlfaCyrillic.ui("Boshqa ilovalar ustida oyna ocha oladi (soxta bank oynasi)"));
                         break;
                     case "android.permission.REQUEST_INSTALL_PACKAGES":
-                        r.med("O'zi boshqa dasturlarni o'rnata oladi");
+                        r.med(AlfaCyrillic.ui("O'zi boshqa dasturlarni o'rnata oladi"));
                         break;
                     case "android.permission.READ_CONTACTS":
-                        r.med("Kontaktlaringizni o'qiy oladi (virusni ularga tarqatish uchun)");
+                        r.med(AlfaCyrillic.ui("Kontaktlaringizni o'qiy oladi (virusni ularga tarqatish uchun)"));
                         break;
                     case "android.permission.CALL_PHONE":
                     case "android.permission.READ_CALL_LOG":
                     case "android.permission.PROCESS_OUTGOING_CALLS":
                     case "android.permission.ANSWER_PHONE_CALLS":
-                        r.med("Qo'ng'iroqlaringizni boshqara oladi");
+                        r.med(AlfaCyrillic.ui("Qo'ng'iroqlaringizni boshqara oladi"));
                         break;
                     case "android.permission.REQUEST_DELETE_PACKAGES":
-                        r.med("Boshqa ilovalarni (antivirusni) o'chira oladi");
+                        r.med(AlfaCyrillic.ui("Boshqa ilovalarni (antivirusni) o'chira oladi"));
                         break;
                     default:
                         break;
@@ -288,16 +288,16 @@ public final class AlfaApkGuard {
             for (ServiceInfo s : pi.services) {
                 if (s == null || s.permission == null) continue;
                 if ("android.permission.BIND_ACCESSIBILITY_SERVICE".equals(s.permission)) {
-                    r.hi("Telefoningizni masofadan boshqara oladi (maxsus imkoniyatlar xizmati)");
+                    r.hi(AlfaCyrillic.ui("Telefoningizni masofadan boshqara oladi (maxsus imkoniyatlar xizmati)"));
                 } else if ("android.permission.BIND_NOTIFICATION_LISTENER_SERVICE".equals(s.permission)) {
-                    r.hi("Barcha bildirishnomalaringizni (kodlarni ham) o'qiy oladi");
+                    r.hi(AlfaCyrillic.ui("Barcha bildirishnomalaringizni (kodlarni ham) o'qiy oladi"));
                 }
             }
         }
         if (pi.receivers != null) {
             for (ActivityInfo a : pi.receivers) {
                 if (a != null && "android.permission.BIND_DEVICE_ADMIN".equals(a.permission)) {
-                    r.hi("Qurilma administratori bo'lishga urinadi — keyin o'chirib bo'lmaydi");
+                    r.hi(AlfaCyrillic.ui("Qurilma administratori bo'lishga urinadi — keyin o'chirib bo'lmaydi"));
                 }
             }
         }
@@ -318,15 +318,15 @@ public final class AlfaApkGuard {
         MessagesController mc = MessagesController.getInstance(message.currentAccount);
         long senderId = message.getSenderId();
         if (message.isForwarded()) {
-            r.sender.add("Boshqa joydan forward qilingan");
+            r.sender.add(AlfaCyrillic.ui("Boshqa joydan forward qilingan"));
         }
         if (senderId > 0) {
             TLRPC.User u = mc.getUser(senderId);
             if (u != null) {
                 if (u.bot) {
-                    r.sender.add("Bot yuborgan");
+                    r.sender.add(AlfaCyrillic.ui("Bot yuborgan"));
                 } else if (!u.contact && !UserObject.isUserSelf(u)) {
-                    r.sender.add("Yuboruvchi kontaktlaringizda yo'q");
+                    r.sender.add(AlfaCyrillic.ui("Yuboruvchi kontaktlaringizda yo'q"));
                 }
                 if (u.verified) {
                     return;
@@ -335,11 +335,11 @@ public final class AlfaApkGuard {
             long created = AlfaAccountAge.estimate(senderId);
             long now = System.currentTimeMillis() / 1000L;
             if (created > 0 && now - created < 180L * 24 * 3600) {
-                r.sender.add("Yuboruvchi akkaunti yaqinda ochilgan (" + AlfaAccountAge.format(senderId) + ")");
+                r.sender.add(AlfaCyrillic.uiFormat("Yuboruvchi akkaunti yaqinda ochilgan (%s)", AlfaAccountAge.format(senderId)));
             }
         }
         if (message.getDialogId() < 0) {
-            r.sender.add("Guruh yoki kanalda tarqatilgan");
+            r.sender.add(AlfaCyrillic.ui("Guruh yoki kanalda tarqatilgan"));
         }
         if (r.sender.size() >= 2 && r.level < MEDIUM) {
             r.level = MEDIUM;
@@ -352,30 +352,30 @@ public final class AlfaApkGuard {
         if (activity == null || activity.isFinishing()) return;
         StringBuilder sb = new StringBuilder();
         if (AlfaFeatures.apkGuard) {
-            sb.append("AlfaGram himoyasi yoqilgan: chatlardan kelgan dasturlar (APK) o'rnatilmaydi.\n\n");
+            sb.append(AlfaCyrillic.ui("AlfaGram himoyasi yoqilgan: chatlardan kelgan dasturlar (APK) o'rnatilmaydi.\n\n"));
         }
         if (r.appLabel != null) {
-            sb.append("Dastur: ").append(r.appLabel);
+            sb.append(AlfaCyrillic.ui("Dastur: ")).append(r.appLabel);
             if (r.packageName != null) sb.append(" (").append(r.packageName).append(")");
             sb.append("\n\n");
         }
         if (r.level == HIGH) {
-            sb.append("🔴 Xavf YUQORI — bu deyarli aniq virus:\n");
+            sb.append(AlfaCyrillic.ui("🔴 Xavf YUQORI — bu deyarli aniq virus:\n"));
         } else if (r.level == MEDIUM) {
-            sb.append("🟠 Xavf o'rtacha:\n");
+            sb.append(AlfaCyrillic.ui("🟠 Xavf o'rtacha:\n"));
         } else {
-            sb.append("🟢 Aniq xavfli belgi topilmadi. Lekin baribir faqat ishonchli odamdan kelgan dasturni o'rnating.\n");
+            sb.append(AlfaCyrillic.ui("🟢 Aniq xavfli belgi topilmadi. Lekin baribir faqat ishonchli odamdan kelgan dasturni o'rnating.\n"));
         }
         for (String s : r.high) sb.append("• ").append(s).append('\n');
         for (String s : r.medium) sb.append("• ").append(s).append('\n');
         if (!r.sender.isEmpty()) {
-            sb.append("\nYuboruvchi:\n");
+            sb.append(AlfaCyrillic.ui("\nYuboruvchi:\n"));
             for (String s : r.sender) sb.append("• ").append(s).append('\n');
         }
         if (AlfaFeatures.apkGuard) {
-            sb.append("\nO'rnatish kerak bo'lsa: AlfaGram sozlamalari → Xavfsizlik → «APK o'rnatishni bloklash»ni o'chiring.");
+            sb.append(AlfaCyrillic.ui("\nO'rnatish kerak bo'lsa: AlfaGram sozlamalari → Xavfsizlik → «APK o'rnatishni bloklash»ni o'chiring."));
         } else {
-            sb.append("\nVirus o'rnatilsa SMS kodlaringiz, bank kartangiz va Telegram akkauntingiz o'g'irlanadi.");
+            sb.append(AlfaCyrillic.ui("\nVirus o'rnatilsa SMS kodlaringiz, bank kartangiz va Telegram akkauntingiz o'g'irlanadi."));
         }
 
         AlertDialog.Builder b = new AlertDialog.Builder(activity);
@@ -446,7 +446,7 @@ public final class AlfaApkGuard {
                 + "bank kartangizni va Telegram akkauntingizni o'g'irlaydi, keyin kontaktlaringizga o'zini yuboradi.\n\n"
                 + "Faqat kerakli dasturni o'rnatib bo'lgach, himoyani qayta yoqing."));
         b.setPositiveButton(AlfaCyrillic.ui("Yoqiq qolsin"), null);
-        b.setNegativeButton(AlfaCyrillic.ui("O'chirish"), (d, w) -> {
+        b.setNegativeButton(AlfaCyrillic.ui("O'chirish", "off"), (d, w) -> {
             if (onDisable != null) onDisable.run();
         });
         AlertDialog dialog = b.create();
@@ -564,13 +564,13 @@ public final class AlfaApkGuard {
         String path = uri.getPath() == null ? "" : uri.getPath().toLowerCase(Locale.US);
 
         if (isApkName(path)) {
-            out.add("Havola dastur (APK) yuklab beradi");
+            out.add(AlfaCyrillic.ui("Havola dastur (APK) yuklab beradi"));
         }
         if (host.startsWith("xn--") || host.contains(".xn--")) {
-            out.add("Manzil boshqa alifbo harflari bilan niqoblangan (" + host + ")");
+            out.add(AlfaCyrillic.uiFormat("Manzil boshqa alifbo harflari bilan niqoblangan (%s)", host));
         }
         if (IPV4.matcher(host).matches()) {
-            out.add("Manzil sayt nomi emas, raqamli IP");
+            out.add(AlfaCyrillic.ui("Manzil sayt nomi emas, raqamli IP"));
         }
         String[] labels = host.split("[.-]");
         for (String[] o : OFFICIAL) {
@@ -584,7 +584,7 @@ public final class AlfaApkGuard {
             }
             if (o[0].equals("mygov") && host.endsWith(".gov.uz")) official = true;
             if (!official) {
-                out.add("Sayt o'zini «" + o[0] + "» qilib ko'rsatyapti, lekin rasmiy manzil emas (" + host + ")");
+                out.add(AlfaCyrillic.uiFormat("Sayt o'zini «%1$s» qilib ko'rsatyapti, lekin rasmiy manzil emas (%2$s)", o[0], host));
             }
             break;
         }
@@ -598,7 +598,7 @@ public final class AlfaApkGuard {
             }
         }
         if (badTld && LURE_URL.matcher(host + path).find()) {
-            out.add("Sovg'a/bonus/premium va'da qiluvchi shubhali sayt");
+            out.add(AlfaCyrillic.ui("Sovg'a/bonus/premium va'da qiluvchi shubhali sayt"));
         }
         return out;
     }
@@ -637,7 +637,7 @@ public final class AlfaApkGuard {
         StringBuilder sb = new StringBuilder();
         sb.append(url.length() > 120 ? url.substring(0, 120) + "…" : url).append("\n\n");
         for (String s : reasons) sb.append("• ").append(s).append('\n');
-        sb.append("\nBunday saytlar Telegram akkauntingiz, karta ma'lumotlaringiz yoki SMS kodingizni o'g'irlashi mumkin. Kodni hech kimga bermang.");
+        sb.append(AlfaCyrillic.ui("\nBunday saytlar Telegram akkauntingiz, karta ma'lumotlaringiz yoki SMS kodingizni o'g'irlashi mumkin. Kodni hech kimga bermang."));
         AlertDialog.Builder b = new AlertDialog.Builder(activity);
         b.setTitle(AlfaCyrillic.ui("⚠️ Shubhali havola"));
         b.setMessage(AlfaCyrillic.ui(sb.toString()));

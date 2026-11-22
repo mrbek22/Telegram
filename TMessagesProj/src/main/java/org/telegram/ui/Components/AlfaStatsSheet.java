@@ -179,7 +179,7 @@ public class AlfaStatsSheet extends BottomSheet {
                 dayHist.merge(dk, 1, Integer::sum);
                 countEmojis(m.message);
             }
-            progressView.setText(AlfaCyrillic.ui("Hisoblanmoqda… ") + format(scanned));
+            progressView.setText(AlfaCyrillic.uiFormat("Hisoblanmoqda… %s", format(scanned)));
             if (scanned < MAX_SCAN && res.messages.size() >= 90 && lastId != offsetId) {
                 scanHistory(lastId);
             } else {
@@ -230,7 +230,7 @@ public class AlfaStatsSheet extends BottomSheet {
         int maxDay = 0;
         for (Integer vv : dayHist.values()) maxDay = Math.max(maxDay, vv);
         if (maxDay > 0) {
-            addRow(R.drawable.msg_stats, 0xFFE6894F, AlfaCyrillic.ui("Bir kundagi rekord"), format(maxDay) + AlfaCyrillic.ui(" ta xabar"));
+            addRow(R.drawable.msg_stats, 0xFFE6894F, AlfaCyrillic.ui("Bir kundagi rekord"), AlfaCyrillic.uiFormat("%s ta xabar", format(maxDay)));
         }
 
         String topEmoji = maxKey(emojiHist);
@@ -250,7 +250,7 @@ public class AlfaStatsSheet extends BottomSheet {
             }
         }
 
-        addNote(AlfaCyrillic.ui("Media sonlari aniq. Qolgan ko'rsatkichlar oxirgi ") + format(scanned) + AlfaCyrillic.ui(" ta xabar bo'yicha. Hammasi telefoningizda hisoblandi."));
+        addNote(AlfaCyrillic.uiFormat("Media sonlari aniq. Qolgan ko'rsatkichlar oxirgi %s ta xabar bo'yicha. Hammasi telefoningizda hisoblandi.", format(scanned)));
     }
 
     // ── UI yordamchilari ──────────────────────────────

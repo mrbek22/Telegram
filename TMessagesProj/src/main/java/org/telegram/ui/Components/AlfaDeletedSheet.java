@@ -150,13 +150,13 @@ public class AlfaDeletedSheet extends BottomSheet {
                     return "@" + user.username;
                 }
             }
-            return org.telegram.messenger.AlfaCyrillic.ui("Foydalanuvchi ") + fromId;
+            return org.telegram.messenger.AlfaCyrillic.uiFormat("Foydalanuvchi %d", fromId);
         }
         TLRPC.Chat chat = MessagesController.getInstance(currentAccount).getChat(-fromId);
         if (chat != null && !TextUtils.isEmpty(chat.title)) {
             return chat.title;
         }
-        return "Chat " + (-fromId);
+        return org.telegram.messenger.AlfaCyrillic.uiFormat("Chat %d", -fromId);
     }
 
     private class Adapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {

@@ -110,7 +110,7 @@ public class AlfaUpdate {
                 ann.setPadding(0, AndroidUtilities.dp(8), 0, AndroidUtilities.dp(6));
                 ll.addView(ann);
                 if (AlfaConfig.announcementUrl != null && AlfaConfig.announcementUrl.length() > 0) {
-                    ll.addView(makeButton(context, "Ochish", AlfaConfig.announcementUrl, ref));
+                    ll.addView(makeButton(context, AlfaCyrillic.ui("Ochish"),AlfaConfig.announcementUrl, ref));
                 }
             }
 
@@ -165,7 +165,7 @@ public class AlfaUpdate {
             TextView title = new TextView(context);
             String vn = AlfaConfig.latestVersionName != null && AlfaConfig.latestVersionName.length() > 0
                     ? " " + AlfaConfig.latestVersionName : "";
-            title.setText("🚀 Yangi versiya" + vn);
+            title.setText(AlfaCyrillic.ui("🚀 Yangi versiya") + vn);
             title.setTextColor(Theme.getColor(Theme.key_dialogTextBlack));
             title.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 20);
             title.setTypeface(AndroidUtilities.bold());
@@ -179,7 +179,7 @@ public class AlfaUpdate {
             ll.addView(msg);
 
             TextView update = new TextView(context);
-            update.setText("Yangilash");
+            update.setText(AlfaCyrillic.ui("Yangilash"));
             update.setGravity(Gravity.CENTER);
             update.setTextColor(Color.WHITE);
             update.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
@@ -198,7 +198,7 @@ public class AlfaUpdate {
 
             if (!AlfaConfig.forceUpdate) {
                 TextView later = new TextView(context);
-                later.setText("Keyinroq");
+                later.setText(AlfaCyrillic.ui("Keyinroq"));
                 later.setGravity(Gravity.CENTER);
                 later.setTextColor(Theme.getColor(Theme.key_dialogTextGray2));
                 later.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);

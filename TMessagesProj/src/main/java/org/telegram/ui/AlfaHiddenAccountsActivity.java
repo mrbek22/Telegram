@@ -56,7 +56,7 @@ public class AlfaHiddenAccountsActivity extends UniversalFragment {
                     items.add(UItem.asHeader(AlfaCyrillic.ui("Maxfiy akkauntga kirish")));
                     anyHidden = true;
                 }
-                items.add(UItem.asButton(OPEN_BASE + account, org.telegram.messenger.R.drawable.msg_openprofile, AlfaCyrillic.ui("Kirish") + ": " + name(account)));
+                items.add(UItem.asButton(OPEN_BASE + account, org.telegram.messenger.R.drawable.msg_openprofile, AlfaCyrillic.uiFormat("Kirish: %s", name(account))));
             }
         }
         if (anyHidden) {

@@ -6177,9 +6177,9 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             });
             dialogsHintCell.setAvatars(currentAccount, users);
             String bdTitle = users.size() == 1
-                    ? "\uD83C\uDF82 Bugun " + UserObject.getForcedFirstName(users.get(0)) + "ning tug'ilgan kuni"
-                    : "\uD83C\uDF82 Bugun " + users.size() + " kishining tug'ilgan kuni";
-            dialogsHintCell.setText(Emoji.replaceEmoji(org.telegram.messenger.AlfaCyrillic.ui(bdTitle), dialogsHintCell.titleView.getPaint().getFontMetricsInt(), false),
+                    ? org.telegram.messenger.AlfaCyrillic.uiFormat("\uD83C\uDF82 Bugun %sning tug'ilgan kuni", org.telegram.messenger.AlfaCyrillic.ui(UserObject.getForcedFirstName(users.get(0))))
+                    : org.telegram.messenger.AlfaCyrillic.uiFormat("\uD83C\uDF82 Bugun %d kishining tug'ilgan kuni", users.size());
+            dialogsHintCell.setText(Emoji.replaceEmoji(bdTitle,dialogsHintCell.titleView.getPaint().getFontMetricsInt(), false),
                     org.telegram.messenger.AlfaCyrillic.ui("Bosing \u2014 tayyor tabrik bilan chat ochiladi"));
             dialogsHintCell.setOnCloseListener(v -> {
                 BirthdayController.getInstance(currentAccount).hide();
@@ -7576,7 +7576,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         }
         Bundle args = new Bundle();
         args.putLong("user_id", user.id);
-        args.putString("start_text", org.telegram.messenger.AlfaCyrillic.ui("\uD83C\uDF89 Tug'ilgan kuningiz muborak, " + UserObject.getForcedFirstName(user) + "! Sizga sog'lik, baxt va omad tilayman! \uD83C\uDF82"));
+        args.putString("start_text", org.telegram.messenger.AlfaCyrillic.uiFormat("\uD83C\uDF89 Tug'ilgan kuningiz muborak, %s! Sizga sog'lik, baxt va omad tilayman! \uD83C\uDF82", org.telegram.messenger.AlfaCyrillic.ui(UserObject.getForcedFirstName(user))));
         presentFragment(new ChatActivity(args));
     }
 
@@ -14178,7 +14178,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         }
 
         // AlfaGram — bosh ekrandagi "..." menyudan tez kirish
-        io.add(R.drawable.msg_settings_old, "AlfaGram sozlamalari", () -> presentFragment(new AlfaSettingsActivity()));
+        io.add(R.drawable.msg_settings_old, org.telegram.messenger.AlfaCyrillic.ui("AlfaGram sozlamalari"), () -> presentFragment(new AlfaSettingsActivity()));
         io.addGap();
 
         final boolean isCurrentThemeDark;

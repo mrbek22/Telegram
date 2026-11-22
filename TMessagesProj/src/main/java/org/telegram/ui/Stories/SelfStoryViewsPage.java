@@ -577,14 +577,14 @@ public class SelfStoryViewsPage extends FrameLayout implements NotificationCente
 
             if (viewers.isEmpty()) {
                 android.widget.TextView tv = new android.widget.TextView(context);
-                tv.setText("Bu story uchun hali saqlangan ko'ruvchi yo'q.\n\n\"Ko'ruvchilar\"ni ochsangiz, AlfaGram avtomatik saqlaydi — story o'chib ketsa ham qoladi.");
+                tv.setText(org.telegram.messenger.AlfaCyrillic.ui("Bu story uchun hali saqlangan ko'ruvchi yo'q.\n\n\"Ko'ruvchilar\"ni ochsangiz, AlfaGram avtomatik saqlaydi — story o'chib ketsa ham qoladi."));
                 tv.setTextColor(Theme.getColor(Theme.key_dialogTextGray2, resourcesProvider));
                 tv.setTextSize(android.util.TypedValue.COMPLEX_UNIT_DIP, 15);
                 tv.setPadding(AndroidUtilities.dp(21), AndroidUtilities.dp(10), AndroidUtilities.dp(21), AndroidUtilities.dp(24));
                 ll.addView(tv);
             } else {
                 org.telegram.ui.Cells.GraySectionCell header = new org.telegram.ui.Cells.GraySectionCell(context, resourcesProvider);
-                header.setText(viewers.size() + " ko'ruvchi saqlangan");
+                header.setText(org.telegram.messenger.AlfaCyrillic.uiFormat("%d ko'ruvchi saqlangan", viewers.size()));
                 ll.addView(header);
                 for (int i = 0; i < viewers.size(); i++) {
                     org.telegram.messenger.AlfaStoryViews.ViewerRecord r = viewers.get(i);
@@ -611,7 +611,7 @@ public class SelfStoryViewsPage extends FrameLayout implements NotificationCente
                     android.widget.FrameLayout.LayoutParams.WRAP_CONTENT));
 
             org.telegram.ui.ActionBar.BottomSheet.Builder builder = new org.telegram.ui.ActionBar.BottomSheet.Builder(context, false, resourcesProvider);
-            builder.setTitle("Bu story — ko'ruvchilar tarixi", true);
+            builder.setTitle(org.telegram.messenger.AlfaCyrillic.ui("Bu story — ko'ruvchilar tarixi"), true);
             builder.setCustomView(scroll);
             builder.show();
         } catch (Exception e) {

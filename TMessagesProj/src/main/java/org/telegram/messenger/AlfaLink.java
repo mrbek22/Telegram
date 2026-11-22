@@ -31,7 +31,7 @@ public class AlfaLink {
             AlertDialog.Builder b = new AlertDialog.Builder(fragment.getParentActivity(), fragment.getResourceProvider());
             b.setTitle(AlfaCyrillic.ui("Mening AlfaGram havolam"));
             b.setMessage(AlfaCyrillic.ui("Shaxsiy havola uchun avval foydalanuvchi nomi (@username) o'rnating."));
-            b.setPositiveButton(AlfaCyrillic.ui("O'rnatish"), (d, w) -> {
+            b.setPositiveButton(AlfaCyrillic.ui("O'rnatish", "set"), (d, w) -> {
                 try {
                     fragment.presentFragment(new org.telegram.ui.ChangeUsernameActivity());
                 } catch (Throwable ignore) {

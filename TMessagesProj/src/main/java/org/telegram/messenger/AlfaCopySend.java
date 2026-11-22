@@ -341,7 +341,7 @@ public class AlfaCopySend implements NotificationCenter.NotificationCenterDelega
             sendAlbum(job, album);
         }
         if (failed > 0) {
-            toast("Ba'zi xabarlarni yuborib bo'lmadi (" + failed + ")");
+            toast(AlfaCyrillic.uiFormat("Ba'zi xabarlarni yuborib bo'lmadi (%d)", failed));
         }
     }
 

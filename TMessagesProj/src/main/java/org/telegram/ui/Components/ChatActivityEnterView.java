@@ -3538,11 +3538,11 @@ public class ChatActivityEnterView extends FrameLayout implements
             }
             try {
                 AlertDialog.Builder b = new AlertDialog.Builder(getContext(), resourcesProvider);
-                b.setTitle("Yuborilsinmi?");
+                b.setTitle(org.telegram.messenger.AlfaCyrillic.ui("Yuborilsinmi?"));
                 CharSequence preview = messageEditText != null && messageEditText.getText() != null
                         ? messageEditText.getText().toString().trim() : "";
                 if (preview.length() > 200) preview = preview.subSequence(0, 200) + "…";
-                b.setMessage(preview.length() > 0 ? preview : "Xabar tayyor.");
+                b.setMessage(preview.length() > 0 ? preview : org.telegram.messenger.AlfaCyrillic.ui("Xabar tayyor."));
                 b.setPositiveButton(LocaleController.getString(R.string.Send), (d, w) -> {
                     alfaConfirmDialog = null;
                     sendMessage();

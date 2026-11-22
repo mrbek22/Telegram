@@ -1429,6 +1429,8 @@ public class LocaleController {
 
     /** AlfaGram — o'zbek tili tanlangan va "Kirill alifbosi" yoqilgan bo'lsa satrlarni kirillga o'giradi. */
     private void alfaApplyCyrillic() {
+        // AlfaGram matnlari ham shu tilga o'tadi (uz → o'zbekcha, ru → ruscha, boshqasi → inglizcha)
+        AlfaI18n.onLocaleChanged(currentLocaleInfo);
         try {
             // brend nomi: cloud langpack "Telegram" qo'ysa ham ilova nomi AlfaGram
             if (localeValues != null) {

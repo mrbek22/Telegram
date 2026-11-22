@@ -28,12 +28,40 @@ public class AlfaCyrillic {
         }
     }
 
-    /** AlfaGram'ning o'z (kodda yozilgan) matnlari uchun: kirill yoki yangi lotin yoqilgan bo'lsa o'giradi. */
+    /**
+     * AlfaGram'ning o'z (kodda yozilgan) matnlari uchun.
+     * Ilova tili o'zbekcha bo'lmasa — ruscha/inglizcha tarjima (AlfaI18n), aks holda
+     * kirill yoki yangi lotin yoqilgan bo'lsa o'giradi.
+     */
     public static String ui(String s) {
         if (s == null) return null;
+        int lang = AlfaI18n.mode();
+        if (lang != AlfaI18n.UZ) return AlfaI18n.translate(s, null, lang);
         if (AlfaFeatures.cyrillicUi) return toCyrillic(s);
         if (AlfaFeatures.newLatinUi) return toNewLatin(s);
         return s;
+    }
+
+    /** Kontekstli variant: bir xil o'zbekcha so'z turli joyda turlicha tarjima qilinishi kerak bo'lsa (lug'atda "ctx::matn"). */
+    public static String ui(String s, String ctx) {
+        if (s == null) return null;
+        int lang = AlfaI18n.mode();
+        if (lang != AlfaI18n.UZ) return AlfaI18n.translate(s, ctx, lang);
+        return ui(s);
+    }
+
+    /** Format satri tarjima qilinib, keyin argumentlar qo'yiladi: ui("%1$s ta xabar", n). */
+    public static String uiFormat(String format, Object... args) {
+        String f = ui(format);
+        try {
+            return String.format(f, args);
+        } catch (Throwable ignore) {
+            try {
+                return String.format(format, args);
+            } catch (Throwable ignore2) {
+                return f;
+            }
+        }
     }
 
     /** Til yuklanayotganda (AlfaFeatures hali o'qilmagan bo'lishi mumkin) — to'g'ridan-to'g'ri sozlamadan. */

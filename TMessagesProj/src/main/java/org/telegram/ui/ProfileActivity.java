@@ -7349,7 +7349,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                 return;
             }
             if (AndroidUtilities.addToClipboard(id)) {
-                BulletinFactory.of(this).createCopyBulletin("ID nusxalandi", resourcesProvider).show();
+                BulletinFactory.of(this).createCopyBulletin(org.telegram.messenger.AlfaCyrillic.ui("ID nusxalandi"), resourcesProvider).show();
             }
         } catch (Throwable e) {
             FileLog.e(e);
@@ -14121,7 +14121,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     } else if (position == liteModeRow) {
                         textCell.setTextAndIcon(LocaleController.getString(R.string.PowerUsage), R.drawable.msg2_battery, true);
                     } else if (position == alfaSettingsRow) {
-                        textCell.setTextAndIcon("AlfaGram sozlamalari", R.drawable.msg_settings_old, true);
+                        textCell.setTextAndIcon(org.telegram.messenger.AlfaCyrillic.ui("AlfaGram sozlamalari"), R.drawable.msg_settings_old, true);
                     } else if (position == questionRow) {
                         textCell.setTextAndIcon(LocaleController.getString(R.string.AskAQuestion), R.drawable.msg2_ask_question, true);
                     } else if (position == faqRow) {

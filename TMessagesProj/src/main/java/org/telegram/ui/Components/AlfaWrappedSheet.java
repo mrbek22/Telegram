@@ -235,7 +235,7 @@ public class AlfaWrappedSheet extends BottomSheet {
     private void build(Context ctx) {
         content.removeAllViews();
         Data d = data;
-        content.addView(text(ctx, AlfaCyrillic.ui(d.month + " yakuni"), 26, true, 0xFFFFFFFF));
+        content.addView(text(ctx, AlfaCyrillic.uiFormat("%s yakuni", AlfaCyrillic.ui(d.month)), 26, true, 0xFFFFFFFF));
         content.addView(text(ctx, AlfaCyrillic.ui("AlfaGram Wrapped · shu qurilmadagi xabarlar bo'yicha"), 13, false, 0xB3FFFFFF),
                 LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, 0, 4, 0, 16));
 
@@ -248,7 +248,7 @@ public class AlfaWrappedSheet extends BottomSheet {
         LinearLayout hero = card(ctx);
         hero.addView(text(ctx, String.valueOf(d.sent), 48, true, ACCENT));
         hero.addView(text(ctx, AlfaCyrillic.ui("ta xabar yubordingiz"), 16, true, 0xFFFFFFFF));
-        hero.addView(text(ctx, AlfaCyrillic.ui(d.received + " ta xabar oldingiz · " + d.chats + " kishi bilan yozishdingiz"), 13, false, 0xB3FFFFFF),
+        hero.addView(text(ctx, AlfaCyrillic.uiFormat("%d ta xabar oldingiz · %d kishi bilan yozishdingiz", d.received, d.chats), 13, false, 0xB3FFFFFF),
                 LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, 0, 6, 0, 0));
 
         if (!d.top.isEmpty()) {
@@ -362,7 +362,7 @@ public class AlfaWrappedSheet extends BottomSheet {
                     tp.setTypeface(Typeface.DEFAULT);
                     tp.setTextSize(dp(11.5f));
                     tp.setColor(ACCENT);
-                    canvas.drawText(AlfaCyrillic.ui(counts[rank] + " ta"), cx, y, tp);
+                    canvas.drawText(AlfaCyrillic.uiFormat("%d ta", counts[rank]), cx, y, tp);
                     y -= dp(16);
                 }
                 tp.setTypeface(AndroidUtilities.bold());
@@ -460,7 +460,7 @@ public class AlfaWrappedSheet extends BottomSheet {
         float y = 210;
         t.setTypeface(bold);
         t.setTextSize(88);
-        c.drawText(AlfaCyrillic.ui(d.month + " yakuni"), 90, y, t);
+        c.drawText(AlfaCyrillic.uiFormat("%s yakuni", AlfaCyrillic.ui(d.month)), 90, y, t);
         y += 70;
         t.setTypeface(Typeface.DEFAULT);
         t.setTextSize(40);

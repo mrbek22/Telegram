@@ -144,13 +144,13 @@ public class AlfaTypingSheet extends BottomSheet {
                     return "@" + user.username;
                 }
             }
-            return org.telegram.messenger.AlfaCyrillic.ui("Foydalanuvchi ") + userId;
+            return org.telegram.messenger.AlfaCyrillic.uiFormat("Foydalanuvchi %d", userId);
         }
         TLRPC.Chat chat = MessagesController.getInstance(currentAccount).getChat(-userId);
         if (chat != null && !TextUtils.isEmpty(chat.title)) {
             return chat.title;
         }
-        return "Chat " + (-userId);
+        return org.telegram.messenger.AlfaCyrillic.uiFormat("Chat %d", -userId);
     }
 
     private class Adapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
@@ -224,7 +224,7 @@ public class AlfaTypingSheet extends BottomSheet {
             }
             timeView.setText(day + ", " + range);
             long durSec = Math.max(1, (r.endedAt - r.startedAt) / 1000L);
-            infoView.setText("~" + durSec + org.telegram.messenger.AlfaCyrillic.ui(" soniya yozdi, lekin xabar yubormadi"));
+            infoView.setText(org.telegram.messenger.AlfaCyrillic.uiFormat("~%d soniya yozdi, lekin xabar yubormadi", durSec));
         }
     }
 }

@@ -287,7 +287,7 @@ public class AlfaSettingsActivity extends BaseFragment {
                 out.add(Row.info("Yuborishni tezlashtiring yoki tasodifiy yuborishning oldini oling."));
 
                 out.add(Row.header("Chat ichida"));
-                out.add(Row.action("Ikki marta bosish: " + AlfaFeatures.DOUBLE_TAP_NAMES[AlfaFeatures.getDoubleTapAction()], this::showDoubleTapPicker));
+                out.add(Row.action(org.telegram.messenger.AlfaCyrillic.uiFormat("Ikki marta bosish: %s", org.telegram.messenger.AlfaCyrillic.ui(AlfaFeatures.DOUBLE_TAP_NAMES[AlfaFeatures.getDoubleTapAction()])), this::showDoubleTapPicker));
                 out.add(Row.toggle("showMessageIds", "Xabar menyusida ID nusxalash"));
                 out.add(Row.toggle("swipeToReply", "Chapga siljitib javob"));
                 out.add(Row.toggle("disableStickerSuggest", "Stiker taklifini o'chirish"));
@@ -307,8 +307,8 @@ public class AlfaSettingsActivity extends BaseFragment {
                 out.add(Row.toggle("openLastChat", "Ochilganda so'nggi chatga o'tish"));
 
                 out.add(Row.header("Surish"));
-                out.add(Row.action("Chapga surish: " + org.telegram.messenger.AlfaSwipe.name(org.telegram.messenger.AlfaSwipe.leftAction()), () -> showSwipePicker(false)));
-                out.add(Row.action("O'ngga surish: " + org.telegram.messenger.AlfaSwipe.name(org.telegram.messenger.AlfaSwipe.rightAction()), () -> showSwipePicker(true)));
+                out.add(Row.action(org.telegram.messenger.AlfaCyrillic.uiFormat("Chapga surish: %s", org.telegram.messenger.AlfaCyrillic.ui(org.telegram.messenger.AlfaSwipe.name(org.telegram.messenger.AlfaSwipe.leftAction()))), () -> showSwipePicker(false)));
+                out.add(Row.action(org.telegram.messenger.AlfaCyrillic.uiFormat("O'ngga surish: %s", org.telegram.messenger.AlfaCyrillic.ui(org.telegram.messenger.AlfaSwipe.name(org.telegram.messenger.AlfaSwipe.rightAction()))), () -> showSwipePicker(true)));
                 out.add(Row.info("Chatni o'ng chetdan chapga yoki chap chetdan o'ngga torting — tanlangan amal bajariladi. O'rtadan surish papkani almashtiradi."));
                 break;
 
@@ -378,7 +378,7 @@ public class AlfaSettingsActivity extends BaseFragment {
                     version = c.getPackageManager().getPackageInfo(c.getPackageName(), 0).versionName;
                 } catch (Throwable ignore) {
                 }
-                out.add(Row.info("AlfaGram " + version + " — Telegram API asosidagi norasmiy klient. Telegram bilan bog'liq emas."));
+                out.add(Row.info(org.telegram.messenger.AlfaCyrillic.uiFormat("AlfaGram %s — Telegram API asosidagi norasmiy klient. Telegram bilan bog'liq emas.", version)));
                 break;
         }
     }

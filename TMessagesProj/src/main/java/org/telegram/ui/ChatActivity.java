@@ -33253,11 +33253,11 @@ public class ChatActivity extends BaseFragment implements
                     org.telegram.messenger.AlfaEdits.getInstance().getForMessage(currentAccount, dialog_id, msg.getId());
             org.telegram.ui.ActionBar.AlertDialog.Builder b =
                     new org.telegram.ui.ActionBar.AlertDialog.Builder(getParentActivity(), themeDelegate);
-            b.setTitle("Tahrir tarixi");
+            b.setTitle(org.telegram.messenger.AlfaCyrillic.ui("Tahrir tarixi"));
             StringBuilder sb = new StringBuilder();
             String cur = msg.messageOwner != null ? msg.messageOwner.message : null;
             if (cur != null && cur.length() > 0) {
-                sb.append("Hozirgi:\n").append(cur).append("\n\n");
+                sb.append(org.telegram.messenger.AlfaCyrillic.ui("Hozirgi:\n")).append(cur).append("\n\n");
             }
             for (int i = 0; i < hist.size(); i++) {
                 org.telegram.messenger.AlfaEdits.Record r = hist.get(i);
@@ -33277,8 +33277,8 @@ public class ChatActivity extends BaseFragment implements
         try {
             org.telegram.ui.ActionBar.AlertDialog.Builder b =
                     new org.telegram.ui.ActionBar.AlertDialog.Builder(getParentActivity(), themeDelegate);
-            b.setTitle("O'chirilgan xabar");
-            b.setMessage("Bu xabarni yuboruvchi o'chirgan. AlfaGram uni sizning chatingizda ushlab qoldi.\n\nBarcha o'chirilgan xabarlar ro'yxatini menyudan (\"O'chirilgan xabarlar\") ochsangiz ko'rasiz.");
+            b.setTitle(org.telegram.messenger.AlfaCyrillic.ui("O'chirilgan xabar"));
+            b.setMessage(org.telegram.messenger.AlfaCyrillic.ui("Bu xabarni yuboruvchi o'chirgan. AlfaGram uni sizning chatingizda ushlab qoldi.\n\nBarcha o'chirilgan xabarlar ro'yxatini menyudan (\"O'chirilgan xabarlar\") ochsangiz ko'rasiz."));
             b.setPositiveButton(org.telegram.messenger.LocaleController.getString(R.string.OK), null);
             b.show();
         } catch (Throwable t) {
