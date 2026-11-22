@@ -589,6 +589,11 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
                 marginLayoutParams = (MarginLayoutParams) radialProgressView.getLayoutParams();
                 marginLayoutParams.topMargin = AndroidUtilities.dp(16) + statusBarHeight;
 
+                if (alfaBotButton != null) {
+                    marginLayoutParams = (MarginLayoutParams) alfaBotButton.getLayoutParams();
+                    marginLayoutParams.topMargin = AndroidUtilities.dp(8) + statusBarHeight;
+                }
+
                 if (emailChangeSkipButton != null) {
                     marginLayoutParams = (MarginLayoutParams) emailChangeSkipButton.getLayoutParams();
                     marginLayoutParams.topMargin = AndroidUtilities.dp(16) + statusBarHeight;
@@ -775,15 +780,17 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
         sizeNotifierFrameLayout.addView(proxyButtonView, LayoutHelper.createFrame(32, 32, Gravity.RIGHT | Gravity.TOP, 16, 16, 16, 16));
         updateProxyButton(false, true);
 
-        // AlfaGram: bot token bilan kirish (iOS'dagi kabi, o'ng tepada robot)
+        // AlfaGram: bot token bilan kirish (iOS'dagi kabi, o'ng tepada robot). Kulrang doira ichida 28 dp ikonka;
+        // tepa chegarasi onMeasure'da status bar balandligiga suriladi (avval status bar ostida qolib, ko'rinmasdi).
         alfaBotButton = new ImageView(context);
         alfaBotButton.setImageResource(R.drawable.msg_bot);
-        alfaBotButton.setScaleType(ImageView.ScaleType.CENTER);
+        alfaBotButton.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        alfaBotButton.setPadding(AndroidUtilities.dp(10), AndroidUtilities.dp(10), AndroidUtilities.dp(10), AndroidUtilities.dp(10));
         alfaBotButton.setColorFilter(new PorterDuffColorFilter(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText), PorterDuff.Mode.SRC_IN));
-        alfaBotButton.setBackground(Theme.createSelectorDrawable(Theme.getColor(Theme.key_listSelector)));
+        alfaBotButton.setBackground(Theme.createSimpleSelectorRoundRectDrawable(AndroidUtilities.dp(24), Theme.getColor(Theme.key_windowBackgroundGray), Theme.getColor(Theme.key_listSelector)));
         alfaBotButton.setContentDescription(org.telegram.messenger.AlfaCyrillic.ui("Bot token bilan kirish"));
         alfaBotButton.setOnClickListener(v -> alfaShowBotLogin());
-        sizeNotifierFrameLayout.addView(alfaBotButton, LayoutHelper.createFrame(40, 40, Gravity.RIGHT | Gravity.TOP, 0, 12, 56, 0));
+        sizeNotifierFrameLayout.addView(alfaBotButton, LayoutHelper.createFrame(48, 48, Gravity.RIGHT | Gravity.TOP, 0, 8, 60, 0));
 
         radialProgressView = new RadialProgressView(context);
         radialProgressView.setSize(AndroidUtilities.dp(20));
@@ -1700,11 +1707,46 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
         column.setPadding(AndroidUtilities.dp(24), AndroidUtilities.dp(24), AndroidUtilities.dp(24), AndroidUtilities.dp(24));
         scroll.addView(column, new ScrollView.LayoutParams(ScrollView.LayoutParams.MATCH_PARENT, ScrollView.LayoutParams.WRAP_CONTENT));
 
+        // Telegram'ning o'z animatsiyali \uD83E\uDD16 (AnimatedEmojies to'plamidan, kirgan akkaunt orqali); u yuklanguncha \u2014
+        // tizim emojisi. Birinchi kirishda (akkaunt yo'q) tizim emojisi qoladi.
+        FrameLayout robotHolder = new FrameLayout(context);
         TextView robot = new TextView(context);
         robot.setText("\uD83E\uDD16");
         robot.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 80);
         robot.setGravity(Gravity.CENTER);
-        column.addView(robot, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER_HORIZONTAL));
+        robotHolder.addView(robot, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, Gravity.CENTER));
+        RLottieImageView robotAnimation = new RLottieImageView(context) {
+            @Override
+            protected void onLoaded() {
+                super.onLoaded();
+                robot.setVisibility(View.INVISIBLE);
+            }
+        };
+        robotAnimation.setAutoRepeat(true);
+        robotHolder.addView(robotAnimation, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, Gravity.CENTER));
+        column.addView(robotHolder, LayoutHelper.createLinear(120, 120, Gravity.CENTER_HORIZONTAL));
+        final int robotAccount = UserConfig.selectedAccount;
+        if (UserConfig.getInstance(robotAccount).isClientActivated()) {
+            final int[] robotTries = {0};
+            final Runnable[] loadRobot = new Runnable[1];
+            loadRobot[0] = () -> {
+                if (!dialog.isShowing()) {
+                    return;
+                }
+                MediaDataController mediaData = MediaDataController.getInstance(robotAccount);
+                TLRPC.Document robotDocument = mediaData.getEmojiAnimatedSticker("\uD83E\uDD16");
+                if (robotDocument != null) {
+                    robotAnimation.setAnimation(robotDocument, 120, 120);
+                    robotAnimation.playAnimation();
+                } else if (robotTries[0]++ < 15) {
+                    if (robotTries[0] == 1) {
+                        mediaData.checkStickers(MediaDataController.TYPE_EMOJI);
+                    }
+                    AndroidUtilities.runOnUIThread(loadRobot[0], 1000);
+                }
+            };
+            AndroidUtilities.runOnUIThread(loadRobot[0], 100);
+        }
 
         TextView title = new TextView(context);
         title.setText(org.telegram.messenger.AlfaCyrillic.ui("Bot token bilan kirish"));
