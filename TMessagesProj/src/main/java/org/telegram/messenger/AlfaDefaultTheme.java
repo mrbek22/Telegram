@@ -93,6 +93,15 @@ public final class AlfaDefaultTheme {
                     .putString("lastDarkTheme", info.getKey())
                     .apply();
             NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.needSetDayNightTheme, info, false, null, accentId);
+            // Mavzu fonidagi naqsh (o'yin rasmlari) fayli hali yuklanmagan — yuklab, tayyor bo'lgach fonni qayta chizadi.
+            // (Qo'lda tanlaganda ro'yxat oldindan yuklab qo'yadi; avtomatik qo'llashda bu qadam kerak.)
+            AndroidUtilities.runOnUIThread(() -> {
+                try {
+                    Theme.PatternsLoader.createLoader(true);
+                } catch (Throwable e) {
+                    FileLog.e(e);
+                }
+            }, 600);
         } catch (Throwable e) {
             FileLog.e(e);
         }

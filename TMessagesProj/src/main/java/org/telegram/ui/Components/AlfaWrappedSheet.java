@@ -449,7 +449,13 @@ public class AlfaWrappedSheet extends BottomSheet {
                 boolean animate = LiteMode.isEnabled(LiteMode.FLAGS_ANIMATED_STICKERS);
                 String filter = sizeDp + "_" + sizeDp + (animate ? "" : "_firstframe");
                 v.getImageReceiver().setAutoRepeat(1);
-                v.setImage(ImageLocation.getForDocument(doc), filter, "tgs", null, doc);
+                // animatsiya yuklanguncha oddiy rangli emoji turadi (bo'sh doira emas)
+                android.graphics.drawable.Drawable thumb = null;
+                try {
+                    thumb = Emoji.getEmojiBigDrawable(emoji);
+                } catch (Throwable ignore) {
+                }
+                v.setImage(ImageLocation.getForDocument(doc), filter, "tgs", thumb, doc);
                 return v;
             }
         } catch (Throwable e) {

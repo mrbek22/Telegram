@@ -33,6 +33,16 @@ public class AlfaWhatsNew {
             SharedPreferences prefs = ApplicationLoader.applicationContext.getSharedPreferences("alfa_features", 0);
             // Paneldan kelgan matn (whats_new) bo'lsa — o'sha, aks holda ilovadagi matn
             final boolean remote = AlfaConfig.whatsNewVersion > 0 && AlfaConfig.whatsNewText != null && AlfaConfig.whatsNewText.length() > 0;
+            if (!force && !prefs.contains("whatsNewSeen")) {
+                // Yangi o'rnatish: foydalanuvchi hozirgina onboarding'ni ko'rdi — eski "yangiliklar" ro'yxati ko'rsatilmaydi,
+                // faqat keyingi versiya yangiliklari chiqadi.
+                SharedPreferences.Editor ed0 = prefs.edit().putInt("whatsNewSeen", NEWS_VERSION);
+                if (remote) {
+                    ed0.putInt("whatsNewRemoteSeen", AlfaConfig.whatsNewVersion);
+                }
+                ed0.apply();
+                return;
+            }
             if (!force) {
                 if (shownThisSession) return;
                 if (remote ? prefs.getInt("whatsNewRemoteSeen", 0) >= AlfaConfig.whatsNewVersion
