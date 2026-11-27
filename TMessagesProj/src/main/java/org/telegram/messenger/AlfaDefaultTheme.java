@@ -74,6 +74,14 @@ public final class AlfaDefaultTheme {
                     return;
                 }
                 int settingsIndex = game.getSettingsIndex(DARK_INDEX);
+                // aniq tungi variant (BaseThemeNight/Tinted): 0-variant kunduzgi (Classic) — undan olinsa naqsh qorong'i fonda ko'rinmaydi
+                for (int i = 0; i < theme.settings.size(); i++) {
+                    TLRPC.BaseTheme base = theme.settings.get(i).base_theme;
+                    if (base instanceof TLRPC.TL_baseThemeNight || base instanceof TLRPC.TL_baseThemeTinted) {
+                        settingsIndex = i;
+                        break;
+                    }
+                }
                 if (settingsIndex < 0 || settingsIndex >= theme.settings.size()) {
                     settingsIndex = 0;
                 }
@@ -83,7 +91,8 @@ public final class AlfaDefaultTheme {
                 }
                 Theme.ThemeAccent accent = info.accentsByThemeId.get(theme.id);
                 if (accent == null) {
-                    accent = info.createNewAccent(theme, account);
+                    // qorong'i variantning ranglari va naqsh yorqinligi bilan (createNewAccent(theme, account) doim 0-variantni oladi)
+                    accent = info.createNewAccent(theme, account, false, settingsIndex);
                 }
                 accentId = accent.id;
                 info.setCurrentAccentId(accentId);
