@@ -128,7 +128,7 @@ final class AlfaI18nDict {
         t("Forward qilinganda muallif ko'rsatilmaydi",
                 "При пересылке автор не указывается",
                 "Forwards without showing the author");
-        t("Forward qilinganda izoh (caption) olib tashlanadi",
+        t("Forward qilinganda izoh olib tashlanadi",
                 "При пересылке подпись удаляется",
                 "Removes the caption when forwarding");
         t("Ovozli xabarlar avtomatik saqlanadi",
@@ -218,7 +218,7 @@ final class AlfaI18nDict {
         t("Tezkor",
                 "Быстрый доступ",
                 "Quick toggles");
-        t("Ghost — onlayn/yozyapman signali ketmaydi. Story — anonim ko'rish. O'qildi — o'qish tasdig'i yuborilmaydi.",
+        t("Ghost — onlayn/yozyapti signali ketmaydi. Story — anonim ko'rish. O'qildi — o'qish tasdig'i yuborilmaydi.",
                 "Призрак — статусы «в сети» и «печатает» не отправляются. Истории — анонимный просмотр. Прочитано — отметки о прочтении не отправляются.",
                 "Ghost — no online or typing status. Stories — view anonymously. Read receipts — not sent.");
         t("Bo'limlar",
@@ -248,7 +248,7 @@ final class AlfaI18nDict {
         t("Ko'rinmaslik",
                 "Невидимость",
                 "Invisibility");
-        t("Ghost mode (onlayn, o'qildi, yozyapti yashirin)",
+        t("Ghost rejim (onlayn, o'qildi, yozyapti yashirin)",
                 "Режим призрака (скрыть «в сети», «прочитано», «печатает»)",
                 "Ghost Mode (hide online, read, typing)");
         t("Anonim story ko'rish",
@@ -266,7 +266,7 @@ final class AlfaI18nDict {
         t("Sozlamalarda telefonni yashirish",
                 "Скрыть номер в настройках",
                 "Hide phone number in Settings");
-        t("Recent apps'da ilovani yashirish",
+        t("So'nggi ilovalar oynasida yashirish",
                 "Скрывать приложение в недавних",
                 "Hide app in recent apps");
         t("Yashirin chatlar",
@@ -320,7 +320,7 @@ final class AlfaI18nDict {
         t("Enter tugmasi bilan yuborish",
                 "Отправка по Enter",
                 "Send with Enter");
-        t("Sukut (silent) rejimda",
+        t("Ovozsiz yuborish",
                 "Отправлять без звука",
                 "Send silently");
         t("Yuborishni tezlashtiring yoki tasodifiy yuborishning oldini oling.",
@@ -359,7 +359,7 @@ final class AlfaI18nDict {
         t("Ro'yxat",
                 "Список",
                 "List");
-        t("Storieslar qatorini yashirish",
+        t("Storylar qatorini yashirish",
                 "Скрыть ленту историй",
                 "Hide stories row");
         t("Ovozsiz chatlarni yashirish",
@@ -392,16 +392,16 @@ final class AlfaI18nDict {
         t("Bir martalik media o'chmasin",
                 "Не удалять одноразовые медиа",
                 "Keep view-once media");
-        t("Screenshotga ruxsat",
+        t("Skrinshotga ruxsat",
                 "Разрешить скриншоты",
                 "Allow screenshots");
-        t("Cheksiz pin",
+        t("Cheksiz qadash",
                 "Безлимитное закрепление",
                 "Unlimited pins");
         t("Forward — muallifsiz",
                 "Пересылка без автора",
                 "Forward without author");
-        t("Forward — izohsiz (caption'siz)",
+        t("Forward — izohsiz",
                 "Пересылка без подписи",
                 "Forward without caption");
         t("Telegram'ning standart cheklovlarini olib tashlash.",
@@ -413,7 +413,7 @@ final class AlfaI18nDict {
         t("Barcha ovozli xabarlarni saqlash",
                 "Сохранять все голосовые",
                 "Save all voice messages");
-        t("Barcha video-notelarni saqlash",
+        t("Barcha dumaloq videolarni saqlash",
                 "Сохранять все видеосообщения",
                 "Save all video messages");
         t("Kelgan media avtomatik telefoningizga tushiriladi.",
@@ -509,7 +509,7 @@ final class AlfaI18nDict {
         t("Dasturchilar uchun",
                 "Для разработчиков",
                 "For developers");
-        t("Debug loglar",
+        t("Nosozlik jurnali",
                 "Журналы отладки",
                 "Debug logs");
         t("AlfaGram %s — Telegram API asosidagi norasmiy klient. Telegram bilan bog'liq emas.",
@@ -1673,6 +1673,34 @@ final class AlfaI18nDict {
         t("Token noto'g'ri. U 123456789:ABCdef... ko'rinishida bo'ladi.",
                 "Неверный токен. Он выглядит так: 123456789:ABCdef...",
                 "Invalid token. It looks like 123456789:ABCdef...");
+        // QR kod bilan kirish (LoginActivity + AlfaQrLoginDialog). «Qayta urinish», «Orqaga» — yuqorida/pastda bor.
+        t("QR kod bilan kirish",
+                "Вход по QR-коду",
+                "Log in with QR code");
+        t("Telefoningizda Telegram'ni oching",
+                "Откройте Telegram на телефоне",
+                "Open Telegram on your phone");
+        t("Sozlamalar → Qurilmalar → Qurilma ulash",
+                "Настройки → Устройства → Подключить устройство",
+                "Settings → Devices → Link Desktop Device");
+        t("Shu QR kodni skanerlang",
+                "Отсканируйте этот QR-код",
+                "Scan this QR code");
+        t("Kirilmoqda...",
+                "Выполняется вход...",
+                "Logging in...");
+        t("Kirib bo'lmadi. Qaytadan urinib ko'ring.",
+                "Не удалось войти. Попробуйте ещё раз.",
+                "Couldn't log in. Please try again.");
+        t("Juda ko'p urinish. Birozdan keyin qayta urining.",
+                "Слишком много попыток. Повторите чуть позже.",
+                "Too many attempts. Please try again a bit later.");
+        t("QR kodni olib bo'lmadi. Internetni tekshirib, qayta urining.",
+                "Не удалось получить QR-код. Проверьте интернет и повторите.",
+                "Couldn't get a QR code. Check your connection and try again.");
+        t("Telefon raqam bilan kirish",
+                "Войти по номеру телефона",
+                "Log in with phone number");
         t("Yoqiq",
                 "Вкл.",
                 "On");
@@ -1799,5 +1827,43 @@ final class AlfaI18nDict {
         t("icon::Neon",
                 "Неон",
                 "Neon");
+        // 6994: Oy yakuni (server bo'yicha hisob)
+        t("Xabarlaringiz sanalmoqda: %d%%",
+                "Считаем ваши сообщения: %d%%",
+                "Counting your messages: %d%%");
+        t("Telegram serveridagi xabarlaringiz bo'yicha",
+                "По вашим сообщениям на сервере Telegram",
+                "Based on your messages on Telegram servers");
+        t("Hisoblab bo'lmadi. Internetni tekshirib, qayta urinib ko'ring.",
+                "Не удалось подсчитать. Проверьте интернет и попробуйте снова.",
+                "Couldn't calculate. Check your connection and try again.");
+        t("Qayta urinish",
+                "Повторить",
+                "Try again");
+        t("Eng faol kuningiz",
+                "Самый активный день",
+                "Your most active day");
+        t("%d ta faol chat tekshirildi · natija faqat telefoningizda",
+                "Проверено активных чатов: %d · результат только на вашем телефоне",
+                "%d active chats checked · results stay on your phone");
+            // 6994: «AlfaGram haqida» yangi bandlari
+        t("Sukut bo'yicha yoqilgan: Sozlamalar → Maxfiylik va xavfsizlik → APK himoyasi.",
+                "Включено по умолчанию: Настройки → Конфиденциальность → Защита от APK.",
+                "On by default: Settings → Privacy and Security → APK protection.");
+        t("Sozlamalar → AlfaGram → «Oy yakuni (AlfaGram Wrapped)».",
+                "Настройки → AlfaGram → «Итоги месяца (AlfaGram Wrapped)».",
+                "Settings → AlfaGram → \"Monthly recap (AlfaGram Wrapped)\".");
+        t("Oy davomida nechta xabar yozganingiz, eng ko'p yozishgan odamlaringiz, faol soat va kuningiz, sevimli emojilaringiz — Telegram serveridagi aniq sonlar bilan. Rasm qilib ulashish mumkin.",
+                "Сколько сообщений вы написали за месяц, с кем переписывались больше всего, самые активные час и день, любимые эмодзи — точные цифры с сервера Telegram. Можно поделиться картинкой.",
+                "How many messages you sent this month, who you chatted with most, your most active hour and day, favorite emoji — exact numbers from Telegram servers. Share it as an image.");
+        t("Kirish ekranida «QR kod bilan kirish» tugmasini bosing.",
+                "На экране входа нажмите «Войти по QR-коду».",
+                "On the login screen, tap \"Log in with QR code\".");
+        t("Boshqa telefondagi Telegram'da Sozlamalar → Qurilmalar → «Qurilma ulash» orqali QR kodni skanerlang — SMS kod kutish shart emas.",
+                "В Telegram на другом телефоне откройте Настройки → Устройства → «Подключить устройство» и отсканируйте QR-код — ждать SMS не нужно.",
+                "In Telegram on another phone open Settings → Devices → \"Link Desktop Device\" and scan the QR code — no need to wait for an SMS.");
+            t("attach::Dumaloq",
+                "Кружок",
+                "Round");
     }
 }

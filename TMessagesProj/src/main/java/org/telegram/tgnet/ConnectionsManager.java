@@ -798,6 +798,11 @@ public class ConnectionsManager extends BaseController {
                 if (BuildVars.LOGS_ENABLED) {
                     FileLog.d("java received " + message);
                 }
+                // AlfaGram — QR bilan kirish: token tasdiqlanganini darhol bildiramiz (polling kutmasdan)
+                if (message instanceof TLRPC.TL_updateShort && ((TLRPC.TL_updateShort) message).update instanceof org.telegram.tgnet.tl.TL_update.TL_updateLoginToken) {
+                    org.telegram.messenger.AndroidUtilities.runOnUIThread(() -> org.telegram.messenger.NotificationCenter.getGlobalInstance()
+                            .postNotificationName(org.telegram.messenger.NotificationCenter.alfaLoginTokenUpdated, currentAccount));
+                }
                 KeepAliveJob.finishJob();
                 Utilities.stageQueue.postRunnable(() -> AccountInstance.getInstance(currentAccount).getMessagesController().processUpdates((TLRPC.Updates) message, false));
             } else {

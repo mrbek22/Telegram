@@ -9338,6 +9338,7 @@ public class MediaDataController extends BaseController {
                         AndroidUtilities.runOnUIThread(() -> {
                             defaultEmojiThemes.clear();
                             defaultEmojiThemes.addAll(previewItems);
+                            AlfaDefaultTheme.maybeApply(currentAccount, previewItems);
                         });
                     }
                 });
@@ -9380,6 +9381,7 @@ public class MediaDataController extends BaseController {
                         defaultEmojiThemes.clear();
                         defaultEmojiThemes.addAll(previewItems);
                         NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.emojiPreviewThemesChanged);
+                        AlfaDefaultTheme.maybeApply(currentAccount, previewItems);
                     });
                 }
             });

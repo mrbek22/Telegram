@@ -213,6 +213,52 @@ public class AlfaDeleted extends SQLiteOpenHelper {
         return keptKeys.contains(account + "_" + dialogId + "_" + messageId);
     }
 
+    /**
+     * Storage oqimidan (chat yuklanishi oldidan): shu chatda saqlangan barcha o'chirilgan xabarlar.
+     * keptKeys ham to'ldiriladi — ilova qayta ochilgandan keyin ham 🗑 belgisi chiqadi.
+     * Telegram bazasi tozalansa (differenceTooLong, kesh) xabarni qayta tiklash uchun ishlatiladi.
+     */
+    public ArrayList<TLRPC.Message> loadKeptMessages(int account, long dialogId) {
+        ArrayList<TLRPC.Message> out = new ArrayList<>();
+        Cursor c = null;
+        try {
+            SQLiteDatabase db = getReadableDatabase();
+            c = db.rawQuery("SELECT message_id, data FROM deleted WHERE account=? AND dialog_id=? AND data IS NOT NULL",
+                    new String[]{String.valueOf(account), String.valueOf(dialogId)});
+            while (c.moveToNext()) {
+                int mid = c.getInt(0);
+                keptKeys.add(account + "_" + dialogId + "_" + mid);
+                byte[] blob = c.getBlob(1);
+                if (blob == null || blob.length < 4) {
+                    continue;
+                }
+                NativeByteBuffer buf = null;
+                try {
+                    buf = new NativeByteBuffer(blob.length);
+                    buf.writeBytes(blob);
+                    buf.rewind();
+                    TLRPC.Message m = TLRPC.Message.TLdeserialize(buf, buf.readInt32(false), false);
+                    if (m != null && m.id == mid) {
+                        m.dialog_id = dialogId;
+                        out.add(m);
+                    }
+                } catch (Throwable ignore) {
+                } finally {
+                    if (buf != null) {
+                        buf.reuse();
+                    }
+                }
+            }
+        } catch (Throwable t) {
+            FileLog.e(t);
+        } finally {
+            if (c != null) {
+                c.close();
+            }
+        }
+        return out;
+    }
+
     public static class Record {
         public int messageId;
         public long fromId;

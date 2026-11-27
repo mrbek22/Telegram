@@ -187,6 +187,10 @@ class ChatsRemoteViewsFactory implements RemoteViewsService.RemoteViewsFactory {
         }
 
         MessageObject message = messageObjects.get(id);
+        // AlfaGram: qulflangan yoki yashirin chat matni ekran vidjetida ko'rinmasin
+        if (message != null && (AlfaChatLock.isLocked(accountInstance.getCurrentAccount(), id) || AlfaHiddenChats.isHidden(accountInstance.getCurrentAccount(), id))) {
+            message = null;
+        }
         TLRPC.Dialog dialog = dialogs.get(id);
         if (message != null) {
             TLRPC.User fromUser = null;

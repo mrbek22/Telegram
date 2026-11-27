@@ -3965,9 +3965,22 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                     }
                     boolean on = !org.telegram.messenger.AlfaFeatures.getUserPref("ghostMode");
                     org.telegram.messenger.AlfaFeatures.setFlag("ghostMode", on);
-                    updateAlfaGhostItem();
-                    BulletinFactory.of(DialogsActivity.this).createSimpleBulletin(R.raw.chats_infotip,
-                        org.telegram.messenger.AlfaCyrillic.ui(on ? "Ghost yoqildi — onlayn va «yozyapti» ko'rinmaydi" : "Ghost o'chirildi")).show();
+                    if (ghostItem != null) {
+                        try {
+                            ghostItem.performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP, android.view.HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
+                        } catch (Throwable ignore) {
+                        }
+                    }
+                    if (ghostDrawable != null) {
+                        ghostDrawable.setOn(org.telegram.messenger.AlfaFeatures.ghostMode, true);
+                    }
+                    String ghostText = org.telegram.messenger.AlfaCyrillic.ui(on ? "Ghost yoqildi — onlayn va «yozyapti» ko'rinmaydi" : "Ghost o'chirildi");
+                    TLRPC.Document ghostDoc = getMediaDataController().getEmojiAnimatedSticker(on ? "\uD83D\uDC7B" : "\uD83D\uDC4B");
+                    if (ghostDoc != null) {
+                        BulletinFactory.of(DialogsActivity.this).createEmojiBulletin(ghostDoc, ghostText).show();
+                    } else {
+                        BulletinFactory.of(DialogsActivity.this).createSimpleBulletin(R.raw.chats_infotip, ghostText).show();
+                    }
                 } else if (id == 1) {
                     if (getParentActivity() == null) {
                         return;
@@ -7644,9 +7657,14 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             return;
         }
         int added = 0;
+        // arxivda tur tugmasi tanlangan bo'lsa — faqat ko'rinib turgan tur
+        final int alfaCategory = folderId == 1 && viewPages[0].dialogsAdapter != null ? viewPages[0].dialogsAdapter.getAlfaArchiveCategory() : -1;
         for (int i = 0; i < all.size(); i++) {
             TLRPC.Dialog d = all.get(i);
             if (d == null || DialogObject.isFolderDialogId(d.id)) {
+                continue;
+            }
+            if (alfaCategory >= 0 && !AlfaAutoFolders.matchesArchiveCategory(currentAccount, alfaCategory, d)) {
                 continue;
             }
             if (onlySelect && getMessagesController().isForum(d.id)) {
@@ -9116,37 +9134,104 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         private android.graphics.ColorFilter themeFilter;
         private int alpha = 255;
         private boolean on;
+        // 0..1 — o'tish animatsiyasi; 1 — tinch holat
+        private float t = 1f;
+        private android.animation.ValueAnimator animator;
 
         AlfaGhostDrawable(Context context) {
             icon = context.getResources().getDrawable(R.drawable.alfa_ic_ghost).mutate();
         }
 
         void setOn(boolean value) {
-            if (on != value) {
-                on = value;
-                invalidateSelf();
+            setOn(value, false);
+        }
+
+        /** animated — sharpa "eriydi" (yoqilganda) yoki sakrab qaytadi (o'chirilganda). */
+        void setOn(boolean value, boolean animated) {
+            if (on == value && !animated) {
+                return;
             }
+            on = value;
+            if (animator != null) {
+                animator.cancel();
+                animator = null;
+            }
+            if (!animated || !org.telegram.messenger.LiteMode.isEnabled(org.telegram.messenger.LiteMode.FLAGS_CHAT)) {
+                t = 1f;
+                invalidateSelf();
+                return;
+            }
+            t = 0f;
+            animator = android.animation.ValueAnimator.ofFloat(0f, 1f);
+            animator.setDuration(on ? 620 : 420);
+            animator.setInterpolator(org.telegram.ui.Components.CubicBezierInterpolator.EASE_OUT);
+            animator.addUpdateListener(an -> {
+                t = (float) an.getAnimatedValue();
+                invalidateSelf();
+            });
+            animator.start();
+        }
+
+        private static float overshoot(float x) {
+            // 0 → 1.18 → 1
+            return x < 0.6f ? 1.18f * (x / 0.6f) : 1.18f - 0.18f * ((x - 0.6f) / 0.4f);
         }
 
         @Override
         public void draw(@NonNull Canvas canvas) {
             android.graphics.Rect b = getBounds();
-            if (on) {
-                // oq rang mavzu filtri (MULTIPLY) orqali ikonka rangiga aylanadi
-                if (themeFilter != null) {
-                    paint.setColor(0xFFFFFFFF);
-                    paint.setColorFilter(themeFilter);
-                } else {
-                    paint.setColor(Theme.getColor(Theme.key_actionBarDefaultIcon));
-                    paint.setColorFilter(null);
-                }
-                paint.setAlpha(alpha * 0x2E / 255);
-                canvas.drawCircle(b.centerX(), b.centerY(), dp(17), paint);
+            final float cx = b.exactCenterX(), cy = b.exactCenterY();
+            if (themeFilter != null) {
+                paint.setColor(0xFFFFFFFF);
+                paint.setColorFilter(themeFilter);
+            } else {
+                paint.setColor(Theme.getColor(Theme.key_actionBarDefaultIcon));
+                paint.setColorFilter(null);
             }
+            // fon doirasi: yoqilganda o'sib chiqadi, o'chganda kichrayadi
+            float circle = on ? overshoot(t) : (1f - t);
+            if (circle > 0.01f) {
+                paint.setAlpha((int) (alpha * 0x2E / 255f * Math.min(1f, circle)));
+                canvas.drawCircle(cx, cy, dp(17) * circle, paint);
+            }
+            // yoqilganda: ichkaridan tashqariga tarqaladigan halqa va uchqunlar
+            if (on && t < 1f) {
+                paint.setStyle(Paint.Style.STROKE);
+                paint.setStrokeWidth(dp(1.6f));
+                paint.setAlpha((int) (alpha * (1f - t) * 0.8f));
+                canvas.drawCircle(cx, cy, dp(10) + dp(14) * t, paint);
+                paint.setStyle(Paint.Style.FILL);
+                paint.setAlpha((int) (alpha * (1f - t)));
+                for (int i = 0; i < 6; i++) {
+                    double ang = Math.PI * 2 * i / 6 + 0.4;
+                    float r = dp(9) + dp(12) * t;
+                    canvas.drawCircle(cx + (float) Math.cos(ang) * r, cy + (float) Math.sin(ang) * r, dp(1.8f) * (1f - t * 0.6f), paint);
+                }
+            }
+            paint.setAlpha(255);
+            // ikonka: yoqilganda yuqoriga suzib, chayqalib "eriydi"; o'chganda sakrab qaytadi
+            float scale = 1f, rot = 0f, dy = 0f;
+            int iconAlpha = alpha;
+            if (t < 1f) {
+                double s = Math.sin(Math.PI * t);
+                if (on) {
+                    scale = 1f - 0.22f * (float) s;
+                    rot = (float) (Math.sin(Math.PI * 2 * t) * 14 * (1f - t));
+                    dy = -dp(4) * (float) s;
+                    iconAlpha = (int) (alpha * (1f - 0.45f * s));
+                } else {
+                    scale = t < 0.5f ? 0.75f + 0.5f * t * 2 * 0.7f : 1.1f - 0.1f * ((t - 0.5f) / 0.5f);
+                }
+            }
+            canvas.save();
+            canvas.translate(0, dy);
+            canvas.rotate(rot, cx, cy);
+            canvas.scale(scale, scale, cx, cy);
             icon.setColorFilter(themeFilter);
-            icon.setAlpha(alpha);
+            icon.setAlpha(iconAlpha);
             icon.setBounds(b);
             icon.draw(canvas);
+            canvas.restore();
         }
 
         @Override

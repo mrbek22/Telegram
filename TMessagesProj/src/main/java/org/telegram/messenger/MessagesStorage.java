@@ -8906,7 +8906,60 @@ public class MessagesStorage extends BaseController {
         });
     }
 
+    // AlfaGram — shu sessiyada saqlangan o'chirilgan xabarlari tiklangan chatlar
+    private final HashSet<Long> alfaRestoredKeptDialogs = new HashSet<>();
+
+    /**
+     * AlfaGram — antiDelete: Telegram bazasidan (differenceTooLong, resetDialogs, kesh tozalash) yo'qolgan
+     * saqlangan o'chirilgan xabarlarni alfa_deleted.db nusxasidan qayta qo'yadi. Storage oqimida, har chat uchun sessiyada 1 marta.
+     */
+    private void alfaRestoreKeptMessages(long dialogId) {
+        if (!AlfaFeatures.antiDelete || dialogId == 0 || DialogObject.isEncryptedDialog(dialogId) || !alfaRestoredKeptDialogs.add(dialogId)) {
+            return;
+        }
+        SQLiteCursor cursor = null;
+        try {
+            ArrayList<TLRPC.Message> kept = AlfaDeleted.getInstance().loadKeptMessages(currentAccount, dialogId);
+            if (kept.isEmpty()) {
+                return;
+            }
+            StringBuilder ids = new StringBuilder();
+            for (int i = 0; i < kept.size(); i++) {
+                if (i > 0) ids.append(',');
+                ids.append(kept.get(i).id);
+            }
+            HashSet<Integer> present = new HashSet<>();
+            cursor = database.queryFinalized(String.format(Locale.US, "SELECT mid FROM messages_v2 WHERE uid = %d AND mid IN(%s)", dialogId, ids));
+            while (cursor.next()) {
+                present.add(cursor.intValue(0));
+            }
+            cursor.dispose();
+            cursor = null;
+            ArrayList<TLRPC.Message> missing = new ArrayList<>();
+            for (TLRPC.Message m : kept) {
+                if (!present.contains(m.id)) {
+                    m.unread = false;
+                    m.media_unread = false;
+                    m.send_state = 0;
+                    missing.add(m);
+                }
+            }
+            if (!missing.isEmpty()) {
+                putMessagesInternal(missing, true, true, 0, false, 0, 0);
+            }
+        } catch (Throwable e) {
+            FileLog.e(e);
+        } finally {
+            if (cursor != null) {
+                cursor.dispose();
+            }
+        }
+    }
+
     public Runnable getMessagesInternal(long dialogId, long mergeDialogId, int count, int max_id, int offset_date, int minDate, int classGuid, int load_type, int mode, long threadMessageId, int loadIndex, boolean processMessages, boolean isTopic, Timer loaderLogger) {
+        if (mode == 0 && threadMessageId == 0) {
+            alfaRestoreKeptMessages(dialogId);
+        }
         TLRPC.TL_messages_messages res = new TLRPC.TL_messages_messages();
         long currentUserId = getUserConfig().clientUserId;
         int count_unread = 0;

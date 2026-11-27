@@ -1044,6 +1044,20 @@ public class NotificationsController extends BaseController implements Notificat
             }
         }
 
+        // AlfaGram: yashirin chatlardan bildirishnoma umuman chiqmaydi (ovozi yoqilgan yoki mention bo'lsa ham)
+        if (messageObjects != null && !messageObjects.isEmpty()) {
+            try {
+                for (int i = messageObjects.size() - 1; i >= 0; i--) {
+                    MessageObject mo = messageObjects.get(i);
+                    if (mo != null && AlfaHiddenChats.isHidden(currentAccount, mo.getDialogId())) {
+                        messageObjects.remove(i);
+                    }
+                }
+            } catch (Throwable e) {
+                FileLog.e(e);
+            }
+        }
+
         if (messageObjects.isEmpty()) {
             if (countDownLatch != null) {
                 countDownLatch.countDown();

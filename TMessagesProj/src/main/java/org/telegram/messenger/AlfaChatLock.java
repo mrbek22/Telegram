@@ -71,6 +71,11 @@ public final class AlfaChatLock {
      * o'tkaziladi (iOS'dagi kabi).
      */
     public static void authenticate(FragmentActivity activity, String title, Runnable onSuccess) {
+        authenticate(activity, title, onSuccess, null);
+    }
+
+    /** onCancel — foydalanuvchi bekor qilsa yoki tekshiruv xato bilan tugasa (null bo'lishi mumkin). */
+    public static void authenticate(FragmentActivity activity, String title, Runnable onSuccess, Runnable onCancel) {
         if (activity == null) {
             return;
         }
@@ -85,6 +90,13 @@ public final class AlfaChatLock {
                 @Override
                 public void onAuthenticationSucceeded(@NonNull BiometricPrompt.AuthenticationResult result) {
                     onSuccess.run();
+                }
+
+                @Override
+                public void onAuthenticationError(int errorCode, @NonNull CharSequence errString) {
+                    if (onCancel != null) {
+                        onCancel.run();
+                    }
                 }
             });
             BiometricPrompt.PromptInfo info = new BiometricPrompt.PromptInfo.Builder()

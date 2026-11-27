@@ -39,7 +39,37 @@ public class AlfaCyrillic {
         if (lang != AlfaI18n.UZ) return AlfaI18n.translate(s, null, lang);
         if (AlfaFeatures.cyrillicUi) return toCyrillic(s);
         if (AlfaFeatures.newLatinUi) return toNewLatin(s);
-        return s;
+        return latinTypography(s);
+    }
+
+    /**
+     * O'zbek lotin matnida tutuq belgilarini Telegram o'zbekcha tarjimasidagi kabi yozish:
+     * o' g' → o‘ g‘ (U+2018), harflar orasidagi boshqa ' → ʼ (U+02BC). Bir ekranda ikki xil yozuv bo'lmasin.
+     */
+    public static String latinTypography(String s) {
+        if (s == null || s.indexOf('\'') < 0) return s;
+        StringBuilder b = new StringBuilder(s.length());
+        for (int i = 0, n = s.length(); i < n; i++) {
+            char c = s.charAt(i);
+            if (c == '\'' && i > 0) {
+                char p = s.charAt(i - 1);
+                char nx = i + 1 < n ? s.charAt(i + 1) : ' ';
+                if (Character.isLetter(p)) {
+                    boolean og = p == 'o' || p == 'O' || p == 'g' || p == 'G';
+                    // o'/g' — so'z o'rtasida yoki oxirida (masalan «o'qildi», «sh, ch, o', g'»)
+                    if (og && (i < 2 || !Character.isLetter(s.charAt(i - 2)) || Character.isLetter(nx))) {
+                        b.append('ʻ'); // ʻ — rasmiy o'zbek lotin belgisi (Telegram tarjimasida ham)
+                        continue;
+                    }
+                    if (Character.isLetter(nx)) {
+                        b.append('ʼ'); // ʼ — tutuq belgisi
+                        continue;
+                    }
+                }
+            }
+            b.append(c);
+        }
+        return b.toString();
     }
 
     /** Kontekstli variant: bir xil o'zbekcha so'z turli joyda turlicha tarjima qilinishi kerak bo'lsa (lug'atda "ctx::matn"). */

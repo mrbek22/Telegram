@@ -6557,7 +6557,7 @@ public class ChatAttachAlert extends BottomSheet implements NotificationCenter.N
                         attachButton.setTextAndIcon(LAYOUT_TYPE_EMOJI, getString(R.string.ChatEmoji), GlassTabView.TabAnimation.EMOJI);
                         attachButton.setTag(LAYOUT_TYPE_EMOJI);
                     } else if (position == alfaRoundVideoButton) {
-                        attachButton.setTextAndIcon(ALFA_ROUND_VIDEO_BUTTON, org.telegram.messenger.AlfaCyrillic.ui("Dumaloq video"), GlassTabView.TabAnimation.ROUND_VIDEO);
+                        attachButton.setTextAndIcon(ALFA_ROUND_VIDEO_BUTTON, org.telegram.messenger.AlfaCyrillic.ui("Dumaloq", "attach"), GlassTabView.TabAnimation.ROUND_VIDEO);
                         attachButton.setTag(ALFA_ROUND_VIDEO_BUTTON);
                     } else if (position == richButton) {
                         attachButton.setTextAndIcon(LAYOUT_TYPE_RICH, getString(R.string.AttachArticle), GlassTabView.TabAnimation.ARTICLE);

@@ -29735,9 +29735,50 @@ public class ChatActivity extends BaseFragment implements
 
     Bulletin.Delegate bulletinDelegate;
 
+    // AlfaGram — ilova fonga o'tib qaytganda ochiq turgan qulflangan chat yana barmoq izi / PIN so'raydi
+    private FrameLayout alfaLockCover;
+
+    private void alfaCheckRelock() {
+        try {
+            if (chatMode != 0 || alfaLockCover != null || fragmentView == null || getParentActivity() == null
+                    || !org.telegram.messenger.AlfaChatLock.needsUnlock(currentAccount, dialog_id)
+                    || !(fragmentView instanceof ViewGroup) || !(getParentActivity() instanceof androidx.fragment.app.FragmentActivity)) {
+                return;
+            }
+            final FrameLayout cover = new FrameLayout(getParentActivity());
+            cover.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundWhite, themeDelegate));
+            cover.setClickable(true);
+            TextView lock = new TextView(getParentActivity());
+            lock.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
+            lock.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText, themeDelegate));
+            lock.setGravity(Gravity.CENTER);
+            lock.setText("\uD83D\uDD12\n\n" + org.telegram.messenger.AlfaCyrillic.ui("Qulflangan chatni ochish"));
+            cover.addView(lock, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER));
+            ((ViewGroup) fragmentView).addView(cover, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
+            alfaLockCover = cover;
+            final long did = dialog_id;
+            final int acc = currentAccount;
+            org.telegram.messenger.AlfaChatLock.authenticate((androidx.fragment.app.FragmentActivity) getParentActivity(),
+                    org.telegram.messenger.AlfaCyrillic.ui("Qulflangan chatni ochish"), () -> {
+                        org.telegram.messenger.AlfaChatLock.markUnlocked(acc, did);
+                        if (alfaLockCover != null) {
+                            AndroidUtilities.removeFromParent(alfaLockCover);
+                            alfaLockCover = null;
+                        }
+                    }, () -> {
+                        if (alfaLockCover != null) {
+                            finishFragment();
+                        }
+                    });
+        } catch (Throwable e) {
+            FileLog.e(e);
+        }
+    }
+
     @Override
     public void onResume() {
         super.onResume();
+        alfaCheckRelock();
         checkShowBlur(false);
         activityResumeTime = System.currentTimeMillis();
         if (openImport && getSendMessagesHelper().getImportingHistory(dialog_id) != null) {
@@ -33312,15 +33353,18 @@ public class ChatActivity extends BaseFragment implements
         // AlfaGram — maxsus opsiyalar
         if (option == OPTION_ALFA_EDIT_HISTORY) {
             showAlfaEditHistory(selectedObject);
+            closeMenu(); // menyu dialog orqasida ochiq qolmasin
             return;
         }
         if (option == OPTION_ALFA_DELETED_INFO) {
             showAlfaDeletedInfo(selectedObject);
+            closeMenu();
             return;
         }
         if (option == OPTION_ALFA_TRANSLIT) {
             showAlfaTranslit(selectedObject);
             clearSelectionMode();
+            closeMenu();
             return;
         }
         if (option == OPTION_ALFA_COPY_MSG_ID) {
@@ -33328,6 +33372,7 @@ public class ChatActivity extends BaseFragment implements
             AndroidUtilities.addToClipboard(String.valueOf(alfaMsgId));
             BulletinFactory.of(this).createSimpleBulletin(R.raw.copy, org.telegram.messenger.AlfaCyrillic.ui("Xabar ID nusxalandi: ") + alfaMsgId).show();
             clearSelectionMode();
+            closeMenu();
             return;
         }
         boolean preserveDim = false;

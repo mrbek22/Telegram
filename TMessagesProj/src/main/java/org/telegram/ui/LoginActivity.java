@@ -109,7 +109,6 @@ import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.api.ApiException;
-import com.google.android.gms.safetynet.SafetyNet;
 import com.google.android.gms.tasks.Task;
 import com.google.android.play.core.integrity.IntegrityManager;
 import com.google.android.play.core.integrity.IntegrityManagerFactory;
@@ -363,6 +362,9 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
     private ImageView proxyButtonView;
     /** AlfaGram: «Bot token bilan kirish» tugmasi (faqat telefon raqami sahifasida). */
     private ImageView alfaBotButton;
+    /** AlfaGram: «QR kod bilan kirish» tugmasi (bot tugmasi yonida) va ochiq QR oynasi. */
+    private ImageView alfaQrButton;
+    private org.telegram.ui.Components.AlfaQrLoginDialog alfaQrDialog;
     private ProxyDrawable proxyDrawable;
 
     // Open animation stuff
@@ -521,6 +523,11 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
             cancelDeleteProgressDialog.dismiss();
             cancelDeleteProgressDialog = null;
         }
+        if (alfaQrDialog != null) {
+            // QR oynasi: polling to'xtaydi, so'rov bekor qilinadi (AlfaQrLoginDialog.dismiss → stop)
+            alfaQrDialog.dismiss();
+            alfaQrDialog = null;
+        }
         for (Runnable callback : editDoneCallback) {
             if (callback != null) {
                 AndroidUtilities.cancelRunOnUIThread(callback);
@@ -591,6 +598,10 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
 
                 if (alfaBotButton != null) {
                     marginLayoutParams = (MarginLayoutParams) alfaBotButton.getLayoutParams();
+                    marginLayoutParams.topMargin = AndroidUtilities.dp(8) + statusBarHeight;
+                }
+                if (alfaQrButton != null) {
+                    marginLayoutParams = (MarginLayoutParams) alfaQrButton.getLayoutParams();
                     marginLayoutParams.topMargin = AndroidUtilities.dp(8) + statusBarHeight;
                 }
 
@@ -791,6 +802,18 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
         alfaBotButton.setContentDescription(org.telegram.messenger.AlfaCyrillic.ui("Bot token bilan kirish"));
         alfaBotButton.setOnClickListener(v -> alfaShowBotLogin());
         sizeNotifierFrameLayout.addView(alfaBotButton, LayoutHelper.createFrame(48, 48, Gravity.RIGHT | Gravity.TOP, 0, 8, 60, 0));
+
+        // AlfaGram: QR kod bilan kirish — bot tugmasi bilan bir xil uslub, uning chap tomonida (tepa chegarasi onMeasure'da).
+        alfaQrButton = new ImageView(context);
+        alfaQrButton.setImageResource(R.drawable.msg_qrcode);
+        alfaQrButton.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        alfaQrButton.setPadding(AndroidUtilities.dp(10), AndroidUtilities.dp(10), AndroidUtilities.dp(10), AndroidUtilities.dp(10));
+        alfaQrButton.setColorFilter(new PorterDuffColorFilter(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText), PorterDuff.Mode.SRC_IN));
+        alfaQrButton.setBackground(Theme.createSimpleSelectorRoundRectDrawable(AndroidUtilities.dp(24), Theme.getColor(Theme.key_windowBackgroundGray), Theme.getColor(Theme.key_listSelector)));
+        alfaQrButton.setContentDescription(org.telegram.messenger.AlfaCyrillic.ui("QR kod bilan kirish"));
+        alfaQrButton.setOnClickListener(v -> alfaShowQrLogin());
+        alfaQrButton.setVisibility(currentViewNum == VIEW_PHONE_INPUT && activityMode == MODE_LOGIN ? View.VISIBLE : View.GONE);
+        sizeNotifierFrameLayout.addView(alfaQrButton, LayoutHelper.createFrame(48, 48, Gravity.RIGHT | Gravity.TOP, 0, 8, 116, 0));
 
         radialProgressView = new RadialProgressView(context);
         radialProgressView.setSize(AndroidUtilities.dp(20));
@@ -1522,6 +1545,9 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
         if (alfaBotButton != null) {
             alfaBotButton.setVisibility(page == VIEW_PHONE_INPUT ? View.VISIBLE : View.GONE);
         }
+        if (alfaQrButton != null) {
+            alfaQrButton.setVisibility(page == VIEW_PHONE_INPUT && activityMode == MODE_LOGIN ? View.VISIBLE : View.GONE);
+        }
         boolean needFloatingButton = page == VIEW_PHONE_INPUT || page == VIEW_REGISTER || page == VIEW_PASSWORD ||
                 page == VIEW_NEW_PASSWORD_STAGE_1 || page == VIEW_NEW_PASSWORD_STAGE_2 || page == VIEW_ADD_EMAIL || page == VIEW_CODE_PHRASE || page == VIEW_CODE_WORD;
         if (page == currentViewNum) {
@@ -1884,6 +1910,58 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
         }), ConnectionsManager.RequestFlagFailOnServerErrors | ConnectionsManager.RequestFlagWithoutLogin | ConnectionsManager.RequestFlagTryDifferentDc | ConnectionsManager.RequestFlagEnableUnauthorized);
     }
 
+    /**
+     * AlfaGram: «QR kod bilan kirish» — to'liq ekran QR oynasi (AlfaQrLoginDialog). Boshqa qurilmadagi Telegram
+     * QR'ni skanerlagach: muvaffaqiyat → onAuthSuccess (auth.signIn'dagi bilan bir xil yo'l),
+     * 2FA → parol sahifasi (telefon kodi oqimidagi SESSION_PASSWORD_NEEDED kabi).
+     */
+    private void alfaShowQrLogin() {
+        if (getParentActivity() == null || activityMode != MODE_LOGIN || alfaQrDialog != null && alfaQrDialog.isShowing()) {
+            return;
+        }
+        if (fragmentView != null) {
+            AndroidUtilities.hideKeyboard(fragmentView.findFocus());
+        }
+        final org.telegram.ui.Components.AlfaQrLoginDialog dialog = new org.telegram.ui.Components.AlfaQrLoginDialog(getParentActivity(), currentAccount, new org.telegram.ui.Components.AlfaQrLoginDialog.Delegate() {
+            @Override
+            public void onAuthorized(TLRPC.TL_auth_authorization authorization) {
+                onAuthSuccess(authorization);
+            }
+
+            @Override
+            public void onPasswordNeeded(TL_account.Password password) {
+                alfaQrOpenPasswordPage(password);
+            }
+        });
+        dialog.setOnDismissListener(d -> {
+            if (alfaQrDialog == d) {
+                alfaQrDialog = null;
+            }
+        });
+        alfaQrDialog = dialog;
+        try {
+            dialog.show();
+        } catch (Exception e) {
+            FileLog.e(e);
+            alfaQrDialog = null;
+        }
+    }
+
+    private void alfaQrOpenPasswordPage(TL_account.Password password) {
+        if (getParentActivity() == null) {
+            return;
+        }
+        if (!TwoStepVerificationActivity.canHandleCurrentPassword(password, true)) {
+            AlertsCreator.showUpdateAppAlert(getParentActivity(), getString(R.string.UpdateAppAlert), true);
+            return;
+        }
+        Bundle bundle = new Bundle();
+        SerializedData data = new SerializedData(password.getObjectSize());
+        password.serializeToStream(data);
+        bundle.putString("password", Utilities.bytesToHex(data.toByteArray()));
+        setPage(VIEW_PASSWORD, true, bundle, false);
+    }
+
     private void onAuthSuccess(TLRPC.TL_auth_authorization res) {
         onAuthSuccess(res, false);
     }
@@ -2053,69 +2131,9 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
                             resendCodeFromSafetyNet(params, res, reason);
                         });
                 } else {
-                    SafetyNet.getClient(ApplicationLoader.applicationContext).attest(res.type.nonce, BuildVars.SAFETYNET_KEY)
-                    .addOnSuccessListener(attestationResponse -> {
-                        String jws = attestationResponse.getJwsResult();
-
-                        if (jws != null) {
-                            TLRPC.TL_auth_requestFirebaseSms req = new TLRPC.TL_auth_requestFirebaseSms();
-                            req.phone_number = phone;
-                            req.phone_code_hash = res.phone_code_hash;
-                            req.safety_net_token = jws;
-                            req.flags |= 1;
-
-                            String[] spl = jws.split("\\.");
-                            if (spl.length > 0) {
-                                try {
-                                    JSONObject obj = new JSONObject(new String(Base64.decode(spl[1].getBytes(StandardCharsets.UTF_8), 0)));
-                                    final boolean basicIntegrity = obj.optBoolean("basicIntegrity");
-                                    final boolean ctsProfileMatch = obj.optBoolean("ctsProfileMatch");
-                                    if (basicIntegrity && ctsProfileMatch) {
-                                        ConnectionsManager.getInstance(currentAccount).sendRequest(req, (response, error) -> {
-                                            if (response instanceof TLRPC.TL_boolTrue) {
-                                                needHideProgress(false);
-                                                isRequestingFirebaseSms = false;
-                                                res.type.verifiedFirebase = true;
-                                                AndroidUtilities.runOnUIThread(() -> fillNextCodeParams(params, res, animate));
-                                            } else {
-                                                FileLog.d("{SAFETYNET_REQUESTFIREBASESMS_FALSE} Resend firebase sms because auth.requestFirebaseSms = false");
-                                                resendCodeFromSafetyNet(params, res, "SAFETYNET_REQUESTFIREBASESMS_FALSE");
-                                            }
-                                        }, ConnectionsManager.RequestFlagFailOnServerErrors | ConnectionsManager.RequestFlagWithoutLogin);
-                                    } else {
-                                        if (!basicIntegrity && !ctsProfileMatch) {
-                                            FileLog.d("{SAFETYNET_BASICINTEGRITY_CTSPROFILEMATCH_FALSE} Resend firebase sms because ctsProfileMatch = false and basicIntegrity = false");
-                                            resendCodeFromSafetyNet(params, res, "SAFETYNET_BASICINTEGRITY_CTSPROFILEMATCH_FALSE");
-                                        } else if (!basicIntegrity) {
-                                            FileLog.d("{SAFETYNET_BASICINTEGRITY_FALSE} Resend firebase sms because basicIntegrity = false");
-                                            resendCodeFromSafetyNet(params, res, "SAFETYNET_BASICINTEGRITY_FALSE");
-                                        } else if (!ctsProfileMatch) {
-                                            FileLog.d("{SAFETYNET_CTSPROFILEMATCH_FALSE} Resend firebase sms because ctsProfileMatch = false");
-                                            resendCodeFromSafetyNet(params, res, "SAFETYNET_CTSPROFILEMATCH_FALSE");
-                                        }
-                                    }
-                                } catch (JSONException e) {
-                                    FileLog.e(e);
-
-                                    FileLog.d("{SAFETYNET_JSON_EXCEPTION} Resend firebase sms because of exception");
-                                    resendCodeFromSafetyNet(params, res, "SAFETYNET_JSON_EXCEPTION");
-                                }
-                            } else {
-                                FileLog.d("{SAFETYNET_CANT_SPLIT} Resend firebase sms because can't split JWS token");
-                                resendCodeFromSafetyNet(params, res, "SAFETYNET_CANT_SPLIT");
-                            }
-                        } else {
-                            FileLog.d("{SAFETYNET_NULL_JWS} Resend firebase sms because JWS = null");
-                            resendCodeFromSafetyNet(params, res, "SAFETYNET_NULL_JWS");
-                        }
-                    })
-                    .addOnFailureListener(e -> {
-                        FileLog.e(e);
-
-                        final String reason = "SAFETYNET_EXCEPTION_" + errorString(e);
-                        FileLog.d("{"+reason+"} Resend firebase sms because of safetynet exception");
-                        resendCodeFromSafetyNet(params, res, reason);
-                    });
+                    // AlfaGram: SafetyNet (eskirgan, Google Play ogohlantirishi) olib tashlandi — oddiy kod qayta yuboriladi
+                    FileLog.d("{SAFETYNET_REMOVED} Resend firebase sms because SafetyNet is not used");
+                    resendCodeFromSafetyNet(params, res, "SAFETYNET_REMOVED");
                 }
             } else {
                 FileLog.d("{GOOGLE_PLAY_SERVICES_NOT_AVAILABLE} Resend firebase sms because firebase is not available");
@@ -2746,6 +2764,30 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
                     }
                     loadCountries();
                 });
+            }
+
+            // AlfaGram: «QR kod bilan kirish» — raqam maydonlari ostida aniq ko'rinadigan havola (tepadagi QR tugmasi bilan bir xil).
+            if (activityMode == MODE_LOGIN) {
+                final int alfaQrLinkColor = Theme.getColor(Theme.key_windowBackgroundWhiteBlueText4);
+                TextView alfaQrLink = new TextView(context);
+                alfaQrLink.setText(org.telegram.messenger.AlfaCyrillic.ui("QR kod bilan kirish"));
+                alfaQrLink.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
+                alfaQrLink.setTypeface(AndroidUtilities.bold());
+                alfaQrLink.setTextColor(alfaQrLinkColor);
+                alfaQrLink.setGravity(Gravity.CENTER);
+                alfaQrLink.setSingleLine(true);
+                Drawable alfaQrIcon = ContextCompat.getDrawable(context, R.drawable.msg_qrcode);
+                if (alfaQrIcon != null) {
+                    alfaQrIcon = alfaQrIcon.mutate();
+                    alfaQrIcon.setColorFilter(new PorterDuffColorFilter(alfaQrLinkColor, PorterDuff.Mode.SRC_IN));
+                    alfaQrLink.setCompoundDrawablesWithIntrinsicBounds(alfaQrIcon, null, null, null);
+                    alfaQrLink.setCompoundDrawablePadding(dp(8));
+                }
+                alfaQrLink.setPadding(dp(16), 0, dp(16), 0);
+                alfaQrLink.setBackground(Theme.createSimpleSelectorRoundRectDrawable(dp(20), 0, Theme.getColor(Theme.key_listSelector)));
+                alfaQrLink.setOnClickListener(v -> alfaShowQrLogin());
+                addView(alfaQrLink, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, 40, Gravity.CENTER_HORIZONTAL, 0, 8, 0, 0));
+                bottomMargin -= 24;
             }
 
             if (bottomMargin > 0 && !AndroidUtilities.isSmallScreen()) {

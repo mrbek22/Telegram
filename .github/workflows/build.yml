@@ -8,6 +8,10 @@ on:
         description: "To'liq build (4 ta ABI, production uchun). O'chiq = faqat arm64 (tez, test uchun)"
         type: boolean
         default: false
+      qa:
+        description: "QA build: paket uz.alfagram.qa (Play nusxasi yonida o'rnatib sinash uchun)"
+        type: boolean
+        default: false
   push:
     branches:
       - master
@@ -99,6 +103,20 @@ jobs:
             ABI_ARG="-PalfaAbi=arm64-v8a"
             echo "▶ Tez build: faqat arm64-v8a"
           fi
+          if [ "${{ inputs.qa }}" = "true" ]; then
+            ABI_ARG="$ABI_ARG -PalfaQa=true"
+            echo "▶ QA build: uz.alfagram.qa"
+            python3 - <<'PY'
+          import json
+          p = 'TMessagesProj_AppStandalone/google-services.json'
+          d = json.load(open(p))
+          web = [c for c in d['client'] if c['client_info']['android_client_info']['package_name'] == 'uz.alfagram.web'][0]
+          qa = json.loads(json.dumps(web))
+          qa['client_info']['android_client_info']['package_name'] = 'uz.alfagram.qa'
+          d['client'].append(qa)
+          json.dump(d, open(p, 'w'), indent=2)
+          PY
+          fi
           if [ "${{ steps.ks.outputs.custom }}" = "true" ]; then
             ./gradlew :TMessagesProj_AppStandalone:assembleAfatStandalone \
               :TMessagesProj_AppStandalone:bundleAfatStandalone \
@@ -137,4 +155,11 @@ jobs:
         with:
           name: telegram-fork-aab
           path: ${{ steps.apk.outputs.aab }}
+          if-no-files-found: warn
+
+      - name: R8 mapping (crash stack trace'larni ochish uchun)
+        uses: actions/upload-artifact@v4
+        with:
+          name: r8-mapping
+          path: TMessagesProj_AppStandalone/build/outputs/mapping/**/mapping.txt
           if-no-files-found: warn

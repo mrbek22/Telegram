@@ -115,6 +115,11 @@ public class DialogsAdapter extends RecyclerListView.SelectionAdapter implements
 
     // AlfaGram — arxivdagi tur tugmalari (Shaxsiy, Guruhlar, ...): tanlangan tur (-1 — hammasi)
     private int alfaArchiveCategory = -1;
+
+    /** AlfaGram — arxivda tanlangan tur tugmasi (-1 — hammasi). */
+    public int getAlfaArchiveCategory() {
+        return alfaArchiveCategory;
+    }
     private final int[] alfaArchiveUnread = new int[org.telegram.ui.AlfaAutoFolders.ARCHIVE_TABS.length - 1];
     private org.telegram.ui.Components.AlfaArchiveTabsView alfaArchiveTabsView;
 

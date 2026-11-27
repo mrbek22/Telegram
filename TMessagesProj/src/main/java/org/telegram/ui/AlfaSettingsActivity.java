@@ -113,7 +113,7 @@ public class AlfaSettingsActivity extends BaseFragment {
             case "allowScreenshots": return "Yopiq chatlarda ham skrinshot olish";
             case "unlimitedPins": return "Istalgancha chatni tepaga qadash";
             case "forwardWithoutAuthor": return "Forward qilinganda muallif ko'rsatilmaydi";
-            case "forwardWithoutReply": return "Forward qilinganda izoh (caption) olib tashlanadi";
+            case "forwardWithoutReply": return "Forward qilinganda izoh olib tashlanadi";
             case "autoSaveVoice": return "Ovozli xabarlar avtomatik saqlanadi";
             case "autoSaveVideoNotes": return "Dumaloq videolar avtomatik saqlanadi";
             case "blockTelegramAds": return "Kanallardagi homiylik xabarlari ko'rinmaydi";
@@ -207,7 +207,7 @@ public class AlfaSettingsActivity extends BaseFragment {
             rows.add(new Row(TYPE_HERO, null, null, null, null));
             rows.add(Row.header("Tezkor"));
             rows.add(new Row(TYPE_QUICK, null, null, null, null));
-            rows.add(Row.info("Ghost — onlayn/yozyapman signali ketmaydi. Story — anonim ko'rish. O'qildi — o'qish tasdig'i yuborilmaydi."));
+            rows.add(Row.info("Ghost — onlayn/yozyapti signali ketmaydi. Story — anonim ko'rish. O'qildi — o'qish tasdig'i yuborilmaydi."));
 
             rows.add(Row.header("Bo'limlar"));
             addCategory(CAT_PRIVACY, R.drawable.alfa_ic_ghost, 0xFF0034B6, 0xFF2563EB);
@@ -239,14 +239,14 @@ public class AlfaSettingsActivity extends BaseFragment {
         switch (cat) {
             case CAT_PRIVACY:
                 out.add(Row.header("Ko'rinmaslik"));
-                out.add(Row.toggle("ghostMode", "Ghost mode (onlayn, o'qildi, yozyapti yashirin)"));
+                out.add(Row.toggle("ghostMode", "Ghost rejim (onlayn, o'qildi, yozyapti yashirin)"));
                 out.add(Row.toggle("stealthStories", "Anonim story ko'rish"));
                 out.add(Row.toggle("noReadReceipts", "O'qish tasdig'ini yubormaslik"));
                 out.add(Row.info("Sizdan hech qanday signal ketmaydi va hech kim sizni kuzatolmaydi."));
 
                 out.add(Row.header("Telefoningizda"));
                 out.add(Row.toggle("hidePhoneInSettings", "Sozlamalarda telefonni yashirish"));
-                out.add(Row.toggle("blurAppInRecents", "Recent apps'da ilovani yashirish"));
+                out.add(Row.toggle("blurAppInRecents", "So'nggi ilovalar oynasida yashirish"));
                 out.add(Row.action("Yashirin chatlar", () -> AlfaHiddenChatsUi.manage(this, () -> {
                     if (listAdapter != null) listAdapter.notifyDataSetChanged();
                 })));
@@ -283,7 +283,7 @@ public class AlfaSettingsActivity extends BaseFragment {
                 out.add(Row.toggle("roundVideoAsk", "Dumaloq video: har safar kamerani so'rash"));
                 out.add(Row.toggle("roundVideoBack", "Dumaloq video orqa kamerada"));
                 out.add(Row.toggle("sendByEnter", "Enter tugmasi bilan yuborish"));
-                out.add(Row.toggle("silentByDefault", "Sukut (silent) rejimda"));
+                out.add(Row.toggle("silentByDefault", "Ovozsiz yuborish"));
                 out.add(Row.info("Yuborishni tezlashtiring yoki tasodifiy yuborishning oldini oling."));
 
                 out.add(Row.header("Chat ichida"));
@@ -301,7 +301,7 @@ public class AlfaSettingsActivity extends BaseFragment {
                 out.add(Row.info("Shaxsiy, Guruhlar, Kanallar, Botlar va O'qilmagan papkalari. Ular faqat AlfaGram'da, shu telefonda ko'rinadi."));
 
                 out.add(Row.header("Ro'yxat"));
-                out.add(Row.toggle("hideStories", "Storieslar qatorini yashirish"));
+                out.add(Row.toggle("hideStories", "Storylar qatorini yashirish"));
                 out.add(Row.toggle("hideMuted", "Ovozsiz chatlarni yashirish"));
                 out.add(Row.toggle("compactChats", "Ixcham (2 qatorli) chat ro'yxati"));
                 out.add(Row.toggle("openLastChat", "Ochilganda so'nggi chatga o'tish"));
@@ -316,15 +316,15 @@ public class AlfaSettingsActivity extends BaseFragment {
                 out.add(Row.header("Saqlash va forward"));
                 out.add(Row.toggle("unrestrictedSave", "Cheklovlarsiz saqlash/forward"));
                 out.add(Row.toggle("keepSelfDestructing", "Bir martalik media o'chmasin"));
-                out.add(Row.toggle("allowScreenshots", "Screenshotga ruxsat"));
-                out.add(Row.toggle("unlimitedPins", "Cheksiz pin"));
+                out.add(Row.toggle("allowScreenshots", "Skrinshotga ruxsat"));
+                out.add(Row.toggle("unlimitedPins", "Cheksiz qadash"));
                 out.add(Row.toggle("forwardWithoutAuthor", "Forward — muallifsiz"));
-                out.add(Row.toggle("forwardWithoutReply", "Forward — izohsiz (caption'siz)"));
+                out.add(Row.toggle("forwardWithoutReply", "Forward — izohsiz"));
                 out.add(Row.info("Telegram'ning standart cheklovlarini olib tashlash."));
 
                 out.add(Row.header("Media"));
                 out.add(Row.toggle("autoSaveVoice", "Barcha ovozli xabarlarni saqlash"));
-                out.add(Row.toggle("autoSaveVideoNotes", "Barcha video-notelarni saqlash"));
+                out.add(Row.toggle("autoSaveVideoNotes", "Barcha dumaloq videolarni saqlash"));
                 out.add(Row.info("Kelgan media avtomatik telefoningizga tushiriladi."));
 
                 out.add(Row.header("Reklama"));
@@ -371,7 +371,7 @@ public class AlfaSettingsActivity extends BaseFragment {
                 out.add(Row.action("Hisob va ma'lumotlarni o'chirish", () -> openLink("https://alfagram.uz/delete-account")));
 
                 out.add(Row.header("Dasturchilar uchun"));
-                out.add(Row.toggle("debugLogs", "Debug loglar"));
+                out.add(Row.toggle("debugLogs", "Nosozlik jurnali"));
                 String version = "";
                 try {
                     android.content.Context c = org.telegram.messenger.ApplicationLoader.applicationContext;
@@ -555,14 +555,15 @@ public class AlfaSettingsActivity extends BaseFragment {
         wrap.addView(card, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
 
         ImageView icon = new ImageView(context);
-        icon.setScaleType(ImageView.ScaleType.CENTER);
-        icon.setImageResource(R.drawable.alfa_ic_alfagram);
-        icon.setColorFilter(0xFFFFFFFF, PorterDuff.Mode.SRC_IN);
+        // ilovaning haqiqiy logotipi (oldin umumiy "uchqun" belgisi edi)
+        icon.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        icon.setImageResource(R.drawable.alfa_logo);
         android.graphics.drawable.GradientDrawable iconBg = new android.graphics.drawable.GradientDrawable();
-        iconBg.setColor(0x38FFFFFF);
+        iconBg.setColor(0x26FFFFFF);
         iconBg.setCornerRadius(AndroidUtilities.dp(16));
         icon.setBackground(iconBg);
-        card.addView(icon, LayoutHelper.createLinear(48, 48));
+        icon.setPadding(AndroidUtilities.dp(3), AndroidUtilities.dp(3), AndroidUtilities.dp(3), AndroidUtilities.dp(3));
+        card.addView(icon, LayoutHelper.createLinear(52, 52));
 
         LinearLayout texts = new LinearLayout(context);
         texts.setOrientation(LinearLayout.VERTICAL);

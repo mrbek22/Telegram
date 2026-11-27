@@ -27,8 +27,8 @@
         <service
             android:name="org.telegram.messenger.SMSJobsNotification"
             android:enabled="true"
-            android:exported="true"
-            android:foregroundServiceType="dataSync|remoteMessaging"
+            android:exported="false"
+            android:foregroundServiceType="remoteMessaging"
         />
     </application>
 </manifest>

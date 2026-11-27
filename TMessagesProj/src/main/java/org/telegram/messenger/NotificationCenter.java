@@ -36,6 +36,8 @@ public class NotificationCenter {
     public static final int messagesDeleted = totalEvents++;
     /** AlfaGram: o'chirilgan, lekin saqlab qolingan xabarlar — args[0]: ArrayList<long[]{dialogId, mid}> */
     public static final int alfaMessagesKept = totalEvents++;
+    /** AlfaGram — QR bilan kirish: server updateLoginToken yubordi (token tasdiqlandi), args[0] = account */
+    public static final int alfaLoginTokenUpdated = totalEvents++;
     public static final int alfaProfileLogUpdated = totalEvents++;
     public static final int historyCleared = totalEvents++;
     public static final int messagesRead = totalEvents++;

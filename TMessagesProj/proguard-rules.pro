@@ -124,6 +124,24 @@
 -dontwarn com.yandex.metrica.**
 -dontwarn io.appmetrica.analytics.**
 
-# Use -keep to explicitly keep any other classes shrinking would remove
--dontoptimize
--dontobfuscate
+# AlfaGram (2026-11-27): Google Play «DEX optimizatsiya/obfuskatsiya 0 %» ogohlantirishi sabab
+# optimize/obfuscate yoqildi. C++ (JNI) nomi bo'yicha chaqiradigan klasslar saqlanadi:
+-keepclasseswithmembers,includedescriptorclasses class * { native <methods>; }
+-keep class org.telegram.messenger.** { *; }
+-keep class org.telegram.tgnet.** { *; }
+-keep class org.telegram.SQLite.** { *; }
+-keep class org.webrtc.** { *; }
+-keep class org.chromium.** { *; }
+-keep class org.jni_zero.** { *; }
+-keep class org.libjpegturbo.** { *; }
+-keep class com.google.android.exoplayer2.** { *; }
+-keep class org.telegram.ui.Components.RLottieDrawable { *; }
+-keep class org.telegram.ui.Components.AnimatedFileDrawable { *; }
+-keep class org.telegram.ui.Components.Paint.** { *; }
+-keep class org.telegram.ui.Stories.recorder.** { *; }
+# reflection: ichki maydonlar
+-keep class androidx.viewpager.widget.ViewPager { *; }
+-keep class androidx.core.widget.NestedScrollView { *; }
+-keepattributes Signature,InnerClasses,EnclosingMethod,*Annotation*,SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile
+-dontwarn **
