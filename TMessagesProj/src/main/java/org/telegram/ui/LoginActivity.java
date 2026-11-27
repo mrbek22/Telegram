@@ -364,6 +364,9 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
     private ImageView alfaBotButton;
     /** AlfaGram: «QR kod bilan kirish» tugmasi (bot tugmasi yonida) va ochiq QR oynasi. */
     private ImageView alfaQrButton;
+    // AlfaGram: o'ng tepadagi QR va 🤖 bitta yumaloq (pill) blokda, mavzu accent rangida
+    private LinearLayout alfaTopActions;
+    private View alfaTopDivider;
     private org.telegram.ui.Components.AlfaQrLoginDialog alfaQrDialog;
     private ProxyDrawable proxyDrawable;
 
@@ -596,13 +599,10 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
                 marginLayoutParams = (MarginLayoutParams) radialProgressView.getLayoutParams();
                 marginLayoutParams.topMargin = AndroidUtilities.dp(16) + statusBarHeight;
 
-                if (alfaBotButton != null) {
-                    marginLayoutParams = (MarginLayoutParams) alfaBotButton.getLayoutParams();
-                    marginLayoutParams.topMargin = AndroidUtilities.dp(8) + statusBarHeight;
-                }
-                if (alfaQrButton != null) {
-                    marginLayoutParams = (MarginLayoutParams) alfaQrButton.getLayoutParams();
-                    marginLayoutParams.topMargin = AndroidUtilities.dp(8) + statusBarHeight;
+                if (alfaTopActions != null) {
+                    marginLayoutParams = (MarginLayoutParams) alfaTopActions.getLayoutParams();
+                    marginLayoutParams.topMargin = AndroidUtilities.dp(10) + statusBarHeight;
+                    marginLayoutParams.rightMargin = AndroidUtilities.dp(proxyButtonView != null && proxyButtonView.getVisibility() == View.VISIBLE ? 56 : 12);
                 }
 
                 if (emailChangeSkipButton != null) {
@@ -791,29 +791,44 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
         sizeNotifierFrameLayout.addView(proxyButtonView, LayoutHelper.createFrame(32, 32, Gravity.RIGHT | Gravity.TOP, 16, 16, 16, 16));
         updateProxyButton(false, true);
 
-        // AlfaGram: bot token bilan kirish (iOS'dagi kabi, o'ng tepada robot). Kulrang doira ichida 28 dp ikonka;
-        // tepa chegarasi onMeasure'da status bar balandligiga suriladi (avval status bar ostida qolib, ko'rinmasdi).
-        alfaBotButton = new ImageView(context);
-        alfaBotButton.setImageResource(R.drawable.msg_bot);
-        alfaBotButton.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        alfaBotButton.setPadding(AndroidUtilities.dp(10), AndroidUtilities.dp(10), AndroidUtilities.dp(10), AndroidUtilities.dp(10));
-        alfaBotButton.setColorFilter(new PorterDuffColorFilter(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText), PorterDuff.Mode.SRC_IN));
-        alfaBotButton.setBackground(Theme.createSimpleSelectorRoundRectDrawable(AndroidUtilities.dp(24), Theme.getColor(Theme.key_windowBackgroundGray), Theme.getColor(Theme.key_listSelector)));
-        alfaBotButton.setContentDescription(org.telegram.messenger.AlfaCyrillic.ui("Bot token bilan kirish"));
-        alfaBotButton.setOnClickListener(v -> alfaShowBotLogin());
-        sizeNotifierFrameLayout.addView(alfaBotButton, LayoutHelper.createFrame(48, 48, Gravity.RIGHT | Gravity.TOP, 0, 8, 60, 0));
+        // AlfaGram: o'ng tepada QR kod va bot token bilan kirish — bitta yumaloq blok (pill), mavzuning accent rangida:
+        // fon accent'ning 12% shaffofi, ikonkalar accent, orasida ingichka chiziq. Kunduzgi va tungi mavzuga bir xil mos.
+        {
+            final int accent = Theme.getColor(Theme.key_windowBackgroundWhiteBlueText4);
+            alfaTopActions = new LinearLayout(context);
+            alfaTopActions.setOrientation(LinearLayout.HORIZONTAL);
+            alfaTopActions.setGravity(Gravity.CENTER_VERTICAL);
+            alfaTopActions.setPadding(AndroidUtilities.dp(2), 0, AndroidUtilities.dp(2), 0);
+            android.graphics.drawable.GradientDrawable pill = new android.graphics.drawable.GradientDrawable();
+            pill.setColor(androidx.core.graphics.ColorUtils.setAlphaComponent(accent, 0x1F));
+            pill.setCornerRadius(AndroidUtilities.dp(22));
+            alfaTopActions.setBackground(pill);
 
-        // AlfaGram: QR kod bilan kirish — bot tugmasi bilan bir xil uslub, uning chap tomonida (tepa chegarasi onMeasure'da).
-        alfaQrButton = new ImageView(context);
-        alfaQrButton.setImageResource(R.drawable.msg_qrcode);
-        alfaQrButton.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        alfaQrButton.setPadding(AndroidUtilities.dp(10), AndroidUtilities.dp(10), AndroidUtilities.dp(10), AndroidUtilities.dp(10));
-        alfaQrButton.setColorFilter(new PorterDuffColorFilter(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText), PorterDuff.Mode.SRC_IN));
-        alfaQrButton.setBackground(Theme.createSimpleSelectorRoundRectDrawable(AndroidUtilities.dp(24), Theme.getColor(Theme.key_windowBackgroundGray), Theme.getColor(Theme.key_listSelector)));
-        alfaQrButton.setContentDescription(org.telegram.messenger.AlfaCyrillic.ui("QR kod bilan kirish"));
-        alfaQrButton.setOnClickListener(v -> alfaShowQrLogin());
-        alfaQrButton.setVisibility(currentViewNum == VIEW_PHONE_INPUT && activityMode == MODE_LOGIN ? View.VISIBLE : View.GONE);
-        sizeNotifierFrameLayout.addView(alfaQrButton, LayoutHelper.createFrame(48, 48, Gravity.RIGHT | Gravity.TOP, 0, 8, 116, 0));
+            alfaQrButton = new ImageView(context);
+            alfaQrButton.setImageResource(R.drawable.msg_qrcode);
+            alfaQrButton.setScaleType(ImageView.ScaleType.CENTER);
+            alfaQrButton.setColorFilter(new PorterDuffColorFilter(accent, PorterDuff.Mode.SRC_IN));
+            alfaQrButton.setBackground(Theme.createSelectorDrawable(androidx.core.graphics.ColorUtils.setAlphaComponent(accent, 0x33), Theme.RIPPLE_MASK_CIRCLE_20DP));
+            alfaQrButton.setContentDescription(org.telegram.messenger.AlfaCyrillic.ui("QR kod bilan kirish"));
+            alfaQrButton.setOnClickListener(v -> alfaShowQrLogin());
+            alfaTopActions.addView(alfaQrButton, LayoutHelper.createLinear(44, 44));
+
+            alfaTopDivider = new View(context);
+            alfaTopDivider.setBackgroundColor(androidx.core.graphics.ColorUtils.setAlphaComponent(accent, 0x40));
+            alfaTopActions.addView(alfaTopDivider, LayoutHelper.createLinear(1, 20));
+
+            alfaBotButton = new ImageView(context);
+            alfaBotButton.setImageResource(R.drawable.msg_bot);
+            alfaBotButton.setScaleType(ImageView.ScaleType.CENTER);
+            alfaBotButton.setColorFilter(new PorterDuffColorFilter(accent, PorterDuff.Mode.SRC_IN));
+            alfaBotButton.setBackground(Theme.createSelectorDrawable(androidx.core.graphics.ColorUtils.setAlphaComponent(accent, 0x33), Theme.RIPPLE_MASK_CIRCLE_20DP));
+            alfaBotButton.setContentDescription(org.telegram.messenger.AlfaCyrillic.ui("Bot token bilan kirish"));
+            alfaBotButton.setOnClickListener(v -> alfaShowBotLogin());
+            alfaTopActions.addView(alfaBotButton, LayoutHelper.createLinear(44, 44));
+
+            alfaUpdateTopActions(currentViewNum);
+            sizeNotifierFrameLayout.addView(alfaTopActions, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, 44, Gravity.RIGHT | Gravity.TOP, 0, 10, 12, 0));
+        }
 
         radialProgressView = new RadialProgressView(context);
         radialProgressView.setSize(AndroidUtilities.dp(20));
@@ -1541,13 +1556,20 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
         showEditDoneProgress(false, animated);
     }
 
+    /** O'ng tepadagi QR / 🤖 bloki faqat telefon raqami sahifasida; QR — faqat oddiy kirishda (akkaunt qo'shish emas). */
+    private void alfaUpdateTopActions(int page) {
+        if (alfaTopActions == null) {
+            return;
+        }
+        boolean phone = page == VIEW_PHONE_INPUT;
+        boolean qr = phone && activityMode == MODE_LOGIN;
+        alfaTopActions.setVisibility(phone ? View.VISIBLE : View.GONE);
+        alfaQrButton.setVisibility(qr ? View.VISIBLE : View.GONE);
+        alfaTopDivider.setVisibility(qr ? View.VISIBLE : View.GONE);
+    }
+
     public void setPage(@ViewNumber int page, boolean animated, Bundle params, boolean back) {
-        if (alfaBotButton != null) {
-            alfaBotButton.setVisibility(page == VIEW_PHONE_INPUT ? View.VISIBLE : View.GONE);
-        }
-        if (alfaQrButton != null) {
-            alfaQrButton.setVisibility(page == VIEW_PHONE_INPUT && activityMode == MODE_LOGIN ? View.VISIBLE : View.GONE);
-        }
+        alfaUpdateTopActions(page);
         boolean needFloatingButton = page == VIEW_PHONE_INPUT || page == VIEW_REGISTER || page == VIEW_PASSWORD ||
                 page == VIEW_NEW_PASSWORD_STAGE_1 || page == VIEW_NEW_PASSWORD_STAGE_2 || page == VIEW_ADD_EMAIL || page == VIEW_CODE_PHRASE || page == VIEW_CODE_WORD;
         if (page == currentViewNum) {
@@ -2766,29 +2788,6 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
                 });
             }
 
-            // AlfaGram: «QR kod bilan kirish» — raqam maydonlari ostida aniq ko'rinadigan havola (tepadagi QR tugmasi bilan bir xil).
-            if (activityMode == MODE_LOGIN) {
-                final int alfaQrLinkColor = Theme.getColor(Theme.key_windowBackgroundWhiteBlueText4);
-                TextView alfaQrLink = new TextView(context);
-                alfaQrLink.setText(org.telegram.messenger.AlfaCyrillic.ui("QR kod bilan kirish"));
-                alfaQrLink.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
-                alfaQrLink.setTypeface(AndroidUtilities.bold());
-                alfaQrLink.setTextColor(alfaQrLinkColor);
-                alfaQrLink.setGravity(Gravity.CENTER);
-                alfaQrLink.setSingleLine(true);
-                Drawable alfaQrIcon = ContextCompat.getDrawable(context, R.drawable.msg_qrcode);
-                if (alfaQrIcon != null) {
-                    alfaQrIcon = alfaQrIcon.mutate();
-                    alfaQrIcon.setColorFilter(new PorterDuffColorFilter(alfaQrLinkColor, PorterDuff.Mode.SRC_IN));
-                    alfaQrLink.setCompoundDrawablesWithIntrinsicBounds(alfaQrIcon, null, null, null);
-                    alfaQrLink.setCompoundDrawablePadding(dp(8));
-                }
-                alfaQrLink.setPadding(dp(16), 0, dp(16), 0);
-                alfaQrLink.setBackground(Theme.createSimpleSelectorRoundRectDrawable(dp(20), 0, Theme.getColor(Theme.key_listSelector)));
-                alfaQrLink.setOnClickListener(v -> alfaShowQrLogin());
-                addView(alfaQrLink, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, 40, Gravity.CENTER_HORIZONTAL, 0, 8, 0, 0));
-                bottomMargin -= 24;
-            }
 
             if (bottomMargin > 0 && !AndroidUtilities.isSmallScreen()) {
                 Space bottomSpacer = new Space(context);
