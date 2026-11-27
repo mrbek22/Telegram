@@ -111,8 +111,40 @@ public final class AlfaDefaultTheme {
                     FileLog.e(e);
                 }
             }, 600);
+            // Naqsh fayli yuklangach fon o'zi qayta chizilmaydi (QA'da: mavzu tanlangan, naqsh faqat qo'lda qayta tanlaganda chiqardi).
+            // Shuning uchun fayl tayyor bo'lishini kutamiz va fonni qayta yuklaymiz.
+            waitPatternAndReload(0);
         } catch (Throwable e) {
             FileLog.e(e);
         }
+    }
+
+    private static void waitPatternAndReload(int attempt) {
+        AndroidUtilities.runOnUIThread(() -> {
+            try {
+                Theme.ThemeInfo active = Theme.getActiveTheme();
+                Theme.ThemeAccent accent = active != null ? active.getAccent(false) : null;
+                if (accent == null || android.text.TextUtils.isEmpty(accent.patternSlug)) {
+                    return;
+                }
+                java.io.File file = accent.getPathToWallpaper();
+                if (file != null && file.exists() && file.length() > 0) {
+                    Theme.reloadWallpaper(true);
+                    NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.didSetNewWallpapper);
+                    return;
+                }
+                if (attempt == 10 || attempt == 25) {
+                    Theme.PatternsLoader.createLoader(true);
+                }
+                if (attempt < 45) {
+                    waitPatternAndReload(attempt + 1);
+                } else {
+                    // oxirgi chora: mavzuni qayta qo'llash (qo'lda tanlash bilan bir xil yo'l)
+                    NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.needSetDayNightTheme, active, false, null, accent.id);
+                }
+            } catch (Throwable e) {
+                FileLog.e(e);
+            }
+        }, attempt == 0 ? 1500 : 1000);
     }
 }
