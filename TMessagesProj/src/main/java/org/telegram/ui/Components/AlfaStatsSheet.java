@@ -81,15 +81,7 @@ public class AlfaStatsSheet extends BottomSheet {
         title.setTypeface(AndroidUtilities.bold());
         title.setTextColor(getThemedColor(Theme.key_dialogTextBlack));
         title.setText(AlfaCyrillic.ui("Chat statistikasi"));
-        // sarlavha oldida qimirlaydigan 📊; keyin qo'shiladigan qatorlar silliq paydo bo'ladi
-        LinearLayout titleRow = new LinearLayout(context);
-        titleRow.setGravity(Gravity.CENTER_VERTICAL);
-        titleRow.addView(AlfaAnim.titleEmoji(context, "📊"), LayoutHelper.createLinear(28, 28, 0, 0, 10, 0));
-        titleRow.addView(title, LayoutHelper.createLinear(0, LayoutHelper.WRAP_CONTENT, 1f));
-        column.addView(titleRow, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 0, 0, 12));
-        if (AlfaAnim.enabled()) {
-            column.setLayoutTransition(new android.animation.LayoutTransition());
-        }
+        column.addView(title, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 0, 0, 12));
 
         progressView = new TextView(context);
         progressView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);

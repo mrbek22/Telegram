@@ -23,8 +23,6 @@ public class AlfaHiddenAccountsActivity extends UniversalFragment {
     private static final int PAUSE_BASE = 2000;
     private static final int OPEN_BASE = 3000;
 
-    private android.view.View alfaHero;
-
     @Override
     protected CharSequence getTitle() {
         return AlfaCyrillic.ui("Maxfiy akkauntlar");
@@ -38,20 +36,6 @@ public class AlfaHiddenAccountsActivity extends UniversalFragment {
     @Override
     protected void fillItems(ArrayList<UItem> items, UniversalAdapter adapter) {
         ArrayList<Integer> accounts = AlfaAccountsActivity.getAccounts(-1, true);
-
-        // tepada qimirlaydigan 🙈
-        if (alfaHero == null && getContext() != null) {
-            android.widget.FrameLayout hero = new android.widget.FrameLayout(getContext());
-            android.view.View monkey = org.telegram.ui.Components.AlfaAnim.emoji(getContext(), "🙈", 90);
-            hero.addView(monkey, org.telegram.ui.Components.LayoutHelper.createFrame(90, 90, android.view.Gravity.CENTER, 0, 14, 0, 8));
-            org.telegram.ui.Components.AlfaAnim.popIn(monkey, 100);
-            alfaHero = hero;
-        }
-        if (alfaHero != null) {
-            UItem heroItem = UItem.asCustom(alfaHero);
-            heroItem.intValue = org.telegram.ui.Components.LayoutHelper.WRAP_CONTENT;
-            items.add(heroItem);
-        }
 
         items.add(UItem.asHeader(AlfaCyrillic.ui("Yashirish")));
         for (int account : accounts) {

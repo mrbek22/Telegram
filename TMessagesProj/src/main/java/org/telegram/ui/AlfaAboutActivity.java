@@ -17,8 +17,6 @@ import java.util.ArrayList;
  */
 public class AlfaAboutActivity extends UniversalFragment {
 
-    private android.view.View alfaHero;
-
     /** ikonka, rang, sarlavha, yoqish, qanday ishlaydi, o'chirish (null — yo'q) */
     private static final Object[][] FEATURES = {
             {R.drawable.alfa_ic_ghost, IconBackgroundColors.GRAY, "Ghost rejim",
@@ -118,30 +116,6 @@ public class AlfaAboutActivity extends UniversalFragment {
 
     @Override
     protected void fillItems(ArrayList<UItem> items, UniversalAdapter adapter) {
-        if (alfaHero == null && getContext() != null) {
-            // tepada qimirlaydigan 🚀 va sarlavha
-            android.widget.LinearLayout hero = new android.widget.LinearLayout(getContext());
-            hero.setOrientation(android.widget.LinearLayout.VERTICAL);
-            hero.setGravity(android.view.Gravity.CENTER_HORIZONTAL);
-            hero.setPadding(0, org.telegram.messenger.AndroidUtilities.dp(18), 0, org.telegram.messenger.AndroidUtilities.dp(10));
-            android.view.View rocket = org.telegram.ui.Components.AlfaAnim.emoji(getContext(), "🚀", 100);
-            hero.addView(rocket, org.telegram.ui.Components.LayoutHelper.createLinear(100, 100, android.view.Gravity.CENTER_HORIZONTAL));
-            android.widget.TextView t = new android.widget.TextView(getContext());
-            t.setText(AlfaCyrillic.ui("Barcha imkoniyatlar bepul"));
-            t.setTextSize(android.util.TypedValue.COMPLEX_UNIT_DIP, 17);
-            t.setTypeface(org.telegram.messenger.AndroidUtilities.bold());
-            t.setTextColor(org.telegram.ui.ActionBar.Theme.getColor(org.telegram.ui.ActionBar.Theme.key_windowBackgroundWhiteBlackText));
-            t.setGravity(android.view.Gravity.CENTER);
-            hero.addView(t, org.telegram.ui.Components.LayoutHelper.createLinear(org.telegram.ui.Components.LayoutHelper.WRAP_CONTENT, org.telegram.ui.Components.LayoutHelper.WRAP_CONTENT, android.view.Gravity.CENTER_HORIZONTAL, 0, 8, 0, 0));
-            org.telegram.ui.Components.AlfaAnim.popIn(rocket, 120);
-            org.telegram.ui.Components.AlfaAnim.fadeUp(t, 220);
-            alfaHero = hero;
-        }
-        if (alfaHero != null) {
-            UItem heroItem = UItem.asCustom(alfaHero);
-            heroItem.intValue = org.telegram.ui.Components.LayoutHelper.WRAP_CONTENT;
-            items.add(heroItem);
-        }
         items.add(UItem.asHeader(AlfaCyrillic.ui("AlfaGram nima?")));
         items.add(UItem.asShadow(AlfaCyrillic.ui("AlfaGram — ustiga qo'shimcha imkoniyatlar qo'shilgan Telegram. Quyidagilarning hammasi bepul, obunasiz. Har birini Sozlamalar → AlfaGram bo'limida yoqib-o'chirasiz.")));
         for (int i = 0; i < FEATURES.length; i++) {

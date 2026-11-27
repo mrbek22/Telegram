@@ -12248,7 +12248,6 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                 }
                 AlertDialog.Builder builder = new AlertDialog.Builder(getParentActivity(), resourcesProvider);
                 builder.setTitle(org.telegram.messenger.AlfaCyrillic.ui("Onlayn tarixi"));
-                builder.setTopView(org.telegram.ui.Components.AlfaAnim.dialogTop(getParentActivity(), "👀"));
                 builder.setMessage(sb.toString());
                 builder.setPositiveButton(LocaleController.getString(R.string.OK), null);
                 if (!list.isEmpty()) {
