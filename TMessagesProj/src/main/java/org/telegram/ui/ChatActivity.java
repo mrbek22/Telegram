@@ -33295,6 +33295,7 @@ public class ChatActivity extends BaseFragment implements
             org.telegram.ui.ActionBar.AlertDialog.Builder b =
                     new org.telegram.ui.ActionBar.AlertDialog.Builder(getParentActivity(), themeDelegate);
             b.setTitle(org.telegram.messenger.AlfaCyrillic.ui("Tahrir tarixi"));
+            b.setTopView(org.telegram.ui.Components.AlfaAnim.dialogTop(getParentActivity(), "\u270F"));
             StringBuilder sb = new StringBuilder();
             String cur = msg.messageOwner != null ? msg.messageOwner.message : null;
             if (cur != null && cur.length() > 0) {
@@ -33319,6 +33320,7 @@ public class ChatActivity extends BaseFragment implements
             org.telegram.ui.ActionBar.AlertDialog.Builder b =
                     new org.telegram.ui.ActionBar.AlertDialog.Builder(getParentActivity(), themeDelegate);
             b.setTitle(org.telegram.messenger.AlfaCyrillic.ui("O'chirilgan xabar"));
+            b.setTopView(org.telegram.ui.Components.AlfaAnim.dialogTop(getParentActivity(), "\uD83D\uDDD1"));
             b.setMessage(org.telegram.messenger.AlfaCyrillic.ui("Bu xabarni yuboruvchi o'chirgan. AlfaGram uni sizning chatingizda ushlab qoldi.\n\nBarcha o'chirilgan xabarlar ro'yxatini menyudan (\"O'chirilgan xabarlar\") ochsangiz ko'rasiz."));
             b.setPositiveButton(org.telegram.messenger.LocaleController.getString(R.string.OK), null);
             b.show();
@@ -33337,6 +33339,7 @@ public class ChatActivity extends BaseFragment implements
         final String result = toLatin ? org.telegram.messenger.AlfaCyrillic.toLatin(text) : org.telegram.messenger.AlfaCyrillic.toCyrillic(text);
         AlertDialog.Builder builder = new AlertDialog.Builder(getParentActivity(), themeDelegate);
         builder.setTitle(org.telegram.messenger.AlfaCyrillic.ui(toLatin ? "Lotin alifbosida" : "Kirill alifbosida"));
+        builder.setTopView(org.telegram.ui.Components.AlfaAnim.dialogTop(getParentActivity(), "\uD83D\uDD24"));
         builder.setMessage(result);
         builder.setPositiveButton(org.telegram.messenger.AlfaCyrillic.ui("Nusxalash"), (d, w) -> {
             AndroidUtilities.addToClipboard(result);

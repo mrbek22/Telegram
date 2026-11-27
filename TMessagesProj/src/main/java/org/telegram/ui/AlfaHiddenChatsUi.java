@@ -73,6 +73,7 @@ public class AlfaHiddenChatsUi {
             return;
         }
         new AlertDialog.Builder(context)
+                .setTopView(org.telegram.ui.Components.AlfaAnim.dialogTop(context, "\uD83D\uDD10"))
                 .setTitle(AlfaCyrillic.ui("Qulf turi"))
                 .setItems(new CharSequence[]{AlfaCyrillic.ui("4 raqamli PIN"), AlfaCyrillic.ui("Harfli-raqamli parol")}, (d, which) -> enterNewCode(fragment, which == 0, onDone))
                 .setNegativeButton(AlfaCyrillic.ui("Bekor qilish"), null)

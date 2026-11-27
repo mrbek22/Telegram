@@ -47,6 +47,7 @@ public class AlfaDeletedSheet extends BottomSheet {
     private RecyclerView listView;
     private Adapter adapter;
     private TextView emptyView;
+    private View emptyBox;
     private TextView clearButton;
 
     public AlfaDeletedSheet(Context context, int currentAccount, long dialogId, Theme.ResourcesProvider resourcesProvider) {
@@ -69,7 +70,8 @@ public class AlfaDeletedSheet extends BottomSheet {
         title.setTypeface(AndroidUtilities.bold());
         title.setTextColor(getThemedColor(Theme.key_dialogTextBlack));
         title.setText(org.telegram.messenger.AlfaCyrillic.ui("O'chirilgan xabarlar"));
-        header.addView(title, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.LEFT | Gravity.CENTER_VERTICAL));
+        header.addView(AlfaAnim.titleEmoji(context, "\uD83D\uDDD1"), LayoutHelper.createFrame(26, 26, Gravity.LEFT | Gravity.CENTER_VERTICAL));
+        header.addView(title, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.LEFT | Gravity.CENTER_VERTICAL, 34, 0, 0, 0));
 
         clearButton = new TextView(context);
         clearButton.setTextSize(android.util.TypedValue.COMPLEX_UNIT_DIP, 14);
@@ -86,6 +88,7 @@ public class AlfaDeletedSheet extends BottomSheet {
         FrameLayout content = new FrameLayout(context);
 
         listView = new RecyclerView(context);
+        AlfaAnim.listAppear(listView);
         listView.setLayoutManager(new LinearLayoutManager(context));
         listView.setClipToPadding(false);
         listView.setPadding(0, 0, 0, dp(12));
@@ -99,7 +102,8 @@ public class AlfaDeletedSheet extends BottomSheet {
         emptyView.setTextColor(getThemedColor(Theme.key_dialogTextGray3));
         emptyView.setPadding(dp(24), dp(40), dp(24), dp(40));
         emptyView.setText(org.telegram.messenger.AlfaCyrillic.ui("Bu chatda hali o'chirilgan xabar yo'q.\nKimdir sizga yozib, keyin o'chirsa, xabar shu yerda saqlanadi."));
-        content.addView(emptyView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER));
+        emptyBox = AlfaAnim.emptyState(context, "\uD83D\uDE36", emptyView);
+        content.addView(emptyBox, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER));
 
         root.addView(content, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 0, 1f));
 
@@ -114,7 +118,7 @@ public class AlfaDeletedSheet extends BottomSheet {
             adapter.notifyDataSetChanged();
         }
         boolean empty = items.isEmpty();
-        emptyView.setVisibility(empty ? View.VISIBLE : View.GONE);
+        emptyBox.setVisibility(empty ? View.VISIBLE : View.GONE);
         listView.setVisibility(empty ? View.GONE : View.VISIBLE);
         clearButton.setVisibility(empty ? View.GONE : View.VISIBLE);
     }

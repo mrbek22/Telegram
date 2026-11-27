@@ -53,6 +53,7 @@ public class AlfaArchiveTabsView extends HorizontalScrollView {
             chip.setSingleLine();
             chip.setPadding(dp(14), 0, dp(14), 0);
             chip.setOnClickListener(v -> {
+                AlfaAnim.bounce(v);
                 if (selected != category) {
                     onSelect.run(category);
                 }
