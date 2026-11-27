@@ -9156,7 +9156,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 animator.cancel();
                 animator = null;
             }
-            if (!animated || !org.telegram.messenger.LiteMode.isEnabled(org.telegram.messenger.LiteMode.FLAGS_CHAT)) {
+            if (!animated || !org.telegram.ui.Components.AlfaAnim.enabled()) {
                 t = 1f;
                 invalidateSelf();
                 return;

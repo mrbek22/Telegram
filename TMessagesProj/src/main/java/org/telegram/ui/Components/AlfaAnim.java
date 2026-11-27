@@ -33,11 +33,30 @@ public final class AlfaAnim {
     private AlfaAnim() {
     }
 
+    /**
+     * Animatsiya ruxsatmi. Zaif telefon (Telegram PERFORMANCE_CLASS_LOW), AlfaGram «Barcha animatsiyalarni o'chirish»
+     * yoki Telegram quvvat tejash rejimi yoqilgan bo'lsa — yo'q: hammasi oddiy, harakatsiz holatda (qotish bo'lmasin).
+     */
     public static boolean enabled() {
         try {
-            return LiteMode.isEnabled(LiteMode.FLAGS_CHAT);
+            if (org.telegram.messenger.SharedConfig.getDevicePerformanceClass() == org.telegram.messenger.SharedConfig.PERFORMANCE_CLASS_LOW) {
+                return false;
+            }
+            if (org.telegram.messenger.AlfaFeatures.disableAnimations) {
+                return false;
+            }
+            return LiteMode.isEnabled(LiteMode.FLAG_CHAT_SCALE);
         } catch (Throwable e) {
-            return true;
+            return false;
+        }
+    }
+
+    /** Emoji qimirlasinmi (aks holda — faqat birinchi kadr, ya'ni oddiy rasm). */
+    public static boolean emojiAnimated() {
+        try {
+            return enabled() && LiteMode.isEnabled(LiteMode.FLAGS_ANIMATED_STICKERS);
+        } catch (Throwable e) {
+            return false;
         }
     }
 
@@ -51,9 +70,9 @@ public final class AlfaAnim {
             TLRPC.Document doc = MediaDataController.getInstance(account).getEmojiAnimatedSticker(emoji);
             if (doc != null) {
                 BackupImageView v = new BackupImageView(ctx);
-                boolean animate = LiteMode.isEnabled(LiteMode.FLAGS_ANIMATED_STICKERS);
+                boolean animate = emojiAnimated();
                 String filter = sizeDp + "_" + sizeDp + (animate ? "" : "_firstframe");
-                v.getImageReceiver().setAutoRepeat(loop ? 1 : 0);
+                v.getImageReceiver().setAutoRepeat(loop && animate ? 1 : 0);
                 Drawable thumb = null;
                 try {
                     thumb = Emoji.getEmojiBigDrawable(emoji);

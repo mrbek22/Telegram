@@ -446,7 +446,7 @@ public class AlfaWrappedSheet extends BottomSheet {
             TLRPC.Document doc = MediaDataController.getInstance(account).getEmojiAnimatedSticker(emoji);
             if (doc != null) {
                 BackupImageView v = new BackupImageView(ctx);
-                boolean animate = LiteMode.isEnabled(LiteMode.FLAGS_ANIMATED_STICKERS);
+                boolean animate = AlfaAnim.emojiAnimated();
                 String filter = sizeDp + "_" + sizeDp + (animate ? "" : "_firstframe");
                 v.getImageReceiver().setAutoRepeat(1);
                 // animatsiya yuklanguncha oddiy rangli emoji turadi (bo'sh doira emas)
@@ -485,7 +485,7 @@ public class AlfaWrappedSheet extends BottomSheet {
     /** Kartalar navbat bilan pastdan suzib chiqadi. */
     private void appear(View v) {
         int i = cardIndex++;
-        if (!LiteMode.isEnabled(LiteMode.FLAGS_CHAT)) {
+        if (!AlfaAnim.enabled()) {
             return;
         }
         v.setAlpha(0f);
@@ -641,7 +641,7 @@ public class AlfaWrappedSheet extends BottomSheet {
     }
 
     private static void countUp(TextView v, int target) {
-        if (target <= 0 || !LiteMode.isEnabled(LiteMode.FLAGS_CHAT)) {
+        if (target <= 0 || !AlfaAnim.enabled()) {
             v.setText(String.valueOf(Math.max(0, target)));
             return;
         }
@@ -690,7 +690,7 @@ public class AlfaWrappedSheet extends BottomSheet {
                     avatars[i].setForUserOrChat(u, new AvatarDrawable(u));
                 }
             }
-            if (LiteMode.isEnabled(LiteMode.FLAGS_CHAT)) {
+            if (AlfaAnim.enabled()) {
                 grow = 0f;
                 ValueAnimator a = ValueAnimator.ofFloat(0f, 1f);
                 a.setStartDelay(450);
@@ -783,7 +783,7 @@ public class AlfaWrappedSheet extends BottomSheet {
             super(c);
             this.hours = hours;
             this.best = best;
-            if (LiteMode.isEnabled(LiteMode.FLAGS_CHAT)) {
+            if (AlfaAnim.enabled()) {
                 grow = 0f;
                 ValueAnimator a = ValueAnimator.ofFloat(0f, 1f);
                 a.setStartDelay(500);
