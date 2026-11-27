@@ -1865,5 +1865,8 @@ final class AlfaI18nDict {
             t("attach::Dumaloq",
                 "Кружок",
                 "Round");
+            t("Barcha imkoniyatlar bepul",
+                "Все функции бесплатны",
+                "All features are free");
     }
 }

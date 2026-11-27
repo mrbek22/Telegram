@@ -30,6 +30,7 @@ public class AlfaLink {
         if (link == null) {
             AlertDialog.Builder b = new AlertDialog.Builder(fragment.getParentActivity(), fragment.getResourceProvider());
             b.setTitle(AlfaCyrillic.ui("Mening AlfaGram havolam"));
+            b.setTopView(org.telegram.ui.Components.AlfaAnim.dialogTop(fragment.getParentActivity(), "\uD83D\uDD17"));
             b.setMessage(AlfaCyrillic.ui("Shaxsiy havola uchun avval foydalanuvchi nomi (@username) o'rnating."));
             b.setPositiveButton(AlfaCyrillic.ui("O'rnatish", "set"), (d, w) -> {
                 try {

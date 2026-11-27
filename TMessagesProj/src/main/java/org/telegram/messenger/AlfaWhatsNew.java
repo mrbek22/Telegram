@@ -56,6 +56,7 @@ public class AlfaWhatsNew {
             ed.apply();
             AlertDialog.Builder builder = new AlertDialog.Builder(fragment.getParentActivity(), fragment.getResourceProvider());
             builder.setTitle(AlfaCyrillic.ui("AlfaGram'da yangi"));
+            builder.setTopView(org.telegram.ui.Components.AlfaAnim.dialogTop(fragment.getParentActivity(), "\uD83C\uDF89"));
             builder.setMessage(AlfaCyrillic.ui(remote ? AlfaConfig.whatsNewText : NEWS));
             builder.setPositiveButton(AlfaCyrillic.ui("Sozlamalarni ochish"), (d, w) -> {
                 try {

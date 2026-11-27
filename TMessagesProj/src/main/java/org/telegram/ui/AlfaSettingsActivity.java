@@ -586,6 +586,9 @@ public class AlfaSettingsActivity extends BaseFragment {
         subtitle.setTextColor(0xFFEFF6FF);
         subtitle.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13);
         texts.addView(subtitle, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, 0, 3, 0, 0));
+        // o'ngda qimirlaydigan ✨, logo esa sakrab chiqadi
+        card.addView(org.telegram.ui.Components.AlfaAnim.emoji(context, "✨", 40), LayoutHelper.createLinear(40, 40, Gravity.CENTER_VERTICAL, 8, 0, 0, 0));
+        org.telegram.ui.Components.AlfaAnim.popIn(icon, 60);
         return wrap;
     }
 
@@ -619,7 +622,16 @@ public class AlfaSettingsActivity extends BaseFragment {
                     return;
                 }
                 AlfaFeatures.setFlag(key, !currentValue(key));
-                listAdapter.notifyDataSetChanged();
+                try {
+                    v.performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP, android.view.HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
+                } catch (Throwable ignore) {
+                }
+                org.telegram.ui.Components.AlfaAnim.bounce(v);
+                AndroidUtilities.runOnUIThread(() -> {
+                    if (listAdapter != null) {
+                        listAdapter.notifyDataSetChanged();
+                    }
+                }, 140);
             });
             row.addView(tile, LayoutHelper.createLinear(0, LayoutHelper.WRAP_CONTENT, 1f, 5, 0, 5, 0));
         }
